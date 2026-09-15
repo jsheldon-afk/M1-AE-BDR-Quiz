@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Setting Meetings That Hold — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Setting Meetings That Hold</h1>
+  <p class="subtitle">Transform conversations into confirmed bookings that actually show up.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/presentation/d/1VR5rAJ7q6oo0QrEEZoa0oivhH1aoXXOZAd0ivw9lSyo/edit" target="_blank" rel="noopener">View slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">The 4 Pillars, discovery, verbal close, and the post-call cadence.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ POST-CALL CADENCE ============ -->
+  <div class="section card" id="pc-section">
+    <h2>Post-Call Cadence</h2>
+    <p class="desc">Tap a step, then tap where it belongs. Only 4 of these 6 are part of the real cadence.</p>
+    <div class="pool column" id="pc-pool"></div>
+    <div id="pc-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="pc-check">Check answers</button>
+    <p class="feedback" id="pc-feedback"></p>
+    <p class="score-note" id="pc-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Setting Meetings That Hold";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "What are the 4 Pillars of Success for setting meetings that hold?", options: ["Timing, the Micro Yes's, Follow-up Template, Getting the Cell","Discovery, Value Prop, Close, Follow-up","Timing, Pricing, Discounts, Urgency","Cold call, Email, Text, Social"], correct: 0, explain: "The 4 Pillars are Timing, the Micro Yes's (calendar invite + explicit confirmation), the Follow-up Template, and Getting the Cell." },
+    { prompt: "Instead of a general pitch like \"we help fill seats so you should work with us,\" what should you do?", options: ["Ask targeted questions to uncover their specific challenges","Repeat the pitch more slowly","Offer a discount immediately","Send a brochure by email"], correct: 0, explain: "High-quality holds start with deep discovery, not a product dump." },
+    { prompt: "What is \"Cold Call FOMO\" built on?", options: ["Offering a limited-time discount","Dropping highly relevant, hyper-local competitor names","Threatening to work with a competitor instead","Rushing the prospect to decide"], correct: 1, explain: "Naming specific local competitors you're working with builds Fear of Missing Out, since operators are inherently competitive." },
+    { prompt: "Right before asking for the close, what should you do to increase the odds they show up?", options: ["Recap what you learned in discovery and verbalize how you'll fill their specific gap","Ask them to confirm their email spelling","Explain your commission structure","Repeat your name and title"], correct: 0, explain: "Verbalizing the specific gap you uncovered in discovery increases the likelihood of attendance." },
+    { prompt: "When should you try to book the meeting for?", options: ["Whenever is convenient, no rush", "Same day first, then next day if unavailable, within 48 hours", "At least a week out to prepare", "Only after a second call"], correct: 1, explain: "The sooner the meeting, the higher the chance it closes — always ask for same day first." },
+    { prompt: "In the \"Visuals\" verbal close script, what do you tell the prospect you're sending?", options: ["A contract to sign","A quick Google Meet invitation to show visuals","A text with pricing","A follow-up call reminder only"], correct: 1, explain: "The Visuals script frames the invite as a way to show them visuals of what Seated offers, increasing perceived value instantly." },
+    { prompt: "What should you always clarify about the meeting format?", options: ["That it's virtual (a Google Meet), not a call or in-person", "That it will be recorded", "That it requires a deposit", "That a manager will also join"], correct: 0, explain: "Always mention it's explicitly a Google Meet so they know it's not a phone call or in-person visit." },
+    { prompt: "How quickly should the \"Booked\" confirmation email go out after the call ends?", options: ["Within 2 minutes", "By end of day", "The next morning", "Only if they don't confirm verbally"], correct: 0, explain: "Immediacy matters — the Booked email should be sent within 2 minutes of the call ending." },
+    { prompt: "In the Post-Call Cadence, what happens at Minute 2?", options: ["Send the Google Meet invite", "Send the \"Booked\" email via SalesLoft", "Send a day-before SMS reminder", "Send a 30-minutes-before reminder"], correct: 1, explain: "Minute 0 is the Google Meet invite; Minute 2 is the \"Booked\" email sent via SalesLoft." },
+    { prompt: "As touchpoints and clarity increase, what happens to the likelihood of a no-show?", options: ["It stays the same", "It increases slightly", "It drops exponentially", "It only matters for virtual meetings"], correct: 2, explain: "The correlation between effort and hold rate is clear: more touchpoints and clarity means no-shows drop exponentially." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ POST-CALL CADENCE (sort with distractors) ============ */
+(function() {
+  const pool = ["Send Google Meet invite","Send \u201cBooked\u201d email via Salesloft","Day-before SMS reminder","30-min-before SMS reminder","Send a contract","Call back the next day to reconfirm"];
+  const slotLabels = ["Minute 0","Minute 2","Day before","30 min before"];
+  const answers = {"Minute 0":"Send Google Meet invite","Minute 2":"Send \u201cBooked\u201d email via Salesloft","Day before":"Day-before SMS reminder","30 min before":"30-min-before SMS reminder"};
+
+  let poolOrder = shuffle(pool);
+  let placed = {"Minute 0":null,"Minute 2":null,"Day before":null,"30 min before":null};
+  let selected = null;
+  const poolEl = document.getElementById("pc-pool");
+  const slotsEl = document.getElementById("pc-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    Object.keys(placed).forEach(label => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.dataset.label = label;
+      row.innerHTML = '<span class="slot-label" style="min-width:96px;">' + label + '</span><span class="slot-val">' + (placed[label] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[label]) { selected = null; placed[label] = null; }
+        else if (selected) { placed[label] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("pc-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    Object.keys(placed).forEach(label => {
+      const row = slotsEl.querySelector('[data-label="'+label+'"] .slot-val');
+      if (placed[label] === answers[label]) { row.className = "slot-val correct"; correctCount++; }
+      else { row.className = "slot-val incorrect"; }
+    });
+    document.getElementById("pc-feedback").textContent = correctCount + " of 4 correct.";
+    submitScore(MODULE_NAME, "Post-Call Cadence", rep, correctCount, 4).then(res => {
+      document.getElementById("pc-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>

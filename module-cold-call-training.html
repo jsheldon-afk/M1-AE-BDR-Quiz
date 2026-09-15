@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cold Call Training — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Cold Call Training</h1>
+  <p class="subtitle">Mindset, call structure, discovery, the ARP framework, objection handling, and the gatekeeper.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/presentation/d/19fleBKDOtS1o_mBwl5u26JBWEH16VjGgIeEvCloeup0/edit" target="_blank" rel="noopener">View slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">Mindset, discovery, ARP in practice, objection scripts, and the gatekeeper.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ DISCOVERY SEQUENCE ============ -->
+  <div class="section card" id="ds-section">
+    <h2>Discovery Sequence</h2>
+    <p class="desc">Drag the 4 discovery moves into the correct order.</p>
+    <div class="top-row">
+      <span>Drag to reorder</span>
+      <button class="secondary" id="ds-reset">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="ds-list"></ul>
+    <button class="primary" id="ds-check">Check order</button>
+    <p class="feedback" id="ds-feedback"></p>
+    <p class="score-note" id="ds-score-note"></p>
+  </div>
+
+  <!-- ============ CALL STRUCTURE ============ -->
+  <div class="section card" id="cs-section">
+    <h2>Call Structure</h2>
+    <p class="desc">Tap a step, then tap where it belongs. Only 4 of these 6 are part of the real structure.</p>
+    <div class="pool column" id="cs-pool"></div>
+    <div id="cs-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="cs-check">Check answers</button>
+    <p class="feedback" id="cs-feedback"></p>
+    <p class="score-note" id="cs-score-note"></p>
+  </div>
+
+  <!-- ============ ARP FRAMEWORK ============ -->
+  <div class="section card" id="arp-section">
+    <h2>ARP Framework</h2>
+    <p class="desc">Tap a step, then tap where it belongs. Only 4 of these 6 are real ARP moves.</p>
+    <div class="pool column" id="arp-pool"></div>
+    <div id="arp-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="arp-check">Check answers</button>
+    <p class="feedback" id="arp-feedback"></p>
+    <p class="score-note" id="arp-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Cold Call Training";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "What is the actual goal of cold calling?", options: ["To set a meeting -- that's the whole point", "To create an environment where people feel comfortable opening up -- a meeting is the result", "To explain every feature of Seated", "To close the sale on the first call"], correct: 1, explain: "Setting a meeting is the RESULT, not the goal. The goal is creating curiosity and comfort so people open up." },
+    { prompt: "What are the 3 core problems Seated solves for restaurants?", options: ["High food cost, high labor cost, bad reviews", "Empty tables = lost money, hard to market slow nights, thin margins make every empty seat painful", "Slow POS systems, bad Wi-Fi, understaffing", "Weather, competition, rent"], correct: 1, explain: "These are the 3 core problems named directly in the training." },
+    { prompt: "What's the golden rule of discovery?", options: ["Tell them their problem directly so it's clear", "Get them to ADMIT the problem themselves -- if they arrive at it, they own it", "Skip discovery and go straight to the pitch", "Ask only yes/no questions"], correct: 1, explain: "If they arrive at the problem themselves, they own it. Don't tell them -- ask until they say it." },
+    { prompt: "What does ARP stand for?", options: ["Acknowledge, Response, Pivot (then pivot with a question)", "Ask, Repeat, Pitch", "Address, Rebut, Persuade", "Analyze, Report, Proceed"], correct: 0, explain: "ARP = Acknowledge, Response, Pivot, Pivot with a question. Run this sequence every time." },
+    { prompt: "In the ARP \"Acknowledge\" step, what's the goal?", options: ["Agree with the objection so they feel validated", "One sentence that makes them feel heard, without agreeing or over-apologizing", "Immediately explain why they're wrong", "Skip straight to the response"], correct: 1, explain: "Acknowledge is about validation, not agreement -- one genuine sentence naming their specific concern." },
+    { prompt: "In the ARP \"Response\" step, what's the guideline?", options: ["Feature dump to fill the silence", "2-3 sentences max, one clear, direct reframe", "Agree and back down from your position", "Bring up price unprompted"], correct: 1, explain: "Response should be direct and confident: one clear reframe in 2-3 sentences, not a feature dump." },
+    { prompt: "In the ARP \"Pivot with a question\" step, what should you do after asking?", options: ["Ask a second question immediately in case the first doesn't land", "Stop talking and embrace the silence -- first to talk loses", "Explain the question further", "Move on to a new objection"], correct: 1, explain: "Ask one question, then stop talking completely. The silence does the work." },
+    { prompt: "A prospect says \"We're already pretty full on weekends.\" What's the core Response point?", options: ["Offer a bigger discount to compete", "Seated focuses on the inventory they're NOT filling (weekday/off-peak), not their packed Fridays", "Argue that they're not actually full", "Immediately ask for a different decision maker"], correct: 1, explain: "The Response reframes Seated as additive -- targeting off-peak inventory, not competing with their busy nights." },
+    { prompt: "A prospect says \"30% rewards feels too high.\" What's the core Response point?", options: ["Lower the rewards percentage on the spot", "An empty table earns zero -- a Seated guest pays full price and earns rewards on a seat that had no other buyer", "Rewards are non-negotiable, end of discussion", "Ask them what percentage they'd prefer"], correct: 1, explain: "The reframe: zero revenue on an empty table vs. full-price revenue plus rewards on an otherwise-empty seat." },
+    { prompt: "A prospect says \"We already use OpenTable.\" What's the core Response point?", options: ["Tell them to cancel OpenTable first", "OpenTable captures existing demand; Seated generates NEW demand -- additive, not competing", "Seated is simply a cheaper alternative to OpenTable", "Ask why they haven't switched already"], correct: 1, explain: "Most partners run both side by side -- Seated slots in with zero changes to how they operate." },
+    { prompt: "A prospect says \"Let me think about it.\" What does the Response ask them to clarify?", options: ["Whether they need to check with a business partner", "Whether it's that they feel they can fill tables on their own, or the reward rate doesn't feel worth it", "How much time they need exactly", "Whether they've read the contract"], correct: 1, explain: "The Response narrows \"I need to think about it\" down to one of two likely real objections." },
+    { prompt: "What's the multi-channel \"double tap\" strategy?", options: ["Calling the restaurant line AND the cell phone", "Sending two emails back to back", "Calling twice in a row without pausing", "Texting the same message twice"], correct: 0, explain: "Double tap means calling both the restaurant line and a cell number when you have one." },
+    { prompt: "On what touch number do most deals typically close?", options: ["The 1st-2nd touch", "The 8th-12th touch", "The 20th+ touch", "There's no pattern"], correct: 1, explain: "Most deals close on the 8th-12th touch -- persistence across channels matters." },
+    { prompt: "What are the recommended cold-calling time blocks?", options: ["9-10, 1-2, 5-6", "10-12, 12-2, 2-4, 4-6", "Random throughout the day", "Only mornings before 10am"], correct: 1, explain: "Call in blocks -- never randomly -- across 10-12, 12-2, 2-4, and 4-6." },
+    { prompt: "What's the target length for a cold call?", options: ["30-60 seconds", "3-5 minutes", "10-15 minutes", "As long as it takes"], correct: 1, explain: "Long enough to qualify, short enough to respect their time: 3-5 minutes." },
+    { prompt: "What is the gatekeeper's two-step goal for you?", options: ["Get transferred first; if that fails, get their name and a direct number to call back", "Explain Seated fully to the gatekeeper", "Ask for the owner's personal cell immediately", "Hang up and try a different restaurant"], correct: 0, explain: "First try: get transferred on the spot. If that fails: get a name and number, then call back." },
+    { prompt: "What kills a gatekeeper transfer fastest?", options: ["Staying vague about why you're calling", "Saying the word \"sales,\" \"pitch,\" or over-explaining", "Asking for the owner by name", "Being polite and brief"], correct: 1, explain: "Saying 'sales' or 'pitch' -- or over-explaining -- gives the gatekeeper a reason to screen you out." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ DISCOVERY SEQUENCE (reorder) ============ */
+(function() {
+  const items = [
+    {id:"gap", text:"Find the gap", sub:"\u201cHow are you [doing X] so that [good thing] does or doesn't happen?\u201d"},
+    {id:"confirm", text:"Confirm the problem", sub:"\u201cSo if I'm hearing you right, you're seeing empty covers on Tuesdays...\u201d"},
+    {id:"ask", text:"Ask if they want to solve it", sub:"\u201cIs that something you're actively trying to solve?\u201d"},
+    {id:"present", text:"Now present Seated", sub:"Only after they've said yes do you have permission to pitch"}
+  ];
+  const correctOrder = items.map(i => i.id);
+  const list = document.getElementById("ds-list");
+  let dragEl = null;
+
+  function render(order) {
+    list.innerHTML = "";
+    order.forEach((id) => {
+      const item = items.find(i => i.id === id);
+      const li = document.createElement("li");
+      li.className = "tile";
+      li.draggable = true;
+      li.dataset.id = id;
+      li.innerHTML = '<span class="grip">&#8942;&#8942;</span><div class="tile-body"><p class="tile-title">' + item.text + '</p><p class="tile-output">' + item.sub + '</p></div><div class="tile-buttons"><button class="up">&#9650;</button><button class="down">&#9660;</button></div>';
+      li.addEventListener("dragstart", () => { dragEl = li; setTimeout(() => li.classList.add("dragging"), 0); });
+      li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl = null; });
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === li) return;
+        const rect = li.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        list.insertBefore(dragEl, before ? li : li.nextSibling);
+      });
+      li.querySelector(".up").addEventListener("click", () => { const prev = li.previousElementSibling; if (prev) list.insertBefore(li, prev); clearFb(); });
+      li.querySelector(".down").addEventListener("click", () => { const next = li.nextElementSibling; if (next) list.insertBefore(next, li); clearFb(); });
+      list.appendChild(li);
+    });
+  }
+  function clearFb() {
+    document.getElementById("ds-feedback").textContent = "";
+    document.getElementById("ds-score-note").textContent = "";
+    [...list.children].forEach(li => li.style.borderColor = "var(--line)");
+  }
+  document.getElementById("ds-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const current = [...list.children].map(li => li.dataset.id);
+    let correctCount = 0;
+    current.forEach((id, idx) => {
+      const li = list.children[idx];
+      if (id === correctOrder[idx]) { li.style.borderColor = "var(--success)"; correctCount++; }
+      else { li.style.borderColor = "var(--danger)"; }
+    });
+    document.getElementById("ds-feedback").textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
+    submitScore(MODULE_NAME, "Discovery Sequence", rep, correctCount, correctOrder.length).then(res => {
+      document.getElementById("ds-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  document.getElementById("ds-reset").addEventListener("click", () => { render(shuffle(correctOrder)); clearFb(); });
+  render(shuffle(correctOrder));
+})();
+
+/* ============ CALL STRUCTURE (sort with distractors) ============ */
+(function() {
+  const pool = ["Intro","Discovery","Why (Value)","Call to Action","Feature pitch","Explain pricing"];
+  const slotLabels = ["1st","2nd","3rd","4th"];
+  const answers = {"1st":"Intro","2nd":"Discovery","3rd":"Why (Value)","4th":"Call to Action"};
+
+  let poolOrder = shuffle(pool);
+  let placed = {"1st":null,"2nd":null,"3rd":null,"4th":null};
+  let selected = null;
+  const poolEl = document.getElementById("cs-pool");
+  const slotsEl = document.getElementById("cs-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    slotLabels.forEach(label => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.dataset.label = label;
+      row.innerHTML = '<span class="slot-label">' + label + '</span><span class="slot-val">' + (placed[label] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[label]) { selected = null; placed[label] = null; }
+        else if (selected) { placed[label] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("cs-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    slotLabels.forEach(label => {
+      const row = slotsEl.querySelector('[data-label="'+label+'"] .slot-val');
+      if (placed[label] === answers[label]) { row.className = "slot-val correct"; correctCount++; }
+      else { row.className = "slot-val incorrect"; }
+    });
+    document.getElementById("cs-feedback").textContent = correctCount + " of 4 correct.";
+    submitScore(MODULE_NAME, "Call Structure", rep, correctCount, 4).then(res => {
+      document.getElementById("cs-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ ARP FRAMEWORK (sort with distractors) ============ */
+(function() {
+  const pool = ["Acknowledge","Response","Pivot","Pivot with a question","Debate the objection","Offer a discount"];
+  const slotLabels = ["1st","2nd","3rd","4th"];
+  const answers = {"1st":"Acknowledge","2nd":"Response","3rd":"Pivot","4th":"Pivot with a question"};
+
+  let poolOrder = shuffle(pool);
+  let placed = {"1st":null,"2nd":null,"3rd":null,"4th":null};
+  let selected = null;
+  const poolEl = document.getElementById("arp-pool");
+  const slotsEl = document.getElementById("arp-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    slotLabels.forEach(label => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.dataset.label = label;
+      row.innerHTML = '<span class="slot-label">' + label + '</span><span class="slot-val">' + (placed[label] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[label]) { selected = null; placed[label] = null; }
+        else if (selected) { placed[label] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("arp-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    slotLabels.forEach(label => {
+      const row = slotsEl.querySelector('[data-label="'+label+'"] .slot-val');
+      if (placed[label] === answers[label]) { row.className = "slot-val correct"; correctCount++; }
+      else { row.className = "slot-val incorrect"; }
+    });
+    document.getElementById("arp-feedback").textContent = correctCount + " of 4 correct.";
+    submitScore(MODULE_NAME, "ARP Framework", rep, correctCount, 4).then(res => {
+      document.getElementById("arp-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
