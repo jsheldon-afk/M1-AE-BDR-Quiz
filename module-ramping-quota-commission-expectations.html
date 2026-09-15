@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ramping Quota, Commission & Expectations — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+  .fill-row {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 6px; align-items: center;
+    background: var(--gold-tint); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
+  }
+  .fill-row.single { grid-template-columns: 1.8fr 1fr; }
+  .fill-header { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 6px; font-size: 11px; color: var(--ink-secondary); padding: 0 4px; }
+  .fill-slot {
+    text-align: center; padding: 6px 4px; border-radius: 6px; border: 1px dashed var(--line);
+    font-size: 13px; font-weight: bold; cursor: pointer; background: #fff;
+  }
+  .sort-box { background: var(--gold-tint); border-radius: 8px; padding: 10px 14px; cursor: pointer; margin-bottom: 8px; }
+  .sort-box .items div { font-size: 13px; padding: 4px 8px; margin-top: 4px; border-radius: 6px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Ramping Quota, Commission & Expectations</h1>
+  <p class="subtitle">Daily KPIs, ramp milestones, the comp plan, and performance expectations for M1 AE/BDRs.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="Ramping_Quota_Commission_Expectations.pptx" download>Download slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first \u2014 needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">Diagnostics, PIP thresholds, and ramp mindset.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ HOW TO RUN YOUR DAY ============ -->
+  <div class="section card" id="dr-section">
+    <h2>How to Run Your Day</h2>
+    <p class="desc">Drag the 9 steps into the correct time order.</p>
+    <div class="top-row">
+      <span>Drag to reorder, earliest to latest</span>
+      <button class="secondary" id="dr-reset">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="dr-list"></ul>
+    <button class="primary" id="dr-check">Check order</button>
+    <p class="feedback" id="dr-feedback"></p>
+    <p class="score-note" id="dr-score-note"></p>
+  </div>
+
+  <!-- ============ CHECKPOINTS ============ -->
+  <div class="section card" id="cp-section">
+    <h2>Checkpoints</h2>
+    <p class="desc">Drag the 4 checkpoints into time order.</p>
+    <ul class="tile-list" id="cp-list"></ul>
+    <button class="primary" id="cp-check">Check order</button>
+    <p class="feedback" id="cp-feedback"></p>
+    <p class="score-note" id="cp-score-note"></p>
+  </div>
+
+  <!-- ============ DAILY KPI TABLE ============ -->
+  <div class="section card" id="kpi-section">
+    <h2>Daily KPI Table</h2>
+    <p class="desc">Tap a number from the bank, then tap the Required or Excellent slot it belongs in.</p>
+    <div class="fill-header"><span></span><span>Required</span><span>Excellent</span></div>
+    <div id="kpi-table"></div>
+    <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
+    <div class="pool" id="kpi-pool"></div>
+    <button class="primary" id="kpi-check">Check answers</button>
+    <p class="feedback" id="kpi-feedback"></p>
+    <p class="score-note" id="kpi-score-note"></p>
+  </div>
+
+  <!-- ============ COMP BUCKETS ============ -->
+  <div class="section card" id="cb-section">
+    <h2>Comp Plan Buckets</h2>
+    <p class="desc">Tap an amount from the bank, then tap the slot it belongs in.</p>
+    <div id="cb-table"></div>
+    <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
+    <div class="pool" id="cb-pool"></div>
+    <button class="primary" id="cb-check">Check answers</button>
+    <p class="feedback" id="cb-feedback"></p>
+    <p class="score-note" id="cb-score-note"></p>
+  </div>
+
+  <!-- ============ POINTS TABLE ============ -->
+  <div class="section card" id="pt-section">
+    <h2>Points Table</h2>
+    <p class="desc">Tap a value from the bank, then tap the Points or Monthly Target slot it belongs in.</p>
+    <div class="fill-header"><span></span><span>Points</span><span>Monthly Target</span></div>
+    <div id="pt-table"></div>
+    <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
+    <div class="pool" id="pt-pool"></div>
+    <button class="primary" id="pt-check">Check answers</button>
+    <p class="feedback" id="pt-feedback"></p>
+    <p class="score-note" id="pt-score-note"></p>
+  </div>
+
+  <!-- ============ CALLBACK TIER SORT ============ -->
+  <div class="section card" id="ct-section">
+    <h2>Callback Tier Sort</h2>
+    <p class="desc">Tap a detail, then tap the tier it belongs to (GOLD / INTEL / TRIGGER / SOFT).</p>
+    <div class="pool column" id="ct-pool"></div>
+    <div id="ct-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="ct-check">Check answers</button>
+    <p class="feedback" id="ct-feedback"></p>
+    <p class="score-note" id="ct-score-note"></p>
+  </div>
+
+  <!-- ============ RAMP MILESTONES ============ -->
+  <div class="section card" id="rm-section">
+    <h2>Ramp Quota Milestones</h2>
+    <p class="desc">Tap a number, then tap the month it belongs to. Only 4 of these 8 numbers are real milestones.</p>
+    <div class="pool" id="rm-pool"></div>
+    <div id="rm-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="rm-check">Check answers</button>
+    <p class="feedback" id="rm-feedback"></p>
+    <p class="score-note" id="rm-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Ramping Quota, Commission & Expectations";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "If you're not hitting your call volume at all, what does that point to?", options: ["A time management problem","A data or list problem","A skill or product mastery problem","A confirmation or follow-up problem"], correct: 0, explain: "Not enough calls at all points to a time management problem." },
+    { prompt: "You're hitting 90 calls but not enough DM connects. What does that point to?", options: ["A time management problem","A data / list / value proposition / timing problem","A confirmation or follow-up problem","You're doing great — no issue"], correct: 1, explain: "Enough calls but not enough DM connects points to data, list, value proposition, or timing problems." },
+    { prompt: "You're getting 6+ DM connects but not enough meetings. What does that point to?", options: ["A time management problem","A data or list problem","A skill / product mastery / value proposition problem","A confirmation or follow-up problem"], correct: 2, explain: "6+ DM connects without enough meetings points to a skill, product mastery, or value proposition problem." },
+    { prompt: "You're getting 2+ meetings but a poor hold rate. What does that point to?", options: ["A time management problem","A data or list problem","A skill or product mastery problem","A confirmation or follow-up problem"], correct: 3, explain: "2+ meetings with a poor hold rate points to a confirmation or follow-up problem." },
+    { prompt: "Which quota threshold can trigger a PIP both during ramp AND once fully ramped?", options: ["Below 50% of quota in a single month","Below 70% on a rolling 3-month average","Below 90% of quota in a single month","Missing one day of dials"], correct: 0, explain: "Below 50% in a single month applies during ramp and once fully ramped." },
+    { prompt: "Which quota threshold only applies to fully ramped reps (not during ramp)?", options: ["Below 50% of quota in a single month","Below 70% on a rolling 3-month average","Below 30% of quota in a single month","Missing one callback"], correct: 1, explain: "Below 70% on a rolling 3-month average applies once fully ramped." },
+    { prompt: "Two PIPs within how many months can result in termination?", options: ["3 months","6 months","12 months","There's no such rule"], correct: 1, explain: "Two PIPs within a 6-month period may result in termination." },
+    { prompt: "What must happen before you work overtime?", options: ["Nothing — just log the hours after","Written approval from your manager in advance","Verbal approval is enough","You can decide on your own if it's under 2 hours"], correct: 1, explain: "Overtime must be written and approved by your manager AHEAD of working OT." },
+    { prompt: "Per the ramp training, what are the three things you can control during ramp?", options: ["Talent, luck, and timing","Attitude, effort, and coachability","Quota, comp, and territory","Product knowledge, tenure, and title"], correct: 1, explain: "The training names attitude, effort, and coachability as the three things you can control during ramp." },
+    { prompt: "Per the 30-min challenge, what's the minimum callback volume and hourly goal?", options: ["5 callbacks/day, goal 1/hour","10 callbacks/day, goal 2/hour","20 callbacks/day, goal 3/hour","There's no set minimum"], correct: 1, explain: "The 30-min challenge sets a minimum of 10 callbacks/day, with a goal of 2/hour." },
+    { prompt: "How many total points do you need in a month to hit the full $2,000 variable pay target (at 100% attainment)?", options: ["60 pts","70 pts","80 pts","100 pts"], correct: 2, explain: "80 points/month hits $2,000 in variable pay at 100% attainment." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ HOW TO RUN YOUR DAY (reorder) ============ */
+(function() {
+  const items = [
+    {id:"prep", focus:"Prep + callbacks", output:"Know exactly who you're attacking first"},
+    {id:"block1", focus:"Call Block #1", output:"~40–45 calls / ~3 DMs / 1 meeting"},
+    {id:"followup1", focus:"Immediate follow-up", output:"Only priority follow up: promised emails, texts, calendar work"},
+    {id:"clean1", focus:"Clean + build leads", output:"Clean/add 20–25 fresh accounts"},
+    {id:"lunch", focus:"Lunch / demos / admin", output:"Meetings + CRM"},
+    {id:"clean2", focus:"Clean + queue", output:"Finish remaining 10–15 accounts"},
+    {id:"block2", focus:"Call Block #2", output:"~40–50 calls / ~3 DMs / 1 meeting"},
+    {id:"followup2", focus:"Callbacks / follow-up", output:"Work today's warmest threads"},
+    {id:"wrap", focus:"Tomorrow setup + wrap", output:"All open loops closed; tomorrow's call list ready"}
+  ];
+  const correctOrder = items.map(i => i.id);
+  const list = document.getElementById("dr-list");
+  let dragEl = null;
+
+  function render(order) {
+    list.innerHTML = "";
+    order.forEach((id) => {
+      const item = items.find(i => i.id === id);
+      const li = document.createElement("li");
+      li.className = "tile";
+      li.draggable = true;
+      li.dataset.id = id;
+      li.innerHTML = '<span class="grip">&#8942;&#8942;</span><div class="tile-body"><p class="tile-title">' + item.focus + '</p><p class="tile-output">' + item.output + '</p></div><div class="tile-buttons"><button class="up">&#9650;</button><button class="down">&#9660;</button></div>';
+      li.addEventListener("dragstart", () => { dragEl = li; setTimeout(() => li.classList.add("dragging"), 0); });
+      li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl = null; });
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === li) return;
+        const rect = li.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        list.insertBefore(dragEl, before ? li : li.nextSibling);
+      });
+      li.querySelector(".up").addEventListener("click", () => { const prev = li.previousElementSibling; if (prev) list.insertBefore(li, prev); clearFb(); });
+      li.querySelector(".down").addEventListener("click", () => { const next = li.nextElementSibling; if (next) list.insertBefore(next, li); clearFb(); });
+      list.appendChild(li);
+    });
+  }
+  function clearFb() {
+    document.getElementById("dr-feedback").textContent = "";
+    document.getElementById("dr-score-note").textContent = "";
+    [...list.children].forEach(li => li.style.borderColor = "var(--line)");
+  }
+  document.getElementById("dr-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const current = [...list.children].map(li => li.dataset.id);
+    let correctCount = 0;
+    current.forEach((id, idx) => {
+      const li = list.children[idx];
+      if (id === correctOrder[idx]) { li.style.borderColor = "var(--success)"; correctCount++; }
+      else { li.style.borderColor = "var(--danger)"; }
+    });
+    document.getElementById("dr-feedback").textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
+    submitScore(MODULE_NAME, "How to Run Your Day", rep, correctCount, correctOrder.length).then(res => {
+      document.getElementById("dr-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  document.getElementById("dr-reset").addEventListener("click", () => { render(shuffle(correctOrder)); clearFb(); });
+  render(shuffle(correctOrder));
+})();
+
+/* ============ CHECKPOINTS (reorder) ============ */
+(function() {
+  const items = [
+    {id:"c1130", time:"By 11:30", target:"40 calls / 3 DMs / 1 meeting"},
+    {id:"c230", time:"By 2:30", target:"35 fresh accounts cleaned + queued"},
+    {id:"c430", time:"By 4:30", target:"90 calls / 6 DMs / ~2 meetings"},
+    {id:"c600", time:"By 6:00", target:"Follow-up closed / tomorrow fully ready"}
+  ];
+  const correctOrder = items.map(i => i.id);
+  const list = document.getElementById("cp-list");
+  let dragEl = null;
+
+  function render(order) {
+    list.innerHTML = "";
+    order.forEach((id) => {
+      const item = items.find(i => i.id === id);
+      const li = document.createElement("li");
+      li.className = "tile";
+      li.draggable = true;
+      li.dataset.id = id;
+      li.innerHTML = '<span class="grip">&#8942;&#8942;</span><div class="tile-body"><p class="tile-title">' + item.time + '</p><p class="tile-output">' + item.target + '</p></div><div class="tile-buttons"><button class="up">&#9650;</button><button class="down">&#9660;</button></div>';
+      li.addEventListener("dragstart", () => { dragEl = li; setTimeout(() => li.classList.add("dragging"), 0); });
+      li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl = null; });
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === li) return;
+        const rect = li.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        list.insertBefore(dragEl, before ? li : li.nextSibling);
+      });
+      li.querySelector(".up").addEventListener("click", () => { const prev = li.previousElementSibling; if (prev) list.insertBefore(li, prev); clearFb(); });
+      li.querySelector(".down").addEventListener("click", () => { const next = li.nextElementSibling; if (next) list.insertBefore(next, li); clearFb(); });
+      list.appendChild(li);
+    });
+  }
+  function clearFb() {
+    document.getElementById("cp-feedback").textContent = "";
+    document.getElementById("cp-score-note").textContent = "";
+    [...list.children].forEach(li => li.style.borderColor = "var(--line)");
+  }
+  document.getElementById("cp-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const current = [...list.children].map(li => li.dataset.id);
+    let correctCount = 0;
+    current.forEach((id, idx) => {
+      const li = list.children[idx];
+      if (id === correctOrder[idx]) { li.style.borderColor = "var(--success)"; correctCount++; }
+      else { li.style.borderColor = "var(--danger)"; }
+    });
+    document.getElementById("cp-feedback").textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
+    submitScore(MODULE_NAME, "Checkpoints", rep, correctCount, correctOrder.length).then(res => {
+      document.getElementById("cp-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  render(shuffle(correctOrder));
+})();
+
+/* ============ DAILY KPI TABLE (fill-in) ============ */
+(function() {
+  const rows = [
+    { label: "Unique Accounts / day", required: "35", excellent: "45", distractors: ["25", "55"] },
+    { label: "Dials / Calls", required: "90+", excellent: "120+", distractors: ["60+", "150+"] },
+    { label: "Call : DM Ratio", required: "15:1", excellent: "<12:1", distractors: ["20:1", "10:1"] },
+    { label: "Talk Time", required: "90 min", excellent: "120+ min", distractors: ["60 min", "150+ min"] },
+    { label: "Owner / DM Connects", required: "6", excellent: "10+", distractors: ["4", "8"] },
+    { label: "DM → Meeting Conversion", required: "33%", excellent: "40%+", distractors: ["25%", "50%"] },
+    { label: "Meetings Scheduled", required: "~2/day", excellent: "4/day", distractors: ["1/day", "3/day"] },
+    { label: "Hold Rate", required: "40%", excellent: "50%+", distractors: ["30%", "60%"] }
+  ];
+  let poolItems = [];
+  rows.forEach((r, i) => {
+    poolItems.push({ key: "r"+i+"-req", label: r.required, rowIndex: i, role: "required" });
+    poolItems.push({ key: "r"+i+"-exc", label: r.excellent, rowIndex: i, role: "excellent" });
+    r.distractors.forEach((d, j) => poolItems.push({ key: "r"+i+"-d"+j, label: d, rowIndex: -1, role: "distractor" }));
+  });
+  let poolOrder = shuffle(poolItems);
+  let placed = {};
+  rows.forEach((r, i) => { placed["r"+i+"-required"] = null; placed["r"+i+"-excellent"] = null; });
+  let selected = null;
+  const tableEl = document.getElementById("kpi-table");
+  const poolEl = document.getElementById("kpi-pool");
+  function isPlaced(key) { return Object.values(placed).includes(key); }
+  function labelFor(key) { const it = poolItems.find(p => p.key === key); return it ? it.label : ""; }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(item => {
+      if (isPlaced(item.key)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === item.key ? " selected" : "");
+      btn.textContent = item.label;
+      btn.addEventListener("click", () => { selected = (selected === item.key) ? null : item.key; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderTable() {
+    tableEl.innerHTML = "";
+    rows.forEach((r, i) => {
+      const reqKey = "r"+i+"-required", excKey = "r"+i+"-excellent";
+      const row = document.createElement("div");
+      row.className = "fill-row";
+      row.innerHTML = '<span style="font-size:13px;font-weight:600;">' + r.label + '</span>' +
+        '<span class="fill-slot" data-slot="' + reqKey + '">' + (placed[reqKey] ? labelFor(placed[reqKey]) : "—") + '</span>' +
+        '<span class="fill-slot" data-slot="' + excKey + '">' + (placed[excKey] ? labelFor(placed[excKey]) : "—") + '</span>';
+      row.querySelectorAll(".fill-slot").forEach(slotEl => {
+        slotEl.addEventListener("click", () => {
+          const slotId = slotEl.dataset.slot;
+          if (placed[slotId]) { selected = null; placed[slotId] = null; }
+          else if (selected) { placed[slotId] = selected; selected = null; }
+          renderPool(); renderTable();
+        });
+      });
+      tableEl.appendChild(row);
+    });
+  }
+  document.getElementById("kpi-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const total = rows.length * 2;
+    rows.forEach((r, i) => {
+      ["required", "excellent"].forEach(role => {
+        const slotId = "r"+i+"-"+role;
+        const slotEl = tableEl.querySelector('[data-slot="'+slotId+'"]');
+        const key = placed[slotId];
+        const item = key ? poolItems.find(p => p.key === key) : null;
+        if (item && item.rowIndex === i && item.role === role) { slotEl.style.borderColor = "var(--success)"; slotEl.style.color = "var(--success)"; correctCount++; }
+        else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
+      });
+    });
+    document.getElementById("kpi-feedback").textContent = correctCount + " of " + total + " correct.";
+    submitScore(MODULE_NAME, "Daily KPI Table", rep, correctCount, total).then(res => {
+      document.getElementById("kpi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderTable();
+})();
+
+/* ============ COMP BUCKETS (fill-in) ============ */
+(function() {
+  const rows = [
+    { label: "Effort / OKR Bucket", sub: "capped", correct: "$1,000", distractors: ["$500", "$1,500"] },
+    { label: "Achievement Bucket", sub: "uncapped", correct: "$2,000", distractors: ["$1,500", "$2,500"] },
+    { label: "Total OTE (baseline)", sub: "at 100% attainment", correct: "$3,000", distractors: ["$2,500", "$3,500"] }
+  ];
+  let poolItems = [];
+  rows.forEach((r, i) => {
+    poolItems.push({ key: "r"+i+"-c", label: r.correct, rowIndex: i });
+    r.distractors.forEach((d, j) => poolItems.push({ key: "r"+i+"-d"+j, label: d, rowIndex: -1 }));
+  });
+  let poolOrder = shuffle(poolItems);
+  let placed = {};
+  rows.forEach((r, i) => placed["r"+i] = null);
+  let selected = null;
+  const tableEl = document.getElementById("cb-table");
+  const poolEl = document.getElementById("cb-pool");
+  function isPlaced(key) { return Object.values(placed).includes(key); }
+  function labelFor(key) { const it = poolItems.find(p => p.key === key); return it ? it.label : ""; }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(item => {
+      if (isPlaced(item.key)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === item.key ? " selected" : "");
+      btn.textContent = item.label;
+      btn.addEventListener("click", () => { selected = (selected === item.key) ? null : item.key; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderTable() {
+    tableEl.innerHTML = "";
+    rows.forEach((r, i) => {
+      const slotId = "r"+i;
+      const row = document.createElement("div");
+      row.className = "fill-row single";
+      row.innerHTML = '<div><span style="font-size:13px;font-weight:600;">' + r.label + '</span><br><span style="font-size:11px;color:var(--ink-secondary);">' + r.sub + '</span></div>' +
+        '<span class="fill-slot" data-slot="' + slotId + '">' + (placed[slotId] ? labelFor(placed[slotId]) : "—") + '</span>';
+      row.querySelector(".fill-slot").addEventListener("click", () => {
+        if (placed[slotId]) { selected = null; placed[slotId] = null; }
+        else if (selected) { placed[slotId] = selected; selected = null; }
+        renderPool(); renderTable();
+      });
+      tableEl.appendChild(row);
+    });
+  }
+  document.getElementById("cb-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    rows.forEach((r, i) => {
+      const slotId = "r"+i;
+      const slotEl = tableEl.querySelector('[data-slot="'+slotId+'"]');
+      const key = placed[slotId];
+      const item = key ? poolItems.find(p => p.key === key) : null;
+      if (item && item.rowIndex === i) { slotEl.style.borderColor = "var(--success)"; slotEl.style.color = "var(--success)"; correctCount++; }
+      else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
+    });
+    document.getElementById("cb-feedback").textContent = correctCount + " of " + rows.length + " correct.";
+    submitScore(MODULE_NAME, "Comp Plan Buckets", rep, correctCount, rows.length).then(res => {
+      document.getElementById("cb-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderTable();
+})();
+
+/* ============ POINTS TABLE (fill-in) ============ */
+(function() {
+  const rows = [
+    { label: "Schedule", sub: "Meeting confirmed on calendar", points: "1 pt", target: "40 / month", pd: ["2 pts", "3 pts"], td: ["20 / month", "60 / month"] },
+    { label: "Hold", sub: "Prospect shows, meeting runs", points: "2 pts", target: "16 / month", pd: ["1 pt", "3 pts"], td: ["8 / month", "24 / month"] },
+    { label: "Closed Win", sub: "Restaurant signs with Seated", points: "3 pts", target: "6 / month", pd: ["1 pt", "2 pts"], td: ["4 / month", "10 / month"] }
+  ];
+  let poolItems = [];
+  rows.forEach((r, i) => {
+    poolItems.push({ key: "r"+i+"-points", label: r.points, rowIndex: i, role: "points" });
+    poolItems.push({ key: "r"+i+"-target", label: r.target, rowIndex: i, role: "target" });
+    r.pd.forEach((d, j) => poolItems.push({ key: "r"+i+"-pd"+j, label: d, rowIndex: -1, role: "distractor" }));
+    r.td.forEach((d, j) => poolItems.push({ key: "r"+i+"-td"+j, label: d, rowIndex: -1, role: "distractor" }));
+  });
+  let poolOrder = shuffle(poolItems);
+  let placed = {};
+  rows.forEach((r, i) => { placed["r"+i+"-points"] = null; placed["r"+i+"-target"] = null; });
+  let selected = null;
+  const tableEl = document.getElementById("pt-table");
+  const poolEl = document.getElementById("pt-pool");
+  function isPlaced(key) { return Object.values(placed).includes(key); }
+  function labelFor(key) { const it = poolItems.find(p => p.key === key); return it ? it.label : ""; }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(item => {
+      if (isPlaced(item.key)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === item.key ? " selected" : "");
+      btn.textContent = item.label;
+      btn.addEventListener("click", () => { selected = (selected === item.key) ? null : item.key; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderTable() {
+    tableEl.innerHTML = "";
+    rows.forEach((r, i) => {
+      const ptsKey = "r"+i+"-points", tgtKey = "r"+i+"-target";
+      const row = document.createElement("div");
+      row.className = "fill-row";
+      row.innerHTML = '<div><span style="font-size:13px;font-weight:600;">' + r.label + '</span><br><span style="font-size:11px;color:var(--ink-secondary);">' + r.sub + '</span></div>' +
+        '<span class="fill-slot" data-slot="' + ptsKey + '">' + (placed[ptsKey] ? labelFor(placed[ptsKey]) : "—") + '</span>' +
+        '<span class="fill-slot" data-slot="' + tgtKey + '">' + (placed[tgtKey] ? labelFor(placed[tgtKey]) : "—") + '</span>';
+      row.querySelectorAll(".fill-slot").forEach(slotEl => {
+        slotEl.addEventListener("click", () => {
+          const slotId = slotEl.dataset.slot;
+          if (placed[slotId]) { selected = null; placed[slotId] = null; }
+          else if (selected) { placed[slotId] = selected; selected = null; }
+          renderPool(); renderTable();
+        });
+      });
+      tableEl.appendChild(row);
+    });
+  }
+  document.getElementById("pt-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const total = rows.length * 2;
+    rows.forEach((r, i) => {
+      ["points", "target"].forEach(role => {
+        const slotId = "r"+i+"-"+role;
+        const slotEl = tableEl.querySelector('[data-slot="'+slotId+'"]');
+        const key = placed[slotId];
+        const item = key ? poolItems.find(p => p.key === key) : null;
+        if (item && item.rowIndex === i && item.role === role) { slotEl.style.borderColor = "var(--success)"; slotEl.style.color = "var(--success)"; correctCount++; }
+        else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
+      });
+    });
+    document.getElementById("pt-feedback").textContent = correctCount + " of " + total + " correct.";
+    submitScore(MODULE_NAME, "Points Table", rep, correctCount, total).then(res => {
+      document.getElementById("pt-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderTable();
+})();
+
+/* ============ CALLBACK TIER SORT ============ */
+(function() {
+  const pool = [
+    "Owner/GM by name — DM their schedule", "Renovation or re-brand underway",
+    "World Cup city, summer travel, local events", "\u201cWe're slammed\u201d \u2192 book for after the rush",
+    "Always log in Salesloft", "New location opening soon",
+    "Holiday or seasonal event hook", "\u201cCall me next month\u201d \u2192 push back hard"
+  ];
+  const tiers = ["GOLD", "INTEL", "TRIGGER", "SOFT"];
+  const answers = {
+    "Owner/GM by name — DM their schedule": "GOLD", "Always log in Salesloft": "GOLD",
+    "Renovation or re-brand underway": "INTEL", "New location opening soon": "INTEL",
+    "World Cup city, summer travel, local events": "TRIGGER", "Holiday or seasonal event hook": "TRIGGER",
+    "\u201cWe're slammed\u201d \u2192 book for after the rush": "SOFT", "\u201cCall me next month\u201d \u2192 push back hard": "SOFT"
+  };
+  let poolOrder = shuffle(pool);
+  let placed = {}; tiers.forEach(t => placed[t] = []);
+  let selected = null;
+  const poolEl = document.getElementById("ct-pool");
+  const slotsEl = document.getElementById("ct-slots");
+  function isPlaced(v) { return tiers.some(t => placed[t].includes(v)); }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (isPlaced(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.style.textAlign = "left";
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    tiers.forEach(tier => {
+      const box = document.createElement("div");
+      box.className = "sort-box";
+      box.dataset.tier = tier;
+      const items = placed[tier].map(v => '<div>' + v + '</div>').join("");
+      box.innerHTML = '<span style="font-size:14px;font-weight:700;">' + tier + '</span><div class="items">' + (items || '<div style="color:var(--ink-secondary);">—</div>') + '</div>';
+      box.addEventListener("click", () => {
+        if (selected && placed[tier].length < 2 && !isPlaced(selected)) { placed[tier].push(selected); selected = null; renderPool(); renderSlots(); }
+        else if (!selected && placed[tier].length > 0) { placed[tier].pop(); renderPool(); renderSlots(); }
+      });
+      slotsEl.appendChild(box);
+    });
+  }
+  document.getElementById("ct-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0, totalPlaced = 0;
+    tiers.forEach(tier => {
+      const box = slotsEl.querySelector('[data-tier="'+tier+'"]');
+      const divs = box.querySelectorAll(".items > div");
+      placed[tier].forEach((val, idx) => {
+        totalPlaced++;
+        const div = divs[idx];
+        if (answers[val] === tier) { div.style.background = "var(--success-bg)"; div.style.color = "var(--success)"; correctCount++; }
+        else { div.style.background = "var(--danger-bg)"; div.style.color = "var(--danger)"; }
+      });
+    });
+    document.getElementById("ct-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
+    submitScore(MODULE_NAME, "Callback Tier Sort", rep, correctCount, 8).then(res => {
+      document.getElementById("ct-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ RAMP MILESTONES ============ */
+(function() {
+  const pool = ["25%","30%","40%","50%","60%","75%","90%","100%"];
+  const months = ["October","November","December","January"];
+  const answers = {"October":"25%","November":"50%","December":"75%","January":"100%"};
+  let poolOrder = shuffle(pool);
+  let placed = {October:null, November:null, December:null, January:null};
+  let selected = null;
+  const poolEl = document.getElementById("rm-pool");
+  const slotsEl = document.getElementById("rm-slots");
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    months.forEach(month => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.dataset.month = month;
+      row.innerHTML = '<span class="slot-label" style="flex:1;">' + month + '</span><span class="slot-val">' + (placed[month] || "—") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[month]) { selected = null; placed[month] = null; }
+        else if (selected) { placed[month] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("rm-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    months.forEach(month => {
+      const row = slotsEl.querySelector('[data-month="'+month+'"] .slot-val');
+      if (placed[month] === answers[month]) { row.className = "slot-val correct"; correctCount++; }
+      else { row.className = "slot-val incorrect"; }
+    });
+    document.getElementById("rm-feedback").textContent = correctCount + " of 4 correct.";
+    submitScore(MODULE_NAME, "Ramp Quota Milestones", rep, correctCount, 4).then(res => {
+      document.getElementById("rm-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
