@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Results Dashboard — Seated M1 Training</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--gold-tint); font-size: 12px; text-transform: uppercase; letter-spacing: 0.02em; }
+  tr.rep-row { cursor: pointer; }
+  tr.rep-row:hover { background: var(--gold-tint); }
+  .pct { font-weight: bold; }
+  .pct.high { color: var(--success); }
+  .pct.mid { color: #B8860B; }
+  .pct.low { color: var(--danger); }
+  .detail-row { display: none; }
+  .detail-row.open { display: table-row; }
+  .detail-row td { background: #fff; padding: 0; }
+  .detail-inner { padding: 10px 10px 14px 24px; }
+  .detail-inner table { font-size: 12px; }
+  .detail-inner th { background: transparent; color: var(--ink-secondary); }
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .loading, .empty { font-size: 13px; color: var(--ink-secondary); padding: 20px 0; }
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:900px;">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Results Dashboard</h1>
+  <p class="subtitle">Per-rep summary across every quiz and widget. Click a row to see the breakdown by component.</p>
+
+  <div class="refresh-row">
+    <span id="summary-line" style="font-size:13px;color:var(--ink-secondary);"></span>
+    <button class="secondary" id="refresh-btn">Refresh</button>
+  </div>
+
+  <div id="content">
+    <p class="loading">Loading results...</p>
+  </div>
+</div>
+
+<script>
+const SCORE_ENDPOINT = "https://script.google.com/macros/s/AKfycbxFJJKa4QhN1sirX2UAEd7oI9m98R2bjX6k09BOwgAd9THjHz1B5R3j6gvtSC2zFXwG/exec";
+
+function pctClass(pct) {
+  if (pct >= 85) return "high";
+  if (pct >= 60) return "mid";
+  return "low";
+}
+
+function loadResults() {
+  const content = document.getElementById("content");
+  content.innerHTML = '<p class="loading">Loading results...</p>';
+
+  fetch(SCORE_ENDPOINT + "?data=true")
+    .then(res => res.json())
+    .then(data => renderResults(data.rows || []))
+    .catch(err => {
+      content.innerHTML = '<p class="empty">Could not load results. The endpoint may need CORS access, or check the Apps Script deployment. (' + err + ')</p>';
+    });
+}
+
+function renderResults(rows) {
+  const content = document.getElementById("content");
+  const summaryLine = document.getElementById("summary-line");
+
+  if (rows.length === 0) {
+    content.innerHTML = '<p class="empty">No scores recorded yet.</p>';
+    summaryLine.textContent = "";
+    return;
+  }
+
+  // Group by rep
+  const byRep = {};
+  rows.forEach(r => {
+    if (!byRep[r.rep]) byRep[r.rep] = [];
+    byRep[r.rep].push(r);
+  });
+
+  const repNames = Object.keys(byRep).sort();
+  summaryLine.textContent = repNames.length + " rep" + (repNames.length === 1 ? "" : "s") + " · " + rows.length + " submissions";
+
+  let html = '<table><thead><tr><th>Rep</th><th>Components completed</th><th>Overall</th></tr></thead><tbody>';
+
+  repNames.forEach((rep, idx) => {
+    const entries = byRep[rep];
+    let totalCorrect = 0, totalPossible = 0;
+    entries.forEach(e => { totalCorrect += Number(e.correct) || 0; totalPossible += Number(e.total) || 0; });
+    const overallPct = totalPossible > 0 ? Math.round((totalCorrect / totalPossible) * 100) : 0;
+
+    html += '<tr class="rep-row" data-idx="' + idx + '">' +
+      '<td>' + rep + '</td>' +
+      '<td>' + entries.length + '</td>' +
+      '<td class="pct ' + pctClass(overallPct) + '">' + overallPct + '%</td>' +
+      '</tr>';
+
+    html += '<tr class="detail-row" id="detail-' + idx + '"><td colspan="3"><div class="detail-inner">' +
+      '<table><thead><tr><th>Module</th><th>Component</th><th>Score</th><th>%</th><th>When</th></tr></thead><tbody>';
+    entries
+      .slice()
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .forEach(e => {
+        const p = parseInt(e.percent) || 0;
+        html += '<tr>' +
+          '<td>' + e.module + '</td>' +
+          '<td>' + e.component + '</td>' +
+          '<td>' + e.correct + '/' + e.total + '</td>' +
+          '<td class="pct ' + pctClass(p) + '">' + e.percent + '</td>' +
+          '<td>' + new Date(e.timestamp).toLocaleString() + '</td>' +
+          '</tr>';
+      });
+    html += '</tbody></table></div></td></tr>';
+  });
+
+  html += '</tbody></table>';
+  content.innerHTML = html;
+
+  document.querySelectorAll(".rep-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const idx = row.dataset.idx;
+      document.getElementById("detail-" + idx).classList.toggle("open");
+    });
+  });
+}
+
+document.getElementById("refresh-btn").addEventListener("click", loadResults);
+loadResults();
+</script>
+</body>
+</html>

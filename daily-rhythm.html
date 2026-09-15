@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>How to Run Your Day — Seated M1 Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All quizzes</a>
+  <h1>How to Run Your Day</h1>
+  <p class="subtitle">Drag the steps into the correct time order, earliest to latest.</p>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
+  </div>
+
+  <div class="card">
+    <div class="top-row">
+      <span>9 steps &mdash; drag to reorder</span>
+      <button class="secondary" id="reset-btn">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="list"></ul>
+    <button class="primary" id="check-btn">Check order</button>
+    <p class="feedback" id="feedback"></p>
+    <p class="score-note" id="score-note"></p>
+  </div>
+</div>
+
+<script src="score.js"></script>
+<script>
+const items = [
+  {id:"prep", focus:"Prep + callbacks", output:"Know exactly who you're attacking first"},
+  {id:"block1", focus:"Call Block #1", output:"~40\u201345 calls / ~3 DMs / 1 meeting"},
+  {id:"followup1", focus:"Immediate follow-up", output:"Only priority follow up: promised emails, texts, calendar work"},
+  {id:"clean1", focus:"Clean + build leads", output:"Clean/add 20\u201325 fresh accounts"},
+  {id:"lunch", focus:"Lunch / demos / admin", output:"Meetings + CRM"},
+  {id:"clean2", focus:"Clean + queue", output:"Finish remaining 10\u201315 accounts"},
+  {id:"block2", focus:"Call Block #2", output:"~40\u201350 calls / ~3 DMs / 1 meeting"},
+  {id:"followup2", focus:"Callbacks / follow-up", output:"Work today's warmest threads"},
+  {id:"wrap", focus:"Tomorrow setup + wrap", output:"All open loops closed; tomorrow's call list ready"}
+];
+const correctOrder = items.map(i => i.id);
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const list = document.getElementById("list");
+let dragEl = null;
+
+function render(order) {
+  list.innerHTML = "";
+  order.forEach((id) => {
+    const item = items.find(i => i.id === id);
+    const li = document.createElement("li");
+    li.className = "tile";
+    li.draggable = true;
+    li.dataset.id = id;
+    li.innerHTML =
+      '<span class="grip">&#8942;&#8942;</span>' +
+      '<div class="tile-body">' +
+        '<p class="tile-title">' + item.focus + '</p>' +
+        '<p class="tile-output">' + item.output + '</p>' +
+      '</div>' +
+      '<div class="tile-buttons">' +
+        '<button class="up" aria-label="Move up">&#9650;</button>' +
+        '<button class="down" aria-label="Move down">&#9660;</button>' +
+      '</div>';
+    li.addEventListener("dragstart", () => { dragEl = li; setTimeout(() => li.classList.add("dragging"), 0); });
+    li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl = null; });
+    li.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (!dragEl || dragEl === li) return;
+      const rect = li.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      list.insertBefore(dragEl, before ? li : li.nextSibling);
+    });
+    li.querySelector(".up").addEventListener("click", () => {
+      const prev = li.previousElementSibling;
+      if (prev) list.insertBefore(li, prev);
+      clearFeedback();
+    });
+    li.querySelector(".down").addEventListener("click", () => {
+      const next = li.nextElementSibling;
+      if (next) list.insertBefore(next, li);
+      clearFeedback();
+    });
+    list.appendChild(li);
+  });
+}
+
+function clearFeedback() {
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("feedback").className = "feedback";
+  document.getElementById("score-note").textContent = "";
+  [...list.children].forEach(li => { li.style.borderColor = "var(--line)"; });
+}
+
+document.getElementById("check-btn").addEventListener("click", () => {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  const repName = requireName(nameInput, nameError);
+  if (!repName) return;
+
+  const current = [...list.children].map(li => li.dataset.id);
+  let correctCount = 0;
+  current.forEach((id, idx) => {
+    const li = list.children[idx];
+    if (id === correctOrder[idx]) {
+      li.style.borderColor = "var(--success)";
+      correctCount++;
+    } else {
+      li.style.borderColor = "var(--danger)";
+    }
+  });
+  const fb = document.getElementById("feedback");
+  if (correctCount === correctOrder.length) {
+    fb.className = "feedback success";
+    fb.textContent = "All 9 steps in the right order.";
+  } else {
+    fb.className = "feedback danger";
+    fb.textContent = correctCount + " of " + correctOrder.length + " in the right spot. Green = correct, red = needs to move.";
+  }
+
+  submitScore("M1 AE/BDR Standalone Quizzes", "How to Run Your Day", repName, correctCount, correctOrder.length).then(res => {
+    document.getElementById("score-note").textContent = res.recorded
+      ? "Score recorded."
+      : "Score not recorded yet — ask your manager if tracking isn't set up.";
+  });
+});
+
+document.getElementById("reset-btn").addEventListener("click", () => { render(shuffle(correctOrder)); clearFeedback(); });
+
+render(shuffle(correctOrder));
+</script>
+</body>
+</html>

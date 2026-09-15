@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Post-Call Cadence — Seated M1 Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All quizzes</a>
+  <h1>Post-Call Cadence</h1>
+  <p class="subtitle">Tap a step, then tap where it belongs. Only 4 of these 6 are part of the real cadence.</p>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
+  </div>
+
+  <div class="card">
+    <div class="pool column" id="pool"></div>
+    <div id="slots"></div>
+    <button class="primary" id="check-btn">Check answers</button>
+    <p class="feedback" id="feedback"></p>
+    <p class="score-note" id="score-note"></p>
+  </div>
+</div>
+
+<script src="score.js"></script>
+<script>
+const pool = ["Send Google Meet invite","Send \u201cBooked\u201d email via Salesloft","Day-before SMS reminder","30-min-before SMS reminder","Send a contract","Call back the next day to reconfirm"];
+const slotLabels = ["Minute 0","Minute 2","Day before","30 min before"];
+const answers = {"Minute 0":"Send Google Meet invite","Minute 2":"Send \u201cBooked\u201d email via Salesloft","Day before":"Day-before SMS reminder","30 min before":"30-min-before SMS reminder"};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let poolOrder = shuffle(pool);
+let placed = {"Minute 0":null,"Minute 2":null,"Day before":null,"30 min before":null};
+let selected = null;
+
+const poolEl = document.getElementById("pool");
+const slotsEl = document.getElementById("slots");
+
+function renderPool() {
+  poolEl.innerHTML = "";
+  poolOrder.forEach(val => {
+    if (Object.values(placed).includes(val)) return;
+    const btn = document.createElement("button");
+    btn.className = "pool-tile" + (selected === val ? " selected" : "");
+    btn.textContent = val;
+    btn.addEventListener("click", () => {
+      selected = (selected === val) ? null : val;
+      renderPool();
+    });
+    poolEl.appendChild(btn);
+  });
+  if (poolEl.children.length === 0) {
+    const p = document.createElement("p");
+    p.style.cssText = "font-size:13px;color:var(--ink-secondary);margin:0;";
+    p.textContent = "All steps placed.";
+    poolEl.appendChild(p);
+  }
+}
+
+function renderSlots() {
+  slotsEl.innerHTML = "";
+  Object.keys(placed).forEach(label => {
+    const row = document.createElement("div");
+    row.className = "slot-row";
+    row.dataset.label = label;
+    row.innerHTML =
+      '<span class="slot-label">' + label + '</span>' +
+      '<span class="slot-val">' + (placed[label] || "\u2014") + '</span>';
+    row.addEventListener("click", () => {
+      if (placed[label]) {
+        selected = null;
+        placed[label] = null;
+      } else if (selected) {
+        placed[label] = selected;
+        selected = null;
+      }
+      renderPool();
+      renderSlots();
+    });
+    slotsEl.appendChild(row);
+  });
+}
+
+document.getElementById("check-btn").addEventListener("click", () => {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  const repName = requireName(nameInput, nameError);
+  if (!repName) return;
+
+  let correctCount = 0;
+  Object.keys(placed).forEach(label => {
+    const row = slotsEl.querySelector('[data-label="' + label + '"] .slot-val');
+    if (placed[label] === answers[label]) {
+      row.className = "slot-val correct";
+      correctCount++;
+    } else {
+      row.className = "slot-val incorrect";
+    }
+  });
+  const fb = document.getElementById("feedback");
+  if (correctCount === 4) {
+    fb.className = "feedback success";
+    fb.textContent = "All 4 steps correct, in order.";
+  } else {
+    fb.className = "feedback danger";
+    fb.textContent = correctCount + " of 4 correct so far.";
+  }
+
+  submitScore("M1 AE/BDR Standalone Quizzes", "Post-Call Cadence", repName, correctCount, 4).then(res => {
+    document.getElementById("score-note").textContent = res.recorded
+      ? "Score recorded."
+      : "Score not recorded yet — ask your manager if tracking isn't set up.";
+  });
+});
+
+renderPool();
+renderSlots();
+</script>
+</body>
+</html>
