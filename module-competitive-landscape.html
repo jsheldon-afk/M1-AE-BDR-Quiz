@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Competitive Landscape — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+  .sort-box { background: var(--gold-tint); border-radius: 8px; padding: 10px 14px; cursor: pointer; margin-bottom: 8px; }
+  .sort-box .items div { font-size: 13px; padding: 4px 8px; margin-top: 4px; border-radius: 6px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Competitive Landscape</h1>
+  <p class="subtitle">The restaurant tech stack, key competitors in each category, and how Seated positions against them.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/presentation/d/1cijRdN200v1bHMJw81nKByVRn-YPiE6NUVWeTZKG5UM/edit" target="_blank" rel="noopener">View slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">The tech stack categories, key competitors, and how Seated fits alongside each.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ OBJECTION HANDLING MATCH ============ -->
+  <div class="section card" id="oh-section">
+    <h2>Objection Handling Match</h2>
+    <p class="desc">Tap a positioning statement, then tap the business function it responds to.</p>
+    <div class="pool column" id="oh-pool"></div>
+    <div id="oh-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="oh-check">Check answers</button>
+    <p class="feedback" id="oh-feedback"></p>
+    <p class="score-note" id="oh-score-note"></p>
+  </div>
+
+  <!-- ============ BLACKBIRD VS SEATED ============ -->
+  <div class="section card" id="bv-section">
+    <h2>Blackbird vs. Seated</h2>
+    <p class="desc">Tap a fact, then tap which company it describes.</p>
+    <div class="pool column" id="bv-pool"></div>
+    <div id="bv-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="bv-check">Check answers</button>
+    <p class="feedback" id="bv-feedback"></p>
+    <p class="score-note" id="bv-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Competitive Landscape";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "What is Seated's core positioning statement relative to a restaurant's existing tech stack?", options: ["Seated is the only tool a restaurant needs going forward", "Seated complements, rather than competes with, your existing tech stack", "Seated replaces reservation platforms entirely", "Seated is a direct competitor to POS systems"], correct: 1, explain: "The training is explicit: Seated is additive, not exclusive -- helping restaurants maximize reach without forcing a choice." },
+    { prompt: "Toast, Square for Restaurants, Chowbus, and Otter all belong to which business function?", options: ["Point of Sale (POS)", "Restaurant Reservation (ERB)", "Loyalty & Rewards", "Third-Party Delivery"], correct: 0, explain: "These are all POS platforms -- powering payments, order/menu management, reconciliation, and guest data." },
+    { prompt: "Which reservation platform is a Visa partner?", options: ["SevenRooms", "Resy", "OpenTable", "Dorsia"], correct: 2, explain: "OpenTable is noted as a Visa partner in the competitive set." },
+    { prompt: "Which reservation platform is owned by DoorDash?", options: ["OpenTable", "SevenRooms", "Resy", "Dorsia"], correct: 1, explain: "SevenRooms is owned by DoorDash." },
+    { prompt: "Which reservation platform is owned by American Express?", options: ["OpenTable", "SevenRooms", "Resy", "Dorsia"], correct: 2, explain: "Resy is owned by AMEX." },
+    { prompt: "What kind of platform is Dorsia?", options: ["A free, open-access reservation app", "An exclusive, members-only dining platform with invite-based or paid access", "A POS system for fine dining", "A delivery marketplace"], correct: 1, explain: "Dorsia provides premium demand and controlled guest access through paid memberships or invite-based access." },
+    { prompt: "How does Seated complement reservation platforms like OpenTable?", options: ["By replacing them entirely", "Reservation platforms capture existing demand; Seated creates incremental demand using rewards to fill empty tables", "By charging restaurants a lower commission", "By managing the restaurant's waitlist"], correct: 1, explain: "Reservation platforms help capture and manage EXISTING demand. Seated creates NEW, incremental demand." },
+    { prompt: "What technology does Blackbird use for guest check-in?", options: ["QR code scanning only", "Blockchain-based payments plus NFC (tap phone on a branded puck)", "Fingerprint scanning", "A physical loyalty card"], correct: 1, explain: "Blackbird uses contactless check-in via NFC tap and blockchain-based $FLY rewards." },
+    { prompt: "What is inKind primarily?", options: ["A POS system", "A restaurant financing (merchant cash advance) and loyalty company", "A third-party delivery marketplace", "An advertising platform"], correct: 1, explain: "inKind provides upfront capital in exchange for future dining credit -- a financing and loyalty model." },
+    { prompt: "In the inKind model, what do diners get when they purchase inKind Cash?", options: ["A cash refund", "A bonus on their balance -- e.g. $125 in dining credit for a $100 purchase", "A free meal with no purchase", "Airline miles"], correct: 1, explain: "Diners get more in dining credit than they paid, which is the incentive to buy in." },
+    { prompt: "What's inKind's typical repayment timeframe for restaurants?", options: ["3-6 months", "16-24 months", "5+ years", "There's no repayment -- it's a grant"], correct: 1, explain: "Restaurants repay via guest-redeemed dining credits over an average 16-24 month period." },
+    { prompt: "How does Seated differ from Google Ads, Meta, and TikTok?", options: ["Seated is cheaper per click", "Seated drives measurable guest spend tied to a completed transaction, not just impressions, clicks, or views", "Seated only works for social media campaigns", "Seated requires no restaurant setup"], correct: 1, explain: "Every dollar attributed to Seated is tied directly to a completed dining transaction -- not just ad engagement." },
+    { prompt: "Roughly what commission does DoorDash typically charge per order?", options: ["5%-10%", "15%-30%, plus optional advertising fees", "50%+", "A flat monthly fee only"], correct: 1, explain: "DoorDash typically charges 15%-30% commission per order." },
+    { prompt: "About what market share does DoorDash hold in third-party delivery?", options: ["20-25%", "40-45%", "60-65%", "90%+"], correct: 2, explain: "DoorDash holds roughly 60-65% of the third-party delivery market." },
+    { prompt: "What's Seated's positioning against event management platforms like Tripleseat?", options: ["Seated replaces the need for event booking software", "Seated complements rather than competes with high-margin event business", "Seated only works for private events", "Seated charges a fee on top of Tripleseat"], correct: 1, explain: "Seated stays out of the high-margin private event and catering business -- it's complementary, not competitive." },
+    { prompt: "Roughly how much does a typical restaurant spend monthly on technology alone?", options: ["$500-$1,000/month", "$2,500-$3,500/month", "$10,000+/month", "Under $200/month"], correct: 1, explain: "A typical restaurant invests roughly $2,500-$3,500/month ($30,000-$42,000 annually) in technology alone." },
+    { prompt: "When advertising, payment processing, and delivery commissions are included, what can total annual technology and guest acquisition costs exceed?", options: ["$10,000", "$50,000", "$100,000+", "$1,000,000+"], correct: 2, explain: "Total annual costs across the full tech and acquisition stack can easily exceed $100,000+." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ OBJECTION HANDLING MATCH (1:1, no distractors) ============ */
+(function() {
+  const categories = ["Point of Sale (POS)", "Restaurant Reservation (ERB)", "Loyalty & Rewards", "Guest Engagement", "Third-Party Delivery", "Restaurant Event Management"];
+  const pool = [
+    "Seated sits above the POS as a demand layer, driving incremental covers without changing operations",
+    "Seated is incremental demand, not replacement demand, filling empty seats",
+    "Seated is designed to complement, not compete with, their existing channels and partners",
+    "Seated is performance-driven, tying spend directly to revenue instead of impressions or clicks",
+    "Seated focuses on in-house dining demand, capturing incremental revenue",
+    "Seated complements rather than competes with high-margin event business"
+  ];
+  const answers = {
+    "Seated sits above the POS as a demand layer, driving incremental covers without changing operations": "Point of Sale (POS)",
+    "Seated is incremental demand, not replacement demand, filling empty seats": "Restaurant Reservation (ERB)",
+    "Seated is designed to complement, not compete with, their existing channels and partners": "Loyalty & Rewards",
+    "Seated is performance-driven, tying spend directly to revenue instead of impressions or clicks": "Guest Engagement",
+    "Seated focuses on in-house dining demand, capturing incremental revenue": "Third-Party Delivery",
+    "Seated complements rather than competes with high-margin event business": "Restaurant Event Management"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  categories.forEach(c => placed[c] = null);
+  let selected = null;
+  const poolEl = document.getElementById("oh-pool");
+  const slotsEl = document.getElementById("oh-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    categories.forEach(cat => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.style.alignItems = "flex-start";
+      row.dataset.cat = cat;
+      row.innerHTML = '<span class="slot-label" style="min-width:150px;font-weight:600;">' + cat + '</span><span class="slot-val" style="flex:1;">' + (placed[cat] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[cat]) { selected = null; placed[cat] = null; }
+        else if (selected) { placed[cat] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("oh-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    categories.forEach(cat => {
+      const row = slotsEl.querySelector('[data-cat="'+cat+'"] .slot-val');
+      if (answers[placed[cat]] === cat) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("oh-feedback").textContent = correctCount + " of " + categories.length + " correct.";
+    submitScore(MODULE_NAME, "Objection Handling Match", rep, correctCount, categories.length).then(res => {
+      document.getElementById("oh-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ BLACKBIRD VS SEATED (sort, 2 buckets) ============ */
+(function() {
+  const pool = [
+    "Loyalty and payments platform",
+    "Guest acquisition and revenue growth platform",
+    "Available in ~7 markets (smaller markets)",
+    "Available in 21 markets (major GMV markets)",
+    "Rewards earned as $FLY, redeemed only within the network",
+    "Rewards earned in dollars, redeemed across multiple brands and merchants",
+    "Guest activity tracked via tap-in, GPS check-in, and payment activity",
+    "Transactions verified automatically via MID mapping, no operational lift"
+  ];
+  const companies = ["Blackbird", "Seated"];
+  const answers = {
+    "Loyalty and payments platform": "Blackbird",
+    "Available in ~7 markets (smaller markets)": "Blackbird",
+    "Rewards earned as $FLY, redeemed only within the network": "Blackbird",
+    "Guest activity tracked via tap-in, GPS check-in, and payment activity": "Blackbird",
+    "Guest acquisition and revenue growth platform": "Seated",
+    "Available in 21 markets (major GMV markets)": "Seated",
+    "Rewards earned in dollars, redeemed across multiple brands and merchants": "Seated",
+    "Transactions verified automatically via MID mapping, no operational lift": "Seated"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {}; companies.forEach(c => placed[c] = []);
+  let selected = null;
+  const poolEl = document.getElementById("bv-pool");
+  const slotsEl = document.getElementById("bv-slots");
+
+  function isPlaced(v) { return companies.some(c => placed[c].includes(v)); }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (isPlaced(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    companies.forEach(company => {
+      const box = document.createElement("div");
+      box.className = "sort-box";
+      box.dataset.company = company;
+      const items = placed[company].map(v => '<div>' + v + '</div>').join("");
+      box.innerHTML = '<span style="font-size:14px;font-weight:700;">' + company + '</span><div class="items">' + (items || '<div style="color:var(--ink-secondary);">\u2014</div>') + '</div>';
+      box.addEventListener("click", () => {
+        if (selected && placed[company].length < 4 && !isPlaced(selected)) { placed[company].push(selected); selected = null; renderPool(); renderSlots(); }
+        else if (!selected && placed[company].length > 0) { placed[company].pop(); renderPool(); renderSlots(); }
+      });
+      slotsEl.appendChild(box);
+    });
+  }
+  document.getElementById("bv-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0, totalPlaced = 0;
+    companies.forEach(company => {
+      const box = slotsEl.querySelector('[data-company="'+company+'"]');
+      const divs = box.querySelectorAll(".items > div");
+      placed[company].forEach((val, idx) => {
+        totalPlaced++;
+        const div = divs[idx];
+        if (answers[val] === company) { div.style.background = "var(--success-bg)"; div.style.color = "var(--success)"; correctCount++; }
+        else { div.style.background = "var(--danger-bg)"; div.style.color = "var(--danger)"; }
+      });
+    });
+    document.getElementById("bv-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
+    submitScore(MODULE_NAME, "Blackbird vs Seated", rep, correctCount, 8).then(res => {
+      document.getElementById("bv-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
