@@ -224,7 +224,10 @@ button.secondary {
 }
 .index-list li { margin-bottom: 10px; }
 .index-list a {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -233,9 +236,21 @@ button.secondary {
   font-weight: bold;
 }
 .index-list a:hover { background: var(--gold-tint); }
+.index-list a > div { flex: 1; min-width: 0; }
 .index-list p {
   margin: 4px 0 0;
   font-size: 13px;
   font-weight: normal;
   color: var(--ink-secondary);
+}
+.time-badge {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--ink);
+  background: var(--gold-tint);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
 }

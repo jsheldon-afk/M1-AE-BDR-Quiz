@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Objection Handling — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Objection Handling</h1>
+  <p class="subtitle">Real objections straight from the Cold Call Hub, and the correct response to each.</p>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">11 real objections from the Cold Call Hub.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Objection Handling";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const rawQuestions = [
+    { prompt: "A gatekeeper won't give you a name, number, or better time to call back. What's the correct response?", correct: "Acknowledge the situation, explain you're trying to reach someone this week about sending guests over, and push for a specific time they'll be in", wrong: ["Ask if you can just leave a general voicemail with the front desk instead", "Explain the full rewards percentage over the phone so they can pass it along", "Offer to email the gatekeeper directly and skip getting a name entirely"], explain: "Acknowledge, explain the urgency, and push for a specific callback window rather than accepting a flat no." },
+    { prompt: "A prospect asks \"What's Seated?\" What's the correct response?", correct: "Give the 30-second version (major card partners, no upfront cost, paid on revenue driven), then ask for 20 minutes since it's easier to show than explain", wrong: ["Walk through the full rewards percentage and payout structure so they understand it up front", "Compare Seated directly to OpenTable and Resy so they see how it's different", "Ask what reservation platforms they currently use before explaining anything"], explain: "The script frames it as easier to show than explain, using recognizable partner names, and ends with the ask for 20 minutes." },
+    { prompt: "A prospect says \"We don't do partnerships.\" What's the correct response?", correct: "Reframe it as a concierge-style traffic driver rather than a typical partnership, then ask if they want new diners and could handle more covers", wrong: ["Ask which specific partnership they're thinking of so you can address it directly", "Offer to send more information by email so they can review it on their own time", "Explain that Seated works differently than a typical vendor relationship and offer to follow up next quarter"], explain: "Reframe away from \"partnership\" language, then ask a qualifying question about new diners and covers." },
+    { prompt: "A prospect says \"Not interested.\" What's the correct response?", correct: "Mirror it back (\"Not interested?\") and ask if it's a cost thing or an ops thing, then address whichever it is", wrong: ["Ask them to explain what would need to change for them to be interested", "Offer a lower rate on the spot to see if that changes their mind", "Let them know you'll follow up again in a few months once things may have changed"], explain: "Mirror the objection back as a question to find out if it's cost or operations, then address whichever it is." },
+    { prompt: "A prospect says \"Send me an email.\" What's the correct response?", correct: "Ask a quick qualifying question first, then offer a specific meeting slot (e.g. tomorrow at 2 PM)", wrong: ["Send the email right away and mention you'll follow up by phone next week", "Ask for a better email address to make sure it reaches the right person", "Offer to send the email along with a link to schedule a call whenever works for them"], explain: "Don't just agree and send an email blind -- confirm fit first, then pivot into a specific meeting time." },
+    { prompt: "A prospect asks \"How did you get my number?\" What's the correct response?", correct: "Give a light, brief answer (an intern found them online), then pivot straight into a business question", wrong: ["Explain that restaurant contact information is publicly available online", "Ask if they'd prefer you only reach out by email going forward", "Let them know the number came from a lead list purchased for outreach"], explain: "Keep it light and vague, then immediately pivot to a business question rather than dwelling on the sourcing question." },
+    { prompt: "A prospect asks \"What does it cost?\" What's the correct response?", correct: "Say cost depends on how much they want to fill empty seats, and that it makes more sense to show them, then ask for the meeting", wrong: ["Give a typical percentage range so they have a ballpark before deciding", "Explain that pricing varies by market and offer to follow up with specifics", "Compare the cost to what they currently pay a reservation platform"], explain: "Never quote percentages or explain occupancy pricing on the phone. Frame cost as dependent on them and get the meeting." },
+    { prompt: "A prospect says \"Too expensive.\" What's the correct response?", correct: "Empathize about tight margins and fixed costs, frame Seated as no-upfront-cost incremental profit, and ask for a specific time", wrong: ["Offer a short-term discount to make the decision easier", "Ask what budget they'd have available for something like this", "Suggest starting with a smaller trial period at a reduced rate"], explain: "Empathize with tight margins, tie Seated to relieving fixed costs, and ask for a specific time to talk." },
+    { prompt: "A prospect says \"We've used Seated before.\" What's the correct response?", correct: "Acknowledge it, highlight what's changed (new partnerships, more volume), and ask for a specific time to reconnect", wrong: ["Ask what their experience was like so you can address any concerns first", "Suggest checking with their previous point of contact before moving forward", "Offer to follow up once you have more details on what's changed"], explain: "Acknowledge the history, highlight what's changed, and ask for a specific time to reconnect." },
+    { prompt: "A prospect says \"We're too busy.\" What's the correct response?", correct: "Reframe being busy as a reason to have this in place before things slow down, then ask about their calendar", wrong: ["Offer to check back in during their slower season instead", "Ask how much time they'd realistically have available each week", "Suggest a shorter 10-minute version of the meeting to fit their schedule"], explain: "Reframe busy as a reason to get something in place now, and ask about their calendar rather than giving up." },
+    { prompt: "A prospect asks \"What is BILT?\" What's the correct response?", correct: "Explain it's a rewards program built into leases at nearby premium apartments, where residents redeem points at local restaurants, then ask for 20 minutes", wrong: ["Compare it to a typical credit card rewards program they may already know", "Ask if they're familiar with similar programs before explaining further", "Offer to send a one-pager instead of explaining it over the phone"], explain: "Explain BILT simply as a rent-based rewards program, then ask directly for the 20-minute meeting." }
+  ];
+
+  // Build each question with shuffled option order so the correct answer isn't always in the same spot
+  const questions = rawQuestions.map(q => {
+    const options = shuffle([q.correct, ...q.wrong]);
+    return { prompt: q.prompt, options: options, correct: options.indexOf(q.correct), explain: q.explain };
+  });
+
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+</script>
+</body>
+</html>
