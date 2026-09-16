@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>API Partners — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>API Partners</h1>
+  <p class="subtitle">Seated's dining rewards network: the card issuers, banks, and rewards platforms that reach millions of diners.</p>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">Every partner in the network, and what makes each one distinct.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ PARTNER MATCH ============ -->
+  <div class="section card" id="pm-section">
+    <h2>Partner Match</h2>
+    <p class="desc">Tap a fact, then tap the partner it describes.</p>
+    <div class="pool column" id="pm-pool"></div>
+    <div id="pm-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="pm-check">Check answers</button>
+    <p class="feedback" id="pm-feedback"></p>
+    <p class="score-note" id="pm-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "API Partners";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "What's Seated's overall positioning for its partner network?", options: ["The cheapest reservation platform on the market", "The highest quality dining rewards network in the country, connecting restaurants to millions of high-spending guests", "A direct competitor to OpenTable and Resy", "A delivery marketplace for restaurants"], correct: 1, explain: "Seated positions itself as one seamless product connecting restaurants to millions of guests across top dining and card platforms." },
+    { prompt: "About how many accounts does Mastercard have?", options: ["20 million", "50 million", "80+ million", "200+ million"], correct: 2, explain: "Mastercard has over 80M accounts, making it one of the largest card networks in the world." },
+    { prompt: "Where does Citi rank among U.S. card issuers?", options: ["1st largest", "3rd largest", "10th largest", "It's not a major issuer"], correct: 1, explain: "Citi is the 3rd largest card issuer in the United States." },
+    { prompt: "What did Rakuten recently launch that strengthens its partnership with Seated?", options: ["A restaurant reservation platform", "A credit card offering the highest dining rewards of any card", "A food delivery app", "A loyalty program for gas stations"], correct: 1, explain: "Rakuten launched a credit card with the highest dining rewards of any card on the market." },
+    { prompt: "Who does the Rakuten partnership primarily target?", options: ["Corporate event planners", "Local residents who want to support local businesses", "Tourists visiting from out of town", "College students only"], correct: 1, explain: "Rakuten's partnership targets local residents looking to support businesses near them." },
+    { prompt: "What makes Bilt's rewards program unique?", options: ["It's the first U.S. program to offer credit card points on rent payments", "It only rewards grocery purchases", "It's exclusively for luxury car purchases", "It only works internationally"], correct: 0, explain: "Bilt is the first U.S. program offering credit card points specifically on rent payments." },
+    { prompt: "About how many rental buildings does Bilt power nationally?", options: ["1 in 20", "1 in 10", "1 in 4", "Nearly all of them"], correct: 2, explain: "Bilt powers roughly 1 in every 4 rental buildings across the country." },
+    { prompt: "Who does Bilt's partnership primarily target?", options: ["Retirees on fixed incomes", "Young, affluent renters and professionals", "Large families with children", "College students"], correct: 1, explain: "Bilt reaches local, young, affluent renters -- one of Seated's largest partnerships." },
+    { prompt: "What does Upside primarily incentivize everyday spend on?", options: ["Luxury travel", "Gas and groceries at local businesses", "Streaming subscriptions", "Home renovations"], correct: 1, explain: "Upside rewards everyday spend like gas and groceries at local businesses." },
+    { prompt: "What role does Seated play for Upside?", options: ["Seated has no relationship with Upside", "Seated powers Upside's dining portal", "Upside powers Seated's entire platform", "Seated only advertises on Upside"], correct: 1, explain: "Seated powers the dining portal within the Upside app, primarily reaching a younger audience." },
+    { prompt: "Which banks does Revenew's exclusive Dining Offers experience cover?", options: ["Citizens (Northeastern focus) and Barclays", "Chase and Wells Fargo", "Bank of America only", "A small regional credit union"], correct: 0, explain: "Revenew controls the Dining Offers experience for Citizens and Barclays." },
+    { prompt: "About how many issued cards/users does Revenew reach nationally?", options: ["2 million", "5 million", "20+ million", "100+ million"], correct: 2, explain: "Revenew has wide national reach with over 20 million issued cards/users." },
+    { prompt: "What kind of partnership is Dinova, and which companies does it work with?", options: ["A consumer grocery rewards app", "A corporate dining platform working with companies like Google, Nike, and Salesforce", "A gas station loyalty program", "A hotel rewards platform"], correct: 1, explain: "Dinova is Seated's corporate partnership, used by employees at large companies for business dining." }, 
+    { prompt: "Why are Dinova transactions especially valuable to restaurants?", options: ["They only happen on weekends", "They're primarily weekday transactions with higher spend tickets", "They're always free to the restaurant", "They only apply to breakfast service"], correct: 1, explain: "Dinova transactions skew weekday and higher-spend -- corporate luncheons, dinners, and events." },
+    { prompt: "Which banks does Cardlytics' exclusive Dining Offers experience cover?", options: ["Truist and US Bank", "Citizens and Barclays", "Chase only", "A single credit union"], correct: 0, explain: "Cardlytics controls the Dining Offers experience for Truist and US Bank." },
+    { prompt: "About how many consumers and small businesses does Fluz reach?", options: ["50k consumers, 500 small businesses", "500k consumers, ~7,500 small businesses", "5 million consumers, 50,000 small businesses", "Fluz doesn't work with small businesses"], correct: 1, explain: "Fluz reaches around 500k consumers and roughly 7,500 small businesses." },
+    { prompt: "What kind of user base does Ascenda's rewards platform skew toward?", options: ["Budget-conscious students", "High-net-worth business owners spending $2M+/year on their issued card", "Retirees with fixed monthly budgets", "Only international travelers"], correct: 1, explain: "Ascenda is geared toward a higher-income, affluent diner -- high-net-worth business owners." },
+    { prompt: "About how many employees does Perks at Work reach with corporate perks?", options: ["1 million", "5 million", "12+ million", "50+ million"], correct: 2, explain: "Perks at Work offers corporate perks to over 12 million employees at top corporations." },
+    { prompt: "What makes Olive unique among Seated's partners?", options: ["It's a donation-based program where users can give earned rewards to a charity of their choosing", "It only operates in one city", "It requires a paid subscription", "It's exclusively for delivery orders"], correct: 0, explain: "Olive lets users donate their earned rewards to a charity of their choosing." },
+    { prompt: "Which demographic does Fetch Rewards primarily target?", options: ["Millennials and Gen X", "Gen Z only", "Retirees", "Corporate executives only"], correct: 0, explain: "Fetch Rewards is the most popular consumer rewards app for groceries/retail, targeting Millennials and Gen X." },
+    { prompt: "What do Franki users do to earn extra points?", options: ["Nothing extra -- points are automatic", "Activate offers and share videos of the restaurant", "Refer a friend who also signs up", "Only dine during off-peak hours"], correct: 1, explain: "Franki users activate offers and share videos to earn extra points -- built for Gen Z discovery and social sharing." },
+    { prompt: "About how many consumer and small-business clients does Bank of America serve?", options: ["10 million", "30 million", "~69 million", "150+ million"], correct: 2, explain: "Bank of America serves roughly 69 million consumer and small-business clients." },
+    { prompt: "What must Bank of America cardholders do to be eligible for Seated dining rewards?", options: ["Nothing -- all cardholders are automatically eligible", "Actively engage with the dining section of the BofA app", "Have a business account, not personal", "Live within a specific zip code"], correct: 1, explain: "Users must be actively engaged in the dining section of the app to be eligible for rewards." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ PARTNER MATCH (1:1) ============ */
+(function() {
+  const partners = ["Bilt", "Dinova", "Rakuten", "Revenew", "Cardlytics", "Fetch Rewards", "Franki", "Bank of America"];
+  const pool = [
+    "First U.S. program with credit card points on rent, powering 1 in 4 rental buildings",
+    "Corporate dining platform used by companies like Google, Nike, and Salesforce",
+    "Recently launched a credit card with the highest dining rewards of any card",
+    "Controls Dining Offers for Citizens and Barclays, reaching 20M+ cards",
+    "Controls Dining Offers for Truist and US Bank",
+    "The most popular consumer rewards app, targeting Millennials and Gen X",
+    "Fast-growing Gen Z discovery app where users share videos to earn points",
+    "Serves ~69 million consumer and small-business clients"
+  ];
+  const answers = {
+    "First U.S. program with credit card points on rent, powering 1 in 4 rental buildings": "Bilt",
+    "Corporate dining platform used by companies like Google, Nike, and Salesforce": "Dinova",
+    "Recently launched a credit card with the highest dining rewards of any card": "Rakuten",
+    "Controls Dining Offers for Citizens and Barclays, reaching 20M+ cards": "Revenew",
+    "Controls Dining Offers for Truist and US Bank": "Cardlytics",
+    "The most popular consumer rewards app, targeting Millennials and Gen X": "Fetch Rewards",
+    "Fast-growing Gen Z discovery app where users share videos to earn points": "Franki",
+    "Serves ~69 million consumer and small-business clients": "Bank of America"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  partners.forEach(p => placed[p] = null);
+  let selected = null;
+  const poolEl = document.getElementById("pm-pool");
+  const slotsEl = document.getElementById("pm-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    partners.forEach(partner => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.style.alignItems = "flex-start";
+      row.dataset.partner = partner;
+      row.innerHTML = '<span class="slot-label" style="min-width:120px;font-weight:700;">' + partner + '</span><span class="slot-val" style="flex:1;">' + (placed[partner] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[partner]) { selected = null; placed[partner] = null; }
+        else if (selected) { placed[partner] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("pm-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    partners.forEach(partner => {
+      const row = slotsEl.querySelector('[data-partner="'+partner+'"] .slot-val');
+      if (answers[placed[partner]] === partner) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("pm-feedback").textContent = correctCount + " of " + partners.length + " correct.";
+    submitScore(MODULE_NAME, "Partner Match", rep, correctCount, partners.length).then(res => {
+      document.getElementById("pm-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
