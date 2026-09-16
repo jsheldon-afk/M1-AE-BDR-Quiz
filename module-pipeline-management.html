@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pipeline Management — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 4px; }
+  .quiz-q p.hint { font-size: 12px; color: var(--ink-secondary); margin: 0 0 8px; font-style: italic; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-opt.missed { border-color: var(--success); background: var(--success-bg); color: var(--success); border-style: dashed; }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .checkbox-mark { display: inline-block; width: 16px; margin-right: 6px; font-weight: bold; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Pipeline Management</h1>
+  <p class="subtitle">Stages, hygiene, the missed meeting protocol, and the Monday weekly reset.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/presentation/d/1G6N2pz2skAdnSMf5BfZ_aPu5NVQ1kwmAGOWlKiDeQEE/edit" target="_blank" rel="noopener">View slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ MULTIPLE CHOICE QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">Stages, thresholds, hygiene rules, and the weekly reset.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ CHOOSE ALL THAT APPLY ============ -->
+  <div class="section card" id="multi-section">
+    <h2>Choose All That Apply</h2>
+    <p class="desc">Some questions have more than one correct answer — select every one that applies.</p>
+    <div id="multi-questions"></div>
+    <button class="primary" id="multi-submit">Submit answers</button>
+    <p class="feedback" id="multi-feedback"></p>
+    <p class="score-note" id="multi-score-note"></p>
+  </div>
+
+  <!-- ============ MISSED MEETING PROTOCOL (reorder) ============ -->
+  <div class="section card" id="mmp-section">
+    <h2>Missed Meeting Protocol</h2>
+    <p class="desc">Drag the 6 steps into the correct order.</p>
+    <div class="top-row">
+      <span>Drag to reorder</span>
+      <button class="secondary" id="mmp-reset">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="mmp-list"></ul>
+    <button class="primary" id="mmp-check">Check order</button>
+    <p class="feedback" id="mmp-feedback"></p>
+    <p class="score-note" id="mmp-score-note"></p>
+  </div>
+
+  <!-- ============ AE'S FIRST 24 HOURS (reorder) ============ -->
+  <div class="section card" id="ae-section">
+    <h2>AE's First 24 Hours</h2>
+    <p class="desc">Drag the 3 steps into the correct order.</p>
+    <div class="top-row">
+      <span>Drag to reorder</span>
+      <button class="secondary" id="ae-reset">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="ae-list"></ul>
+    <button class="primary" id="ae-check">Check order</button>
+    <p class="feedback" id="ae-feedback"></p>
+    <p class="score-note" id="ae-score-note"></p>
+  </div>
+
+  <!-- ============ MONDAY WEEKLY RESET (reorder) ============ -->
+  <div class="section card" id="mr-section">
+    <h2>Monday Weekly Reset</h2>
+    <p class="desc">Drag the 4 steps into the correct order.</p>
+    <div class="top-row">
+      <span>Drag to reorder</span>
+      <button class="secondary" id="mr-reset">Shuffle again</button>
+    </div>
+    <ul class="tile-list" id="mr-list"></ul>
+    <button class="primary" id="mr-check">Check order</button>
+    <p class="feedback" id="mr-feedback"></p>
+    <p class="score-note" id="mr-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Pipeline Management";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ MULTIPLE CHOICE QUIZ ============ */
+(function() {
+  const rawQuestions = [
+    { prompt: "What's the fastest path to closed-won, per the training?", correct: "Through the pipeline you already have -- not new outreach", wrong: ["Prioritizing brand-new cold accounts over existing deals", "Sending more outreach volume across all channels", "Focusing only on the largest deals in your pipeline"], explain: "Every deal you're already working is warmer than any cold account -- the pipeline you have is the fastest path to closed-won." },
+    { prompt: "When must a deal be moved to Closed Lost?", correct: "On a clear no, or after 14 days of silence -- no exceptions", wrong: ["Only when the prospect explicitly asks to be removed", "After 30 days with no activity", "Only at the end of the quarter during cleanup"], explain: "A clear no gets closed immediately. Two weeks of silence gets the same result -- no exceptions." },
+    { prompt: "If an AE does not act within 24 hours of a missed meeting, what happens?", correct: "The opp moves to Reschedule under the BDR's name, and goes to round-robin", wrong: ["Nothing changes -- the AE keeps the opp indefinitely", "The deal is automatically marked Closed Lost", "The prospect is removed from all outreach"], explain: "Not acting within 24 hours means the opp goes back to the BDR, gets rescheduled, and enters round-robin -- the AE loses the relationship they built." },
+    { prompt: "What must Lead Source be set to on every BDR-sourced meeting?", correct: "Outbound BDR", wrong: ["Marketing Qualified Lead", "Self-Sourced", "Referral"], explain: "This is tied directly to BDR compensation -- if it's not set correctly, they don't get credit." },
+    { prompt: "When must a demo-held stage be updated in the CRM?", correct: "Same day", wrong: ["Within a week", "At the end of the month", "Only if the deal closes"], explain: "BDRs track pacing against a points model -- if the stage isn't updated same-day, they can't see where they stand." },
+    { prompt: "About how many new accounts should be added to pipeline per day and per week?", correct: "10-12 per day, 50-60 per week", wrong: ["2-3 per day, 10-15 per week", "20-25 per day, 100+ per week", "Only when a deal closes or is lost"], explain: "Your pipeline is a river, not a swamp -- 10-12/day and 50-60/week keeps it flowing without flooding it." },
+    { prompt: "What is the deadline for the weekly pipeline reset?", correct: "Monday by 12 PM ET", wrong: ["Friday end of day", "Wednesday by 5 PM ET", "Sunday night"], explain: "Monday by 12 PM ET is when you clean your pipeline and check if you have enough to hit your weekly goal." },
+    { prompt: "What's the maximum time without contact on an open opp before you should reach out again?", correct: "2 days", wrong: ["5 days", "1 week", "As long as the stage looks accurate"], explain: "Two days with no contact attempt is too long -- open opp means active pursuit, not passive monitoring." },
+    { prompt: "How many inaccurate stages can a BDR have before their meetings are paused?", correct: "Fewer than 3 -- 3 or more pauses meetings until fixed", wrong: ["Up to 10, reviewed monthly", "There's no limit as long as it's fixed eventually", "Exactly 1 -- any error pauses meetings immediately"], explain: "3 or more inaccurate stages means BDR meetings are paused until the pipeline is corrected." },
+    { prompt: "How long should reps spend reviewing their pipeline daily, and when?", correct: "15 minutes, at the start or end of every day", wrong: ["5 minutes, only on Fridays", "An hour, once a week on Mondays", "There's no recommended daily review"], explain: "15 minutes, start or end of day, reviewing every stage and every deal." }
+  ];
+  const questions = rawQuestions.map(q => {
+    const options = shuffle([q.correct, ...q.wrong]);
+    return { prompt: q.prompt, options: options, correct: options.indexOf(q.correct), explain: q.explain };
+  });
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ CHOOSE ALL THAT APPLY ============ */
+(function() {
+  const rawQuestions = [
+    {
+      prompt: "Which of the following are actual Seated pipeline stages?",
+      options: ["Expressed Interest", "Meeting Set", "Reschedule", "Following Up", "On Hold – Interested", "Order Form Sent", "Negotiation", "Contract Review"],
+      correctIndexes: [0,1,2,3,4,5]
+    },
+    {
+      prompt: "Which of these are the BDR's responsibilities in the Missed Meeting Protocol?",
+      options: ["Add the account to a Salesloft missed meeting cadence immediately on AE notification", "Use a new angle each attempt -- not just resending the original invite", "Escalate to a manager after 3 attempts in 48 hours with no response", "Call the prospect before the AE gets a chance to", "Decide whether the opp should be marked Closed Lost"],
+      correctIndexes: [0,1,2]
+    },
+    {
+      prompt: "Which of the following are named benefits of good pipeline management?",
+      options: ["Revenue becomes predictable", "Managers can coach effectively", "Stronger time management", "Accurate forecasting", "Guaranteed promotion within 6 months", "Unlimited PTO"],
+      correctIndexes: [0,1,2,3]
+    }
+  ];
+
+  const container = document.getElementById("multi-questions");
+  const state = rawQuestions.map(() => new Set());
+
+  rawQuestions.forEach((q, qi) => {
+    // shuffle option order but track correct set by value
+    const correctValues = q.correctIndexes.map(i => q.options[i]);
+    const shuffledOptions = shuffle(q.options);
+
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p><p class="hint">Select all that apply.</p>';
+    shuffledOptions.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.innerHTML = '<span class="checkbox-mark">\u2610</span>' + opt;
+      btn.addEventListener("click", () => {
+        if (state[qi].has(opt)) { state[qi].delete(opt); btn.classList.remove("selected"); btn.querySelector(".checkbox-mark").textContent = "\u2610"; }
+        else { state[qi].add(opt); btn.classList.add("selected"); btn.querySelector(".checkbox-mark").textContent = "\u2611"; }
+      });
+      btn.dataset.value = opt;
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = "Correct: " + correctValues.join("; ");
+    div.appendChild(explain);
+    div.dataset.correctValues = JSON.stringify(correctValues);
+    container.appendChild(div);
+  });
+
+  document.getElementById("multi-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    qDivs.forEach((div, qi) => {
+      const correctValues = JSON.parse(div.dataset.correctValues);
+      const selected = state[qi];
+      let allRight = selected.size === correctValues.length;
+      div.querySelectorAll(".quiz-opt").forEach(btn => {
+        const val = btn.dataset.value;
+        const isCorrect = correctValues.includes(val);
+        const isSelected = selected.has(val);
+        if (isCorrect && isSelected) btn.classList.add("correct");
+        else if (!isCorrect && isSelected) { btn.classList.add("incorrect"); allRight = false; }
+        else if (isCorrect && !isSelected) { btn.classList.add("missed"); allRight = false; }
+      });
+      div.querySelector(".quiz-explain").style.display = "block";
+      if (allRight) correctCount++;
+    });
+    document.getElementById("multi-feedback").textContent = correctCount + " / " + qDivs.length + " fully correct (every correct box checked, no incorrect ones).";
+    submitScore(MODULE_NAME, "Choose All That Apply", rep, correctCount, qDivs.length).then(res => {
+      document.getElementById("multi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ Shared reorder builder ============ */
+function buildReorder(listId, items, checkBtnId, resetBtnId, feedbackId, scoreNoteId, componentName) {
+  const correctOrder = items.map(i => i.id);
+  const list = document.getElementById(listId);
+  let dragEl = null;
+
+  function render(order) {
+    list.innerHTML = "";
+    order.forEach((id) => {
+      const item = items.find(i => i.id === id);
+      const li = document.createElement("li");
+      li.className = "tile";
+      li.draggable = true;
+      li.dataset.id = id;
+      li.innerHTML = '<span class="grip">&#8942;&#8942;</span><div class="tile-body"><p class="tile-title">' + item.text + '</p>' + (item.sub ? '<p class="tile-output">' + item.sub + '</p>' : '') + '</div><div class="tile-buttons"><button class="up">&#9650;</button><button class="down">&#9660;</button></div>';
+      li.addEventListener("dragstart", () => { dragEl = li; setTimeout(() => li.classList.add("dragging"), 0); });
+      li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragEl = null; });
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === li) return;
+        const rect = li.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        list.insertBefore(dragEl, before ? li : li.nextSibling);
+      });
+      li.querySelector(".up").addEventListener("click", () => { const prev = li.previousElementSibling; if (prev) list.insertBefore(li, prev); clearFb(); });
+      li.querySelector(".down").addEventListener("click", () => { const next = li.nextElementSibling; if (next) list.insertBefore(next, li); clearFb(); });
+      list.appendChild(li);
+    });
+  }
+  function clearFb() {
+    document.getElementById(feedbackId).textContent = "";
+    document.getElementById(scoreNoteId).textContent = "";
+    [...list.children].forEach(li => li.style.borderColor = "var(--line)");
+  }
+  document.getElementById(checkBtnId).addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const current = [...list.children].map(li => li.dataset.id);
+    let correctCount = 0;
+    current.forEach((id, idx) => {
+      const li = list.children[idx];
+      if (id === correctOrder[idx]) { li.style.borderColor = "var(--success)"; correctCount++; }
+      else { li.style.borderColor = "var(--danger)"; }
+    });
+    document.getElementById(feedbackId).textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
+    submitScore(MODULE_NAME, componentName, rep, correctCount, correctOrder.length).then(res => {
+      document.getElementById(scoreNoteId).textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  if (resetBtnId) {
+    document.getElementById(resetBtnId).addEventListener("click", () => { render(shuffle(correctOrder)); clearFb(); });
+  }
+  render(shuffle(correctOrder));
+}
+
+/* ============ MISSED MEETING PROTOCOL (reorder) ============ */
+buildReorder("mmp-list", [
+  {id:"m1", text:"Meeting is missed"},
+  {id:"m2", text:"AE attempts to re-engage", sub:"Call, text, or email immediately"},
+  {id:"m3", text:"24 hours pass with no response"},
+  {id:"m4", text:"Opp moves to Reschedule, logged under the BDR's name", sub:"AE is notified"},
+  {id:"m5", text:"BDR adds the account to a Salesloft missed meeting cadence"},
+  {id:"m6", text:"BDR re-engages the prospect", sub:"Call \u2192 Text \u2192 Email, using a new angle"}
+], "mmp-check", "mmp-reset", "mmp-feedback", "mmp-score-note", "Missed Meeting Protocol");
+
+/* ============ AE'S FIRST 24 HOURS (reorder) ============ */
+buildReorder("ae-list", [
+  {id:"a1", text:"Call on time", sub:"At the exact time the BDR booked"},
+  {id:"a2", text:"Text within 15 minutes if no answer", sub:"A personal text, not a template"},
+  {id:"a3", text:"Call again before EOD", sub:"Twice if it was a morning meeting"}
+], "ae-check", "ae-reset", "ae-feedback", "ae-score-note", "AE's First 24 Hours");
+
+/* ============ MONDAY WEEKLY RESET (reorder) ============ */
+buildReorder("mr-list", [
+  {id:"w1", text:"Clean your pipeline first", sub:"Accurate stages, next steps + dates, 14+ days silent \u2192 Closed Lost"},
+  {id:"w2", text:"Look at your forecast goal for the week"},
+  {id:"w3", text:"Count what's actually closeable this week"},
+  {id:"w4", text:"If there's a gap, schedule more demos or add fresh accounts"}
+], "mr-check", "mr-reset", "mr-feedback", "mr-score-note", "Monday Weekly Reset");
+</script>
+</body>
+</html>
