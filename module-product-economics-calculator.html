@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Product Economics Calculator — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .scenario-box {
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 16px; font-size: 13px;
+  }
+  .scenario-box p { margin: 0 0 6px; }
+  .scenario-box .inputs { margin: 8px 0 0; padding-left: 18px; }
+  .scenario-box .inputs li { margin-bottom: 2px; }
+  .steps ol { margin: 8px 0 0; padding-left: 20px; }
+  .steps li { margin-bottom: 6px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Product Economics Calculator</h1>
+  <p class="subtitle">The incremental math behind Seated -- and how to run it live for a prospect on the phone.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Economics Calculator</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">This link makes your own copy -- don't edit the master sheet.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/spreadsheets/d/1I_WC7YuRa8-8jHAYRK4-so6eWuxokDWOWih8VDtGi-Y/copy" target="_blank" rel="noopener">Make your copy</a>
+  </div>
+
+  <div class="card steps">
+    <p style="margin:0;font-weight:bold;font-size:14px;">How to use this module</p>
+    <ol>
+      <li>Click "Make your copy" above -- Google will prompt you to save your own version to your Drive.</li>
+      <li>In your copy, you'll see 6 yellow input cells: Average Spend, Guests w/o Seated, Seated Guests, F&B %, Seated Reward Rate, and Fixed Costs.</li>
+      <li>For each scenario below, change those 6 inputs to match the numbers given, and read the answer off the calculated columns to the right.</li>
+      <li>Answer the question, then move to the next scenario. Each scenario changes ALL 6 inputs, so double check every field before reading your answer.</li>
+    </ol>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">3 scenarios, 10 questions. Plug each scenario's inputs into your copy of the sheet before answering.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit Module</h2>
+    <p class="desc">Check your quiz above, then submit here once for your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Product Economics Calculator";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+let moduleResults = {};
+
+/* ============ QUIZ ============ */
+(function() {
+  const scenarioA = "SCENARIO A -- Average Spend: $60 | Guests w/o Seated: 80 | Seated Guests: 8 | F&B %: 30% | Seated Reward Rate: 25% | Fixed Costs: $2,000.";
+  const scenarioB = "SCENARIO B -- Average Spend: $40 | Guests w/o Seated: 120 | Seated Guests: 15 | F&B %: 28% | Seated Reward Rate: 20% | Fixed Costs: $3,000.";
+  const scenarioC = "SCENARIO C -- Average Spend: $100 | Guests w/o Seated: 60 | Seated Guests: 6 | F&B %: 35% | Seated Reward Rate: 30% | Fixed Costs: $4,000.";
+
+  const rawQuestions = [
+    { prompt: scenarioA + " With these inputs, what's the total Revenue in the \"with Seated\" column?", correct: "$5,280", wrong: ["$5,000", "$4,800", "$5,600"], explain: "88 total diners (80 + 8) x $60 average spend = $5,280." },
+    { prompt: scenarioA + " What's the Seated Cost?", correct: "$120", wrong: ["$150", "$100", "$200"], explain: "Seated revenue is 8 x $60 = $480. At a 25% reward rate, Seated Cost = $120." },
+    { prompt: scenarioA + " What's the Profit in the \"with Seated\" column?", correct: "$1,576", wrong: ["$1,000", "$1,225", "$1,450"], explain: "Revenue $5,280 minus F&B cost (30% = $1,584) minus Fixed Costs ($2,000) minus Seated Cost ($120) = $1,576." },
+    { prompt: scenarioB + " With these inputs, what's the F&B Cost in the \"without Seated\" column?", correct: "$1,344", wrong: ["$1,200", "$1,440", "$1,050"], explain: "120 guests x $40 = $4,800 revenue. At 28% F&B, cost = $1,344." },
+    { prompt: scenarioB + " What's the Profit in the Seated Guests column (the incremental column only)?", correct: "$312", wrong: ["$480", "$168", "$600"], explain: "Seated revenue: 15 x $40 = $600. F&B cost (28%) = $168. Seated Cost (20%) = $120. Profit = $600 - $168 - $120 = $312." },
+    { prompt: scenarioB + " What's the Profit Margin in the \"with Seated\" column?", correct: "~14%", wrong: ["~20%", "~28%", "~45%"], explain: "135 total diners x $40 = $5,400 revenue. F&B cost (28%) = $1,512. Fixed Costs $3,000. Seated Cost $120. Profit = $768. $768 / $5,400 = ~14%." },
+    { prompt: scenarioC + " With these inputs, what's the Profit in the \"without Seated\" column?", correct: "-$100 (a loss)", wrong: ["$400", "$0 (break-even)", "$1,000"], explain: "60 guests x $100 = $6,000 revenue. F&B cost (35%) = $2,100. Fixed Costs $4,000. Profit = $6,000 - $2,100 - $4,000 = -$100. This restaurant is actually losing money before Seated." },
+    { prompt: scenarioC + " What's the Profit Margin in the Seated Guests column (incremental only)?", correct: "35%", wrong: ["20%", "50%", "65%"], explain: "Seated revenue: 6 x $100 = $600. F&B cost (35%) = $210. Seated Cost (30%) = $180. Profit = $210. $210 / $600 = 35%." },
+    { prompt: scenarioC + " What's the total Revenue in the \"with Seated\" column?", correct: "$6,600", wrong: ["$6,000", "$6,300", "$7,000"], explain: "66 total diners (60 + 6) x $100 = $6,600." },
+    { prompt: scenarioC + " Does adding Seated guests flip this restaurant from a loss to a profit overall, and by how much?", correct: "Yes -- from -$100 to +$110", wrong: ["No -- it stays a loss", "Yes -- from -$100 to +$500", "No -- it has no effect on overall profit"], explain: "With Seated: Revenue $6,600, F&B cost (35%) $2,310, Fixed Costs $4,000, Seated Cost $180. Profit = $6,600 - $2,310 - $4,000 - $180 = $110. That's the whole point of the incremental math -- a restaurant that's barely profitable, or even losing money, overall can still come out ahead because of the diners Seated adds on top." }
+  ];
+  const questions = rawQuestions.map(q => {
+    const options = shuffle([q.correct, ...q.wrong]);
+    return { prompt: q.prompt, options: options, correct: options.indexOf(q.correct), explain: q.explain };
+  });
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
+    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
+  });
+})();
+
+/* ============ SUBMIT MODULE (aggregate) ============ */
+(function() {
+  const expected = ["Quiz"];
+  document.getElementById("submit-module-btn").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const missing = expected.filter(c => !moduleResults[c]);
+    const fb = document.getElementById("submit-module-feedback");
+    if (missing.length > 0) {
+      fb.style.color = "var(--danger)";
+      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
+      return;
+    }
+    let totalCorrect = 0, totalPossible = 0;
+    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    fb.style.color = "";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+</script>
+</body>
+</html>
