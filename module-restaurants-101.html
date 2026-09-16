@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Restaurants 101 — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .resource-card {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gold-tint); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 28px;
+  }
+  .resource-card a.dl {
+    background: var(--gold); color: var(--ink); font-weight: bold; font-size: 13px;
+    padding: 8px 14px; border-radius: 6px; text-decoration: none; white-space: nowrap;
+  }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+  .sort-box { background: var(--gold-tint); border-radius: 8px; padding: 10px 14px; cursor: pointer; margin-bottom: 8px; }
+  .sort-box .items div { font-size: 13px; padding: 4px 8px; margin-top: 4px; border-radius: 6px; background: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Restaurants 101</h1>
+  <p class="subtitle">Talk like a restaurant: the industry, the lingo, operator types, and the reservation platform landscape.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source presentation</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/presentation/d/1h6prR0e7ZpjQ7Jx-6ZfyhBsCIRwiNs8KvBun3bwVtFw/edit" target="_blank" rel="noopener">View slides</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">The industry, restaurant lingo, operator types, and connecting with operators efficiently.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ RESTAURANT LINGO MATCH ============ -->
+  <div class="section card" id="rl-section">
+    <h2>Restaurant Lingo Match</h2>
+    <p class="desc">Tap a definition, then tap the term it matches.</p>
+    <div class="pool column" id="rl-pool"></div>
+    <div id="rl-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="rl-check">Check answers</button>
+    <p class="feedback" id="rl-feedback"></p>
+    <p class="score-note" id="rl-score-note"></p>
+  </div>
+
+  <!-- ============ OPERATOR TYPES SORT ============ -->
+  <div class="section card" id="ot-section">
+    <h2>Operator Types Sort</h2>
+    <p class="desc">Tap a priority, then tap the operator type it matches.</p>
+    <div class="pool column" id="ot-pool"></div>
+    <div id="ot-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="ot-check">Check answers</button>
+    <p class="feedback" id="ot-feedback"></p>
+    <p class="score-note" id="ot-score-note"></p>
+  </div>
+
+  <!-- ============ ERB PLATFORM MATCH ============ -->
+  <div class="section card" id="erb-section">
+    <h2>ERB Platform Match</h2>
+    <p class="desc">Tap a description, then tap the platform it matches.</p>
+    <div class="pool column" id="erb-pool"></div>
+    <div id="erb-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="erb-check">Check answers</button>
+    <p class="feedback" id="erb-feedback"></p>
+    <p class="score-note" id="erb-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Restaurants 101";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const questions = [
+    { prompt: "Which of the following is NOT cited as a reason restaurants are a tough business?", options: ["Small margins", "High labor and food costs", "Being under-capitalized", "Abundant capital and cash reserves"], correct: 3, explain: "Restaurants are typically under-capitalized, not flush with cash -- the opposite of the correct answer." },
+    { prompt: "What's the \"Old School: Phone only\" reservation approach?", options: ["They don't take reservations any other way", "They use a full digital reservation platform", "They only accept walk-ins", "They require a deposit for every booking"], correct: 0, explain: "Phone-only means exactly that -- no other reservation channel is offered." },
+    { prompt: "What's the \"Old School: Walk-in only\" approach?", options: ["They take phone reservations exclusively", "They don't take reservations at all -- guests walk in and wait", "They only accept online bookings", "They require reservations 24 hours in advance"], correct: 1, explain: "Walk-in only means no reservations of any kind -- guests just show up and wait." },
+    { prompt: "What's the \"Modern\" reservation approach, per the training?", options: ["Digital reservation platform only, no phone or walk-ins accepted", "A reservation platform, usually still also accepting phone reservations and walk-ins", "Walk-ins only, digitally managed", "Reservations by text message only"], correct: 1, explain: "Modern operators typically layer a reservation platform on top of still accepting calls and walk-ins." },
+    { prompt: "Which of these is NOT one of the recommended publications to follow for industry trends?", options: ["Eater", "Infatuation", "Michelin Guide", "The Wall Street Journal"], correct: 3, explain: "The recommended list is Eater, GrubStreet, Infatuation, Michelin Guide, Instagram/TikTok influencers, and local blogs." },
+    { prompt: "What does \"FOH\" stand for?", options: ["Front of House", "Food Order Handling", "Full Occupancy Hours", "Facility Operations Head"], correct: 0, explain: "FOH = Front of House -- the guest-facing staff: hosts, servers, bussers, and bartenders." },
+    { prompt: "What does \"BOH\" stand for?", options: ["Back of House", "Bar Operations Head", "Basic Operating Hours", "Beverage Order Handling"], correct: 0, explain: "BOH = Back of House -- the staff you don't see: chefs, cooks, prep-cooks, and dishwashers." },
+    { prompt: "What's the difference between Line Cooks and Prep Cooks?", options: ["Line cooks prepare food when it's ordered; prep cooks prepare food to be cooked later", "Prep cooks only work breakfast shifts", "Line cooks manage inventory; prep cooks manage the POS", "There's no difference, just different titles"], correct: 0, explain: "Line cooks fire dishes to order; prep cooks get ingredients ready ahead of time." },
+    { prompt: "What does \"Short Staffed\" mean?", options: ["The restaurant is closing early", "They don't have the projected number of workers for the day", "The kitchen ran out of a menu item", "A shift change is happening"], correct: 1, explain: "Short staffed simply means fewer workers showed up than were scheduled/projected." },
+    { prompt: "What's a \"Turn\" (as opposed to \"Turn Time\")?", options: ["How long it takes a table to finish their meal", "How many times a table can be sat during a meal period", "The time between shifts", "How quickly a server processes payment"], correct: 1, explain: "Turn Time is the duration per table; a Turn is how many times that table gets re-seated in one meal period." },
+    { prompt: "What's the difference between a \"Comp\" and a \"Send-out\"?", options: ["A comp is an item removed from the bill; a send-out is a free item given without being asked", "They're the same thing", "A comp only applies to drinks", "A send-out requires manager approval, a comp doesn't"], correct: 0, explain: "Comp = removed from the bill after the fact. Send-out = proactively given for free." },
+    { prompt: "What does \"F&B Cost\" refer to?", options: ["The restaurant's total monthly rent", "Food and Beverage cost -- e.g. an item sells for $30 but costs $10 to make", "The fee charged by a food delivery app", "The cost of a reservation platform subscription"], correct: 1, explain: "F&B Cost is the cost to produce a menu item versus what it sells for." },
+    { prompt: "What does \"ERB\" stand for in restaurant tech?", options: ["Electronic (Reservation) Booking system", "Estimated Revenue per Booking", "Employee Records Book", "Expense Reporting Backend"], correct: 0, explain: "ERB = Electronic Booking/Reservation system -- manages reservations and seating flow (OpenTable, Resy, SevenRooms, etc.)." },
+    { prompt: "How does Direct Online Ordering typically differ from 3rd party delivery apps?", options: ["It's always more expensive", "It's an ecommerce store on the restaurant's own site charging a flat monthly fee instead of a % of sale", "It only works for delivery, not pickup", "It requires a 3rd party courier"], correct: 1, explain: "Direct Online Ordering avoids the per-order percentage that 3rd party apps charge, using a flat monthly fee instead." },
+    { prompt: "What does a Traditional Operator care about most, and how should you market to them?", options: ["Scalability and automation; pitch them on LinkedIn", "Reliability, personal relationships, and cost control; emphasize trust and use online forms", "Guest experience and menu quality; reach them on Instagram", "Data and reporting; send a cold email with metrics"], correct: 1, explain: "Traditional Operators value stability and simplicity -- trust-building and online forms work best." },
+    { prompt: "What's the best channel to reach a Modern & Tech-Forward Operator?", options: ["Instagram", "Online forms", "LinkedIn", "Direct mail"], correct: 2, explain: "Modern & Tech-Forward Operators care about scalability and data -- LinkedIn fits their mindset best." },
+    { prompt: "What's the best channel to reach a Culinary-Driven Operator?", options: ["LinkedIn", "Instagram", "Online forms", "Cold call only"], correct: 1, explain: "Culinary-Driven Operators care about guest experience and menu story -- Instagram fits their world." },
+    { prompt: "Which ERB platform is described as \"the OG\" with the biggest reach, but seen as expensive with older tech and an older user base?", options: ["Resy", "Yelp Reservations", "OpenTable", "Tock"], correct: 2, explain: "OpenTable is the long-standing industry standard -- big reach, but pricier and seen as behind on tech." },
+    { prompt: "Which ERB platform is owned by American Express and known for \"cool restaurant\" branding, though with more limited reach than OpenTable?", options: ["Resy", "SevenRooms", "Yelp Reservations", "Tock"], correct: 0, explain: "Resy is owned by AMEX and known for strong branding and discoverability, with a smaller footprint than OpenTable." },
+    { prompt: "Which ERB platform is discovery-first with the cheapest flat fee, but carries a reputation problem tied to guest reviews?", options: ["OpenTable", "SevenRooms", "Yelp Reservations", "Tock"], correct: 2, explain: "Yelp Reservations is the cheapest and discovery-focused, but its association with public reviews creates a reputation issue for both guests and restaurants." },
+    { prompt: "Which ERB platform is known as the best CRM for restaurants with the most guest data, but is also the most expensive?", options: ["SevenRooms", "OpenTable", "Resy", "Tock"], correct: 0, explain: "SevenRooms leads on CRM and guest data, at the cost of being the priciest ERB option." },
+    { prompt: "Which ERB platform is best for high-end prix-fixe/prepay dining and was also purchased by American Express?", options: ["Resy", "Tock", "Yelp Reservations", "OpenTable"], correct: 1, explain: "Tock specializes in prepaid, tailored dining experiences and is also owned by AMEX, alongside Resy." },
+    { prompt: "Per \"Connecting with Operators Efficiently,\" who should you generally avoid focusing your time on?", options: ["Owners", "DOOs", "Managers -- limited decision-making authority", "Executive Chefs"], correct: 2, explain: "Managers typically can't make the final call, which leads to unnecessary follow-up and delays." },
+    { prompt: "Since owners are rarely at the venue, what should you try to find?", options: ["Their home address", "Their personal contact line", "Their social media handle only", "Their manager's schedule"], correct: 1, explain: "Find personal lines for owners since they're rarely on-site to take a call at the restaurant." }
+  ];
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ RESTAURANT LINGO MATCH (1:1) ============ */
+(function() {
+  const terms = ["FOH", "BOH", "DOO", "Turns", "Covers", "Slammed"];
+  const pool = [
+    "Extremely busy",
+    "The staff you don't see — chefs, cooks, prep-cooks, dishwashers",
+    "How many times a table can be sat during a meal period",
+    "The staff that faces the guest — hosts, servers, bussers, bartenders",
+    "The number of guests",
+    "Director of Operations"
+  ];
+  const answers = {
+    "The staff that faces the guest — hosts, servers, bussers, bartenders": "FOH",
+    "The staff you don't see — chefs, cooks, prep-cooks, dishwashers": "BOH",
+    "Director of Operations": "DOO",
+    "How many times a table can be sat during a meal period": "Turns",
+    "The number of guests": "Covers",
+    "Extremely busy": "Slammed"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  terms.forEach(t => placed[t] = null);
+  let selected = null;
+  const poolEl = document.getElementById("rl-pool");
+  const slotsEl = document.getElementById("rl-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    terms.forEach(term => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.dataset.term = term;
+      row.innerHTML = '<span class="slot-label" style="min-width:60px;font-weight:700;">' + term + '</span><span class="slot-val" style="flex:1;">' + (placed[term] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[term]) { selected = null; placed[term] = null; }
+        else if (selected) { placed[term] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("rl-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    terms.forEach(term => {
+      const row = slotsEl.querySelector('[data-term="'+term+'"] .slot-val');
+      if (answers[placed[term]] === term) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("rl-feedback").textContent = correctCount + " of " + terms.length + " correct.";
+    submitScore(MODULE_NAME, "Restaurant Lingo Match", rep, correctCount, terms.length).then(res => {
+      document.getElementById("rl-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ OPERATOR TYPES SORT ============ */
+(function() {
+  const pool = [
+    "Reliability and personal relationships",
+    "Guest experience and menu quality/story",
+    "Scalability and efficiency",
+    "Tools that don't get in the way of the food",
+    "Data / reporting / automation",
+    "Cost control and simplicity of operations"
+  ];
+  const types = ["Traditional", "Modern & Tech-Forward", "Culinary-Driven"];
+  const answers = {
+    "Reliability and personal relationships": "Traditional",
+    "Cost control and simplicity of operations": "Traditional",
+    "Scalability and efficiency": "Modern & Tech-Forward",
+    "Data / reporting / automation": "Modern & Tech-Forward",
+    "Guest experience and menu quality/story": "Culinary-Driven",
+    "Tools that don't get in the way of the food": "Culinary-Driven"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {}; types.forEach(t => placed[t] = []);
+  let selected = null;
+  const poolEl = document.getElementById("ot-pool");
+  const slotsEl = document.getElementById("ot-slots");
+
+  function isPlaced(v) { return types.some(t => placed[t].includes(v)); }
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (isPlaced(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    types.forEach(type => {
+      const box = document.createElement("div");
+      box.className = "sort-box";
+      box.dataset.type = type;
+      const items = placed[type].map(v => '<div>' + v + '</div>').join("");
+      box.innerHTML = '<span style="font-size:14px;font-weight:700;">' + type + '</span><div class="items">' + (items || '<div style="color:var(--ink-secondary);">\u2014</div>') + '</div>';
+      box.addEventListener("click", () => {
+        if (selected && placed[type].length < 2 && !isPlaced(selected)) { placed[type].push(selected); selected = null; renderPool(); renderSlots(); }
+        else if (!selected && placed[type].length > 0) { placed[type].pop(); renderPool(); renderSlots(); }
+      });
+      slotsEl.appendChild(box);
+    });
+  }
+  document.getElementById("ot-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0, totalPlaced = 0;
+    types.forEach(type => {
+      const box = slotsEl.querySelector('[data-type="'+type+'"]');
+      const divs = box.querySelectorAll(".items > div");
+      placed[type].forEach((val, idx) => {
+        totalPlaced++;
+        const div = divs[idx];
+        if (answers[val] === type) { div.style.background = "var(--success-bg)"; div.style.color = "var(--success)"; correctCount++; }
+        else { div.style.background = "var(--danger-bg)"; div.style.color = "var(--danger)"; }
+      });
+    });
+    document.getElementById("ot-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
+    submitScore(MODULE_NAME, "Operator Types Sort", rep, correctCount, 6).then(res => {
+      document.getElementById("ot-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ ERB PLATFORM MATCH (1:1) ============ */
+(function() {
+  const platforms = ["OpenTable", "Resy", "Yelp Reservations", "SevenRooms", "Tock"];
+  const pool = [
+    "The OG -- biggest reach, industry standard, but expensive with older tech",
+    "Owned by AMEX, great \u201ccool restaurant\u201d branding, but limited reach vs OpenTable",
+    "Discovery-first, cheapest flat fee, but a reputation problem tied to guest reviews",
+    "Best CRM for restaurants and the most guest data, but the most expensive ERB",
+    "Best for high-end prix-fixe/prepay dining, also owned by AMEX"
+  ];
+  const answers = {
+    "The OG -- biggest reach, industry standard, but expensive with older tech": "OpenTable",
+    "Owned by AMEX, great \u201ccool restaurant\u201d branding, but limited reach vs OpenTable": "Resy",
+    "Discovery-first, cheapest flat fee, but a reputation problem tied to guest reviews": "Yelp Reservations",
+    "Best CRM for restaurants and the most guest data, but the most expensive ERB": "SevenRooms",
+    "Best for high-end prix-fixe/prepay dining, also owned by AMEX": "Tock"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  platforms.forEach(p => placed[p] = null);
+  let selected = null;
+  const poolEl = document.getElementById("erb-pool");
+  const slotsEl = document.getElementById("erb-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    platforms.forEach(platform => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.style.alignItems = "flex-start";
+      row.dataset.platform = platform;
+      row.innerHTML = '<span class="slot-label" style="min-width:110px;font-weight:700;">' + platform + '</span><span class="slot-val" style="flex:1;">' + (placed[platform] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[platform]) { selected = null; placed[platform] = null; }
+        else if (selected) { placed[platform] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("erb-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    platforms.forEach(platform => {
+      const row = slotsEl.querySelector('[data-platform="'+platform+'"] .slot-val');
+      if (answers[placed[platform]] === platform) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("erb-feedback").textContent = correctCount + " of " + platforms.length + " correct.";
+    submitScore(MODULE_NAME, "ERB Platform Match", rep, correctCount, platforms.length).then(res => {
+      document.getElementById("erb-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
