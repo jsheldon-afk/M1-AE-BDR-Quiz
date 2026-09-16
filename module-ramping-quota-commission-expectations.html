@@ -129,7 +129,7 @@
   <!-- ============ POINTS TABLE ============ -->
   <div class="section card" id="pt-section">
     <h2>Points Table</h2>
-    <p class="desc">Tap a value from the bank, then tap the Points or Monthly Target slot it belongs in.</p>
+    <p class="desc">Tap a monthly target from the bank, then tap the slot it belongs in.</p>
     <div class="fill-header"><span></span><span>Points</span><span>Monthly Target</span></div>
     <div id="pt-table"></div>
     <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
@@ -137,6 +137,15 @@
     <button class="primary" id="pt-check">Check answers</button>
     <p class="feedback" id="pt-feedback"></p>
     <p class="score-note" id="pt-score-note"></p>
+  </div>
+
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit Module</h2>
+    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
   </div>
 
 </div>
@@ -157,6 +166,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
+let moduleResults = {};
 
 /* ============ QUIZ ============ */
 (function() {
@@ -199,8 +209,6 @@ function getRep() {
   });
 
   document.getElementById("quiz-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -213,9 +221,8 @@ function getRep() {
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
-      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
+    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -265,8 +272,6 @@ function getRep() {
     [...list.children].forEach(li => li.style.borderColor = "var(--line)");
   }
   document.getElementById("dr-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     const current = [...list.children].map(li => li.dataset.id);
     let correctCount = 0;
     current.forEach((id, idx) => {
@@ -275,9 +280,8 @@ function getRep() {
       else { li.style.borderColor = "var(--danger)"; }
     });
     document.getElementById("dr-feedback").textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
-    submitScore(MODULE_NAME, "How to Run Your Day", rep, correctCount, correctOrder.length).then(res => {
-      document.getElementById("dr-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["How to Run Your Day"] = { correct: correctCount, total: correctOrder.length };
+    document.getElementById("dr-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   document.getElementById("dr-reset").addEventListener("click", () => { render(shuffle(correctOrder)); clearFb(); });
   render(shuffle(correctOrder));
@@ -324,8 +328,6 @@ function getRep() {
     [...list.children].forEach(li => li.style.borderColor = "var(--line)");
   }
   document.getElementById("cp-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     const current = [...list.children].map(li => li.dataset.id);
     let correctCount = 0;
     current.forEach((id, idx) => {
@@ -334,9 +336,8 @@ function getRep() {
       else { li.style.borderColor = "var(--danger)"; }
     });
     document.getElementById("cp-feedback").textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
-    submitScore(MODULE_NAME, "Checkpoints", rep, correctCount, correctOrder.length).then(res => {
-      document.getElementById("cp-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Checkpoints"] = { correct: correctCount, total: correctOrder.length };
+    document.getElementById("cp-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   render(shuffle(correctOrder));
 })();
@@ -399,8 +400,6 @@ function getRep() {
     });
   }
   document.getElementById("kpi-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const total = rows.length * 2;
     rows.forEach((r, i) => {
@@ -414,9 +413,8 @@ function getRep() {
       });
     });
     document.getElementById("kpi-feedback").textContent = correctCount + " of " + total + " correct.";
-    submitScore(MODULE_NAME, "Daily KPI Table", rep, correctCount, total).then(res => {
-      document.getElementById("kpi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Daily KPI Table"] = { correct: correctCount, total: total };
+    document.getElementById("kpi-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderTable();
 })();
@@ -424,9 +422,9 @@ function getRep() {
 /* ============ COMP BUCKETS (fill-in) ============ */
 (function() {
   const rows = [
-    { label: "Effort / OKR Bucket", sub: "capped", correct: "$1,000", distractors: ["$500", "$1,500"] },
-    { label: "Achievement Bucket", sub: "uncapped", correct: "$2,000", distractors: ["$1,500", "$2,500"] },
-    { label: "Total OTE (baseline)", sub: "at 100% attainment", correct: "$3,000", distractors: ["$2,500", "$3,500"] }
+    { label: "Effort / OKR Bucket", sub: "capped", correct: "$1,000", distractors: ["$750", "$1,250"] },
+    { label: "Achievement Bucket", sub: "uncapped", correct: "$2,000", distractors: ["$1,750", "$2,250"] },
+    { label: "Total OTE (baseline)", sub: "at 100% attainment", correct: "$3,000", distractors: ["$2,750", "$3,250"] }
   ];
   let poolItems = [];
   rows.forEach((r, i) => {
@@ -469,8 +467,6 @@ function getRep() {
     });
   }
   document.getElementById("cb-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     rows.forEach((r, i) => {
       const slotId = "r"+i;
@@ -481,30 +477,27 @@ function getRep() {
       else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
     });
     document.getElementById("cb-feedback").textContent = correctCount + " of " + rows.length + " correct.";
-    submitScore(MODULE_NAME, "Comp Plan Buckets", rep, correctCount, rows.length).then(res => {
-      document.getElementById("cb-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Comp Plan Buckets"] = { correct: correctCount, total: rows.length };
+    document.getElementById("cb-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderTable();
 })();
 
-/* ============ POINTS TABLE (fill-in) ============ */
+/* ============ POINTS TABLE (fill-in, target only) ============ */
 (function() {
   const rows = [
-    { label: "Schedule", sub: "Meeting confirmed on calendar", points: "1 pt", target: "40 / month", pd: ["2 pts", "3 pts"], td: ["20 / month", "60 / month"] },
-    { label: "Hold", sub: "Prospect shows, meeting runs", points: "2 pts", target: "16 / month", pd: ["1 pt", "3 pts"], td: ["8 / month", "24 / month"] },
-    { label: "Closed Win", sub: "Restaurant signs with Seated", points: "3 pts", target: "6 / month", pd: ["1 pt", "2 pts"], td: ["4 / month", "10 / month"] }
+    { label: "Schedule", sub: "Meeting confirmed on calendar", points: "1 pt", target: "40 / month", td: ["20 / month", "60 / month"] },
+    { label: "Hold", sub: "Prospect shows, meeting runs", points: "2 pts", target: "16 / month", td: ["8 / month", "24 / month"] },
+    { label: "Closed Win", sub: "Restaurant signs with Seated", points: "3 pts", target: "6 / month", td: ["4 / month", "10 / month"] }
   ];
   let poolItems = [];
   rows.forEach((r, i) => {
-    poolItems.push({ key: "r"+i+"-points", label: r.points, rowIndex: i, role: "points" });
-    poolItems.push({ key: "r"+i+"-target", label: r.target, rowIndex: i, role: "target" });
-    r.pd.forEach((d, j) => poolItems.push({ key: "r"+i+"-pd"+j, label: d, rowIndex: -1, role: "distractor" }));
-    r.td.forEach((d, j) => poolItems.push({ key: "r"+i+"-td"+j, label: d, rowIndex: -1, role: "distractor" }));
+    poolItems.push({ key: "r"+i+"-target", label: r.target, rowIndex: i });
+    r.td.forEach((d, j) => poolItems.push({ key: "r"+i+"-td"+j, label: d, rowIndex: -1 }));
   });
   let poolOrder = shuffle(poolItems);
   let placed = {};
-  rows.forEach((r, i) => { placed["r"+i+"-points"] = null; placed["r"+i+"-target"] = null; });
+  rows.forEach((r, i) => { placed["r"+i+"-target"] = null; });
   let selected = null;
   const tableEl = document.getElementById("pt-table");
   const poolEl = document.getElementById("pt-pool");
@@ -524,44 +517,59 @@ function getRep() {
   function renderTable() {
     tableEl.innerHTML = "";
     rows.forEach((r, i) => {
-      const ptsKey = "r"+i+"-points", tgtKey = "r"+i+"-target";
+      const tgtKey = "r"+i+"-target";
       const row = document.createElement("div");
       row.className = "fill-row";
       row.innerHTML = '<div><span style="font-size:13px;font-weight:600;">' + r.label + '</span><br><span style="font-size:11px;color:var(--ink-secondary);">' + r.sub + '</span></div>' +
-        '<span class="fill-slot" data-slot="' + ptsKey + '">' + (placed[ptsKey] ? labelFor(placed[ptsKey]) : "—") + '</span>' +
+        '<span style="text-align:center;font-size:13px;font-weight:700;">' + r.points + '</span>' +
         '<span class="fill-slot" data-slot="' + tgtKey + '">' + (placed[tgtKey] ? labelFor(placed[tgtKey]) : "—") + '</span>';
-      row.querySelectorAll(".fill-slot").forEach(slotEl => {
-        slotEl.addEventListener("click", () => {
-          const slotId = slotEl.dataset.slot;
-          if (placed[slotId]) { selected = null; placed[slotId] = null; }
-          else if (selected) { placed[slotId] = selected; selected = null; }
-          renderPool(); renderTable();
-        });
+      row.querySelector(".fill-slot").addEventListener("click", () => {
+        if (placed[tgtKey]) { selected = null; placed[tgtKey] = null; }
+        else if (selected) { placed[tgtKey] = selected; selected = null; }
+        renderPool(); renderTable();
       });
       tableEl.appendChild(row);
     });
   }
   document.getElementById("pt-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
-    const total = rows.length * 2;
+    const total = rows.length;
     rows.forEach((r, i) => {
-      ["points", "target"].forEach(role => {
-        const slotId = "r"+i+"-"+role;
-        const slotEl = tableEl.querySelector('[data-slot="'+slotId+'"]');
-        const key = placed[slotId];
-        const item = key ? poolItems.find(p => p.key === key) : null;
-        if (item && item.rowIndex === i && item.role === role) { slotEl.style.borderColor = "var(--success)"; slotEl.style.color = "var(--success)"; correctCount++; }
-        else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
-      });
+      const slotId = "r"+i+"-target";
+      const slotEl = tableEl.querySelector('[data-slot="'+slotId+'"]');
+      const key = placed[slotId];
+      const item = key ? poolItems.find(p => p.key === key) : null;
+      if (item && item.rowIndex === i) { slotEl.style.borderColor = "var(--success)"; slotEl.style.color = "var(--success)"; correctCount++; }
+      else { slotEl.style.borderColor = "var(--danger)"; slotEl.style.color = key ? "var(--danger)" : ""; }
     });
     document.getElementById("pt-feedback").textContent = correctCount + " of " + total + " correct.";
-    submitScore(MODULE_NAME, "Points Table", rep, correctCount, total).then(res => {
-      document.getElementById("pt-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Points Table"] = { correct: correctCount, total: total };
+    document.getElementById("pt-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderTable();
+})();
+
+/* ============ SUBMIT MODULE (aggregate) ============ */
+(function() {
+  const expected = ["Quiz", "How to Run Your Day", "Checkpoints", "Daily KPI Table", "Comp Plan Buckets", "Points Table"];
+  document.getElementById("submit-module-btn").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const missing = expected.filter(c => !moduleResults[c]);
+    const fb = document.getElementById("submit-module-feedback");
+    if (missing.length > 0) {
+      fb.style.color = "var(--danger)";
+      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
+      return;
+    }
+    let totalCorrect = 0, totalPossible = 0;
+    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    fb.style.color = "";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    });
+  });
 })();
 
 </script>

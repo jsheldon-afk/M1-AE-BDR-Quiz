@@ -92,6 +92,15 @@
     <p class="score-note" id="cm-score-note"></p>
   </div>
 
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit Module</h2>
+    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
+  </div>
+
 </div>
 
 <script src="score.js"></script>
@@ -110,31 +119,32 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
+let moduleResults = {};
 
 /* ============ QUIZ ============ */
 (function() {
   const rawQuestions = [
     { prompt: "Per the Golden Rules, who controls the call?", correct: "Whoever asks questions", wrong: ["Whoever talks the most", "Whoever brings up price first", "Whoever mentions the competitor first"], explain: "Asking real questions -- not talking the most -- is what controls the conversation." },
-    { prompt: "For \"Margins too low / % too high,\" what's the core reframe?", correct: "Look at margin on the INCREMENTAL table, not overall margin -- fixed costs don't change, only F&B (~30%)", wrong: ["Offer to lower the rate immediately to match their margin", "Explain that margins don't matter for marketing spend", "Suggest they raise menu prices to compensate"], explain: "A guest on an incremental table nets far more than the overall 5% margin suggests, since fixed costs don't change." },
+    { prompt: "For \"Margins too low / % too high,\" what's the core reframe?", correct: "Look at margin on the incremental table, not the overall margin", wrong: ["Offer to lower the Seated rate immediately to match their margin", "Explain that overall margin doesn't apply to marketing spend at all", "Suggest they raise menu prices across the board to compensate"], explain: "A guest on an incremental table nets far more than the overall 5% margin suggests, since fixed costs don't change." },
     { prompt: "In the incremental math example, a $100 check with ~30% F&B cost and a 20% Seated fee nets the restaurant how much pure profit?", correct: "$50", wrong: ["$20", "$70", "$0"], explain: "$70 gross profit (after ~30% F&B cost) minus $20 Seated fee = $50 net incremental profit on a table that would've produced $0." },
-    { prompt: "For \"I need to run the numbers,\" what's the recommended response?", correct: "Ask what numbers specifically -- there are no numbers to run if they have empty seats", wrong: ["Offer to send a full financial breakdown by email", "Agree and follow up again next week", "Ask them to sign now and cancel later if the numbers don't work"], explain: "This is usually a smokescreen -- dig for the real objection instead of accepting it at face value." },
-    { prompt: "What rate range is recommended when a prospect asks to start at 5%?", correct: "21-26% on slower days, 15-20% on busier days (average at least 18%)", wrong: ["Always start at exactly 5% and raise later", "A flat 10% regardless of day", "Whatever rate the competitor is charging"], explain: "Starting low rarely gets raised later -- a low rate also means less exposure since diners filter by reward rate." },
-    { prompt: "How does Seated calculate what it bills on, regarding tax and tip?", correct: "Bills on the cleared amount minus ~18% for tips and state-specific tax", wrong: ["Bills on the full cleared amount including tip and tax", "Bills a flat fee regardless of check size", "Bills only on alcohol sales"], explain: "This is designed to benefit operators -- they're only ever paying on food and beverage." },
+    { prompt: "For \"I need to run the numbers,\" what's the recommended response?", correct: "Ask what numbers they mean, specifically", wrong: ["Offer to send a full financial breakdown by email for review", "Agree to their request and plan to follow up again next week", "Ask them to sign now and cancel later if the numbers don't work"], explain: "This is usually a smokescreen -- dig for the real objection instead of accepting it at face value." },
+    { prompt: "What rate range is recommended when a prospect asks to start at 5%?", correct: "21-26% on slower days, 15-20% on busier days", wrong: ["Always start at exactly 5% and plan to raise the rate later", "A flat 10% rate regardless of which day of the week", "Whatever rate the closest competitor happens to be charging"], explain: "Starting low rarely gets raised later -- a low rate also means less exposure since diners filter by reward rate." },
+    { prompt: "How does Seated calculate what it bills on, regarding tax and tip?", correct: "Cleared amount minus ~18% for tips and state-specific tax", wrong: ["Bills on the full cleared amount, including both tip and tax", "Bills a flat monthly fee regardless of the size of the check", "Bills only on the alcohol portion of a guest's total check"], explain: "This is designed to benefit operators -- they're only ever paying on food and beverage." },
     { prompt: "What retention rate and partner count does Seated cite when addressing cannibalization concerns?", correct: "99% retention, 2,500+ partners", wrong: ["50% retention, 500 partners", "99% retention, 100 partners", "There's no retention data available"], explain: "A high retention rate across thousands of partners is used as evidence against cannibalization concerns -- they wouldn't stay if it wasn't working." },
-    { prompt: "What example restaurant is cited to counter cannibalization concerns?", correct: "Malibu Farm -- booked out every weekend but still makes $20K/month from Seated", wrong: ["A restaurant that closed due to overbooking", "A restaurant with no online presence", "A restaurant that left the platform"], explain: "If Seated were just cannibalizing existing traffic, a fully-booked restaurant like this would have left long ago." },
+    { prompt: "What example restaurant is cited to counter cannibalization concerns?", correct: "Malibu Farm -- booked out every weekend, still makes $20K/month from Seated", wrong: ["A restaurant that closed permanently due to overbooking issues", "A restaurant that has no meaningful online booking presence", "A restaurant that left the Seated platform after one year"], explain: "If Seated were just cannibalizing existing traffic, a fully-booked restaurant like this would have left long ago." },
     { prompt: "What does Seated use instead of integrating directly with a restaurant's POS?", correct: "The restaurant's Merchant ID (MID)", wrong: ["A dedicated Seated tablet at the host stand", "Manual entry by restaurant staff after each visit", "A QR code scanned at checkout"], explain: "Seated captures the MID by swiping a card through the POS once -- no ongoing integration needed." },
-    { prompt: "For \"You'll only send guests during peak times,\" what's the core response?", correct: "The majority of volume comes at off-peak times, and rates can be customized by day", wrong: ["Peak-time traffic is unavoidable and can't be controlled", "Seated only works with restaurants that have no peak times", "Restaurants must accept all traffic regardless of timing"], explain: "Members book last-minute and peak times are usually already taken -- most Seated volume fills off-peak gaps." },
-    { prompt: "Why can't Seated block specific days or times for a restaurant?", correct: "To feature the restaurant on partners like Bilt, Citi, and Dinova, Seated needs to show full availability", wrong: ["It's a technical limitation with no workaround", "Restaurants are never allowed to influence scheduling", "Blocking times would violate card network rules"], explain: "Blocking would remove the restaurant from those high-value partner channels entirely -- customizing rates by day is the alternative." },
-    { prompt: "For \"We're already full most of the time,\" what's the reframe?", correct: "Think of Seated as an insurance policy -- going from 85% to 95% full", wrong: ["Seated only works with restaurants that are empty most nights", "This objection can't be addressed and the call should end", "Suggest they lower prices to attract more guests independently"], explain: "A 5-10% lift in occupancy sounds small day-to-day but adds up significantly over a year." },
-    { prompt: "For \"I need to talk to my partner first,\" what's the recommended first question?", correct: "\"If the decision were entirely up to you, would you try it?\"", wrong: ["\"When can I speak to your partner directly?\"", "\"Can you get their number for me?\"", "\"Why do you need their approval?\""], explain: "This surfaces whether the partner objection is real, or a stand-in for something else." },
-    { prompt: "For \"I don't want to discount my brand,\" what's the key point made?", correct: "Guests pay full price -- Seated is not a discount, and 15 Michelin Star restaurants partner with Seated", wrong: ["Discounting is necessary to compete in this market", "Seated requires a percentage off the menu price", "Only budget restaurants use Seated"], explain: "The more a guest spends, the more they earn back -- this incentivizes higher spend, not lower prices." },
-    { prompt: "What's the response to staffing concerns about extra guest volume?", correct: "It adds a few extra turns at slower times, not a full shift change -- no partner has needed to add staff because of it", wrong: ["Restaurants should plan to hire 1-2 additional staff members", "Seated requires dedicated staff to manage the program", "This is a valid reason to decline the partnership"], explain: "Framed as icing on the cake, not a complete shift change." },
-    { prompt: "What's the key difference Seated highlights versus Blackbird?", correct: "Blackbird is crypto-focused loyalty for regulars in a few cities (NYC, SF, LA); Seated drives incremental new diners nationwide with simple rewards", wrong: ["Blackbird and Seated are functionally identical products", "Seated only operates in the same 3 cities as Blackbird", "Blackbird focuses on corporate dining, Seated does not"], explain: "Different audience, different reward mechanism, much broader geographic reach for Seated." },
-    { prompt: "What's the key difference Seated highlights versus inKind?", correct: "inKind is an upfront-capital/prepaid-credit financing tool; Seated drives repeatable weekly demand, not one-time redemptions", wrong: ["inKind and Seated charge restaurants the exact same way", "Seated is also a financing tool for restaurants", "inKind focuses on new diner acquisition like Seated"], explain: "Think loyalty and marketing engine (Seated) versus a financing tool (inKind)." },
-    { prompt: "What's the positioning line used across ALL competitor objections?", correct: "\"We have very different audiences and offer a completely different product -- Seated is a complement, not a replacement\"", wrong: ["\"Our competitors are inferior products\"", "\"You should cancel your other platforms before signing with us\"", "\"We match any competitor's rate automatically\""], explain: "Seated positions itself as additive to existing tools, not a replacement for them." },
-    { prompt: "Roughly what's the revenue split between the restaurant and Seated?", correct: "Roughly 75% to the restaurant, 25% to Seated (not fixed)", wrong: ["50/50 split, fixed", "90% to Seated, 10% to the restaurant", "100% to the restaurant, Seated earns nothing"], explain: "The exact split can vary and isn't locked -- the majority always goes back to the restaurant." },
-    { prompt: "What's the caveat about sharing a guest's last 4 card digits if they paid with Apple Pay?", correct: "The POS sees the Apple Pay card's last 4, but Seated sends the real card's last 4 -- they won't match", wrong: ["Apple Pay transactions are never tracked at all", "Apple Pay always shows the same last 4 in both systems", "Apple Pay guests are excluded from rewards entirely"], explain: "This is a known discrepancy worth explaining proactively so it doesn't look like an error." },
-    { prompt: "What's the referral bonus for referring a new restaurant partner?", correct: "$250 Seated Reward, once the referred restaurant stays live for 90 days", wrong: ["$1,000 cash paid immediately upon signing", "A permanent rate reduction on your own account", "There is no referral program"], explain: "The reward is a Seated credit usable in their store, not a cash payment, and requires 90 days live." },
+    { prompt: "For \"You'll only send guests during peak times,\" what's the core response?", correct: "Most volume comes at off-peak times, and rates can flex by day", wrong: ["Peak-time traffic is unavoidable and simply can't be controlled", "Seated only partners with restaurants that have no peak times at all", "Restaurants must accept all incoming traffic regardless of timing"], explain: "Members book last-minute and peak times are usually already taken -- most Seated volume fills off-peak gaps." },
+    { prompt: "Why can't Seated block specific days or times for a restaurant?", correct: "It needs to show full availability to partners like Bilt and Citi", wrong: ["It's a technical limitation on Seated's platform with no workaround", "Restaurants are never allowed to influence their own scheduling", "Blocking specific times would violate card network processing rules"], explain: "Blocking would remove the restaurant from those high-value partner channels entirely -- customizing rates by day is the alternative." },
+    { prompt: "For \"We're already full most of the time,\" what's the reframe?", correct: "Think of it as an insurance policy -- 85% full going to 95%", wrong: ["Seated only works with restaurants that are empty most nights", "This objection can't really be addressed, so the call should end", "Suggest they lower menu prices to attract more guests on their own"], explain: "A 5-10% lift in occupancy sounds small day-to-day but adds up significantly over a year." },
+    { prompt: "For \"I need to talk to my partner first,\" what's the recommended first question?", correct: "\"If it were up to you alone, would you want to try it?\"", wrong: ["\"When can I speak to your partner directly instead?\"", "\"Would you mind getting me their number today?\"", "\"Why exactly do you need their approval first?\""], explain: "This surfaces whether the partner objection is real, or a stand-in for something else." },
+    { prompt: "For \"I don't want to discount my brand,\" what's the key point made?", correct: "Guests pay full price -- it's not a discount at all", wrong: ["Discounting is generally necessary to stay competitive in this market", "Seated requires restaurants to take a percentage off the menu price", "Only budget-focused restaurants tend to use platforms like Seated"], explain: "The more a guest spends, the more they earn back -- this incentivizes higher spend, not lower prices." },
+    { prompt: "What's the response to staffing concerns about extra guest volume?", correct: "It's a few extra turns at slow times, not a full shift change", wrong: ["Restaurants should generally plan to hire one or two extra staff members", "Seated requires a restaurant to assign dedicated staff to manage it", "This is generally considered a valid reason to decline the partnership"], explain: "Framed as icing on the cake, not a complete shift change -- no partner has needed to add staff for it." },
+    { prompt: "What's the key difference Seated highlights versus Blackbird?", correct: "Blackbird is crypto loyalty in a few cities; Seated is nationwide", wrong: ["Blackbird and Seated are essentially identical products in practice", "Seated currently only operates in the same three cities as Blackbird", "Blackbird primarily focuses on corporate dining, unlike Seated"], explain: "Different audience, different reward mechanism, much broader geographic reach for Seated." },
+    { prompt: "What's the key difference Seated highlights versus inKind?", correct: "inKind is prepaid financing; Seated drives repeatable demand", wrong: ["inKind and Seated charge restaurants in exactly the same way", "Seated also functions as a financing tool for restaurants", "inKind is primarily focused on new diner acquisition, like Seated"], explain: "Think loyalty and marketing engine (Seated) versus a financing tool (inKind)." },
+    { prompt: "What's the positioning line used across ALL competitor objections?", correct: "\"Seated is a complement, not a replacement\"", wrong: ["\"Our competitors are simply inferior products\"", "\"You should cancel your other platforms first\"", "\"We automatically match any competitor's rate\""], explain: "Seated positions itself as additive to existing tools, not a replacement for them." },
+    { prompt: "Roughly what's the revenue split between the restaurant and Seated?", correct: "Roughly 75% to the restaurant, 25% to Seated", wrong: ["A fixed 50/50 split between the restaurant and Seated", "Roughly 90% to Seated and only 10% to the restaurant", "100% to the restaurant, with Seated earning nothing at all"], explain: "The exact split can vary and isn't locked -- the majority always goes back to the restaurant." },
+    { prompt: "What's the caveat about sharing a guest's last 4 card digits if they paid with Apple Pay?", correct: "The Apple Pay and real card last-4 digits won't match", wrong: ["Apple Pay transactions are never tracked by Seated at all", "Apple Pay always shows the identical last 4 in both systems", "Guests who pay with Apple Pay are excluded from rewards"], explain: "This is a known discrepancy worth explaining proactively so it doesn't look like an error." },
+    { prompt: "What's the referral bonus for referring a new restaurant partner?", correct: "$250, once the referred restaurant is live 90 days", wrong: ["A flat $1,000 cash payment made immediately upon signing", "A permanent reduction to the referring restaurant's own rate", "There is currently no referral program available to partners"], explain: "The reward is a Seated credit usable in their store, not a cash payment, and requires 90 days live." },
     { prompt: "What's Restaurant Success's SLA for responding to a cancellation request?", correct: "Within 24 hours", wrong: ["Within 1 week", "Within 30 days", "There's no defined SLA"], explain: "RS responds within 24 hours and works to schedule the required offboarding call." },
     { prompt: "About when can a restaurant typically revisit or adjust their rate?", correct: "Around the 4-month mark", wrong: ["After 30 days", "After 1 year minimum", "Rates can never be adjusted once set"], explain: "This gives enough time to gather data before evaluating a rate change with Restaurant Success." },
     { prompt: "About how long does the average go-live timeline take?", correct: "About 10 business days", wrong: ["Same day", "60+ days", "6 months"], explain: "This is tied to card networks (Amex, Mastercard, Visa) confirming everything on their end." },
@@ -172,8 +182,6 @@ function getRep() {
   });
 
   document.getElementById("quiz-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -186,9 +194,8 @@ function getRep() {
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
-      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
+    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -242,8 +249,6 @@ function getRep() {
   });
 
   document.getElementById("multi-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     qDivs.forEach((div, qi) => {
@@ -262,9 +267,8 @@ function getRep() {
       if (allRight) correctCount++;
     });
     document.getElementById("multi-feedback").textContent = correctCount + " / " + qDivs.length + " fully correct.";
-    submitScore(MODULE_NAME, "Choose All That Apply", rep, correctCount, qDivs.length).then(res => {
-      document.getElementById("multi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Choose All That Apply"] = { correct: correctCount, total: qDivs.length };
+    document.getElementById("multi-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -313,8 +317,6 @@ function getRep() {
     });
   }
   document.getElementById("tt-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     ranges.forEach(range => {
       const row = slotsEl.querySelector('[data-range="'+range+'"] .slot-val');
@@ -322,9 +324,8 @@ function getRep() {
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("tt-feedback").textContent = correctCount + " of " + ranges.length + " correct.";
-    submitScore(MODULE_NAME, "Transaction Thresholds", rep, correctCount, ranges.length).then(res => {
-      document.getElementById("tt-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Transaction Thresholds"] = { correct: correctCount, total: ranges.length };
+    document.getElementById("tt-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderSlots();
 })();
@@ -378,8 +379,6 @@ function getRep() {
     });
   }
   document.getElementById("cm-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     competitors.forEach(comp => {
       const row = slotsEl.querySelector('[data-comp="'+comp+'"] .slot-val');
@@ -387,12 +386,34 @@ function getRep() {
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("cm-feedback").textContent = correctCount + " of " + competitors.length + " correct.";
-    submitScore(MODULE_NAME, "Competitors Match", rep, correctCount, competitors.length).then(res => {
-      document.getElementById("cm-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Competitors Match"] = { correct: correctCount, total: competitors.length };
+    document.getElementById("cm-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderSlots();
 })();
+/* ============ SUBMIT MODULE (aggregate) ============ */
+(function() {
+  const expected = ["Quiz", "Choose All That Apply", "Transaction Thresholds", "Competitors Match"];
+  document.getElementById("submit-module-btn").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const missing = expected.filter(c => !moduleResults[c]);
+    const fb = document.getElementById("submit-module-feedback");
+    if (missing.length > 0) {
+      fb.style.color = "var(--danger)";
+      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
+      return;
+    }
+    let totalCorrect = 0, totalPossible = 0;
+    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    fb.style.color = "";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
 </script>
 </body>
 </html>

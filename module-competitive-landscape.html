@@ -89,6 +89,15 @@
     <p class="score-note" id="bv-score-note"></p>
   </div>
 
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit Module</h2>
+    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
+  </div>
+
 </div>
 
 <script src="score.js"></script>
@@ -107,6 +116,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
+let moduleResults = {};
 
 /* ============ QUIZ ============ */
 (function() {
@@ -155,8 +165,6 @@ function getRep() {
   });
 
   document.getElementById("quiz-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -169,9 +177,8 @@ function getRep() {
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
-      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
+    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -230,8 +237,6 @@ function getRep() {
     });
   }
   document.getElementById("oh-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     categories.forEach(cat => {
       const row = slotsEl.querySelector('[data-cat="'+cat+'"] .slot-val');
@@ -239,9 +244,8 @@ function getRep() {
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("oh-feedback").textContent = correctCount + " of " + categories.length + " correct.";
-    submitScore(MODULE_NAME, "Objection Handling Match", rep, correctCount, categories.length).then(res => {
-      document.getElementById("oh-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Objection Handling Match"] = { correct: correctCount, total: categories.length };
+    document.getElementById("oh-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderSlots();
 })();
@@ -304,8 +308,6 @@ function getRep() {
     });
   }
   document.getElementById("bv-check").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0, totalPlaced = 0;
     companies.forEach(company => {
       const box = slotsEl.querySelector('[data-company="'+company+'"]');
@@ -318,12 +320,34 @@ function getRep() {
       });
     });
     document.getElementById("bv-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
-    submitScore(MODULE_NAME, "Blackbird vs Seated", rep, correctCount, 8).then(res => {
-      document.getElementById("bv-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Blackbird vs Seated"] = { correct: correctCount, total: 8 };
+    document.getElementById("bv-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
   renderPool(); renderSlots();
 })();
+/* ============ SUBMIT MODULE (aggregate) ============ */
+(function() {
+  const expected = ["Quiz", "Objection Handling Match", "Blackbird vs Seated"];
+  document.getElementById("submit-module-btn").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const missing = expected.filter(c => !moduleResults[c]);
+    const fb = document.getElementById("submit-module-feedback");
+    if (missing.length > 0) {
+      fb.style.color = "var(--danger)";
+      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
+      return;
+    }
+    let totalCorrect = 0, totalPossible = 0;
+    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    fb.style.color = "";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
 </script>
 </body>
 </html>

@@ -115,6 +115,15 @@
     <p class="score-note" id="mr-score-note"></p>
   </div>
 
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit Module</h2>
+    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
+  </div>
+
 </div>
 
 <script src="score.js"></script>
@@ -133,6 +142,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
+let moduleResults = {};
 
 /* ============ MULTIPLE CHOICE QUIZ ============ */
 (function() {
@@ -178,8 +188,6 @@ function getRep() {
   });
 
   document.getElementById("quiz-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -192,9 +200,8 @@ function getRep() {
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
-      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
+    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -249,8 +256,6 @@ function getRep() {
   });
 
   document.getElementById("multi-submit").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     qDivs.forEach((div, qi) => {
@@ -269,9 +274,8 @@ function getRep() {
       if (allRight) correctCount++;
     });
     document.getElementById("multi-feedback").textContent = correctCount + " / " + qDivs.length + " fully correct (every correct box checked, no incorrect ones).";
-    submitScore(MODULE_NAME, "Choose All That Apply", rep, correctCount, qDivs.length).then(res => {
-      document.getElementById("multi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults["Choose All That Apply"] = { correct: correctCount, total: qDivs.length };
+    document.getElementById("multi-score-note").textContent = "Saved — submit the whole module below when you're done.";
   });
 })();
 
@@ -310,8 +314,6 @@ function buildReorder(listId, items, checkBtnId, resetBtnId, feedbackId, scoreNo
     [...list.children].forEach(li => li.style.borderColor = "var(--line)");
   }
   document.getElementById(checkBtnId).addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
     const current = [...list.children].map(li => li.dataset.id);
     let correctCount = 0;
     current.forEach((id, idx) => {
@@ -320,9 +322,8 @@ function buildReorder(listId, items, checkBtnId, resetBtnId, feedbackId, scoreNo
       else { li.style.borderColor = "var(--danger)"; }
     });
     document.getElementById(feedbackId).textContent = correctCount + " of " + correctOrder.length + " in the right spot.";
-    submitScore(MODULE_NAME, componentName, rep, correctCount, correctOrder.length).then(res => {
-      document.getElementById(scoreNoteId).textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
-    });
+    moduleResults[componentName] = { correct: correctCount, total: correctOrder.length };
+    document.getElementById(scoreNoteId).textContent = "Saved — submit the whole module below when you're done.";
   });
   if (resetBtnId) {
     document.getElementById(resetBtnId).addEventListener("click", () => { render(shuffle(correctOrder)); clearFb(); });
@@ -354,6 +355,29 @@ buildReorder("mr-list", [
   {id:"w3", text:"Count what's actually closeable this week"},
   {id:"w4", text:"If there's a gap, schedule more demos or add fresh accounts"}
 ], "mr-check", "mr-reset", "mr-feedback", "mr-score-note", "Monday Weekly Reset");
+
+/* ============ SUBMIT MODULE (aggregate) ============ */
+(function() {
+  const expected = ["Quiz", "Choose All That Apply", "Missed Meeting Protocol", "AE's First 24 Hours", "Monday Weekly Reset"];
+  document.getElementById("submit-module-btn").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    const missing = expected.filter(c => !moduleResults[c]);
+    const fb = document.getElementById("submit-module-feedback");
+    if (missing.length > 0) {
+      fb.style.color = "var(--danger)";
+      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
+      return;
+    }
+    let totalCorrect = 0, totalPossible = 0;
+    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    fb.style.color = "";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
 </script>
 </body>
 </html>
