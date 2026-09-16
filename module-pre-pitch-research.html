@@ -2,72 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pre-Pitch Research — Seated M1 Module</title>
+<title>Pre-Pitch Research — Seated Certification</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
-  .section { margin-bottom: 36px; }
-  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section { margin-bottom: 40px; }
+  .section h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 21px; letter-spacing: -0.005em; margin: 0 0 6px; }
   .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
   .quiz-q { margin-bottom: 18px; }
-  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 8px; }
+  .quiz-q p.prompt { font-weight: 600; font-size: 14.5px; margin: 0 0 10px; line-height: 1.45; }
   .quiz-opt {
-    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
-    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+    display: block; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 13.5px; cursor: pointer;
+    transition: border-color 0.15s ease;
   }
-  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.selected { border-color: var(--gold); border-width: 2px; background: var(--gold-tint); }
   .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
   .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
-  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
-  .pool-tile {
-    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
-    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
-  }
-  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
-  .sort-box { background: var(--gold-tint); border-radius: 8px; padding: 10px 14px; cursor: pointer; margin-bottom: 8px; }
-  .sort-box .items div { font-size: 13px; padding: 4px 8px; margin-top: 4px; border-radius: 6px; background: #fff; }
+  .quiz-explain { font-size: 12.5px; color: var(--ink-secondary); margin: 8px 0 0; display: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <a class="back-link" href="index.html">&larr; All modules</a>
   <h1>Pre-Pitch Research</h1>
-  <p class="subtitle">What to know before you ever get on the call: the business, the deal, and your close mentality.</p>
+  <p class="subtitle">What to know before you ever get on the call.</p>
 
   <div class="card name-field">
     <label for="rep-name">Your name</label>
     <input type="text" id="rep-name" placeholder="First and last name">
-    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
   </div>
 
-  <!-- ============ QUIZ ============ -->
   <div class="section card" id="quiz-section">
     <h2>Quiz</h2>
-    <p class="desc">The specific facts to have ready before a pitch call.</p>
+    <p class="desc">The specific facts worth having ready before a pitch call.</p>
     <div id="quiz-questions"></div>
-    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <button class="primary" id="quiz-submit">Submit module</button>
     <p class="feedback" id="quiz-feedback"></p>
     <p class="score-note" id="quiz-score-note"></p>
-  </div>
-
-  <!-- ============ CATEGORIZE THE CHECKLIST ============ -->
-  <div class="section card" id="cat-section">
-    <h2>Categorize the Checklist</h2>
-    <p class="desc">Tap a research item, then tap which category it belongs to.</p>
-    <div class="pool column" id="cat-pool"></div>
-    <div id="cat-slots" style="margin-top:12px;"></div>
-    <button class="primary" id="cat-check">Check answers</button>
-    <p class="feedback" id="cat-feedback"></p>
-    <p class="score-note" id="cat-score-note"></p>
-  </div>
-
-  <!-- ============ SUBMIT MODULE ============ -->
-  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
-    <h2>Submit Module</h2>
-    <p class="desc">Check every section above, then submit here once for your final module score.</p>
-    <button class="primary" id="submit-module-btn">Submit module</button>
-    <p class="feedback" id="submit-module-feedback"></p>
-    <p class="score-note" id="submit-module-score-note"></p>
   </div>
 
 </div>
@@ -88,23 +61,21 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
-let moduleResults = {};
 
-/* ============ QUIZ ============ */
 (function() {
   const rawQuestions = [
-    { prompt: "What are the three categories of pre-pitch research?", correct: "Know the Business, Know the Deal, Close Mentality", wrong: ["Know the Product, Know the Price, Know the Close", "Discovery, Objections, Follow-up", "Company, Contact, Competitor"], explain: "Everything you prep before a pitch falls into one of these three buckets." },
-    { prompt: "Under \"Know the Business,\" what should you check about their POS setup?", correct: "Whether they're in a hotel, a separate business, use prepay, or use Chowbus", wrong: ["Which specific POS brand they use for reporting", "Whether their POS supports Apple Pay", "How many terminals they have on-site"], explain: "These situations can cause MID tracking issues, so they're worth flagging before the call, not during it." },
-    { prompt: "What two names should you confirm before the call?", correct: "The DM name(s) and the GM name", wrong: ["The head chef and the sommelier", "The marketing manager and the social media lead", "The owner's spouse and their accountant"], explain: "Knowing who you're speaking with, and who else is involved, before the call starts is part of \"Know the Business.\"" },
+    { prompt: "Before a pitch, what should you check about the restaurant's POS setup?", correct: "Whether they're in a hotel, a separate business, use prepay, or use Chowbus", wrong: ["Which specific POS brand they use for reporting", "Whether their POS supports Apple Pay", "How many terminals they have on-site"], explain: "These situations can cause MID tracking issues, so they're worth flagging before the call, not during it." },
+    { prompt: "What two names should you confirm before the call?", correct: "The DM name(s) and the GM name", wrong: ["The head chef and the sommelier", "The marketing manager and the social media lead", "The owner's spouse and their accountant"], explain: "Knowing who you're speaking with, and who else is involved, before the call starts matters." },
     { prompt: "What two market-level facts should you know before the call?", correct: "The market name and its market launch date", wrong: ["The market's average rent prices", "The market's total restaurant count", "The market's most popular cuisine type"], explain: "Knowing when Seated launched in their market gives context for how established the program is there." },
     { prompt: "What performance metric should you check for the market?", correct: "GMV in the last 30 days", wrong: ["Total number of sign-ups all-time", "Average check size across the market", "Number of competitor restaurants nearby"], explain: "Recent GMV gives you a live read on how active the market actually is right now." },
     { prompt: "How many nearby restaurants already on Seated should you identify, and what should you note about them?", correct: "3 nearby restaurants, and their performance", wrong: ["1 nearby restaurant and its owner's name", "5 nearby restaurants and their menus", "10 nearby restaurants and their ratings"], explain: "Having 3 concrete, nearby examples with real performance data makes your pitch credible and specific." },
-    { prompt: "What historical fact should you check about the prospect before the call?", correct: "Whether they've churned before, and when", wrong: ["Whether they've ever left a bad online review", "Whether they've worked with a competitor before", "Whether they've had a change in ownership"], explain: "If they've churned before, you need to know that context going in -- it changes the conversation." },
-    { prompt: "Under \"Know the Deal,\" what should you confirm about their ERB before the call?", correct: "Whether they have open tables today and later in the week, and when", wrong: ["Which ERB platform they currently subscribe to", "How much they pay for their ERB monthly", "Whether their ERB integrates with delivery apps"], explain: "Checking real-time table availability tells you how much inventory they actually have to work with." },
+    { prompt: "What historical fact should you check about the prospect before the call?", correct: "Whether they've churned before, and when", wrong: ["Whether they've ever left a bad online review", "Whether they've worked with a competitor before", "Whether they've had a change in ownership"], explain: "If they've churned before, you need that context going in -- it changes the conversation." },
+    { prompt: "What should you confirm about their ERB before the call?", correct: "Whether they have open tables today and later in the week, and when", wrong: ["Which ERB platform they currently subscribe to", "How much they pay for their ERB monthly", "Whether their ERB integrates with delivery apps"], explain: "Checking real-time table availability tells you how much inventory they actually have to work with." },
     { prompt: "What should you have decided before the call regarding pricing?", correct: "What take rates you're proposing", wrong: ["What discount you're authorized to offer", "What competitor's rate you'll reference", "What the maximum allowable rate is"], explain: "Walking in with a specific rate in mind, rather than figuring it out live, keeps the conversation moving." },
-    { prompt: "Under \"Close Mentality,\" what should you reflect on from the appointment-setting call?", correct: "What you learned on that call", wrong: ["How long the call lasted", "Whether the call was recorded", "What time zone the prospect is in"], explain: "Anything you learned setting the appointment should carry directly into how you run the pitch." },
+    { prompt: "What should you reflect on from the appointment-setting call before the pitch?", correct: "What you learned on that call", wrong: ["How long the call lasted", "Whether the call was recorded", "What time zone the prospect is in"], explain: "Anything you learned setting the appointment should carry directly into how you run the pitch." },
     { prompt: "What should you identify before the pitch regarding motivation to act now?", correct: "What urgency lever you're using", wrong: ["What discount you'll lead with", "What time of day works best for them", "What competitor they might mention"], explain: "Knowing your urgency lever ahead of time means you're not searching for one mid-conversation." },
-    { prompt: "What should you prepare for in advance of the pitch?", correct: "An objection you anticipate they may have", wrong: ["A list of every possible objection with a rebuttal for each", "A backup pitch in case the first one fails", "A written script to read verbatim"], explain: "You don't need to prep every possible objection -- just think through the one you actually expect." }
+    { prompt: "What should you prepare for in advance of the pitch?", correct: "An objection you anticipate they may have", wrong: ["A list of every possible objection with a rebuttal for each", "A backup pitch in case the first one fails", "A written script to read verbatim"], explain: "You don't need to prep every possible objection -- just think through the one you actually expect." },
+    { prompt: "Broadly, what are the three things worth researching before any pitch?", correct: "The business, the deal terms, and your own mindset going in", wrong: ["The competitor landscape, the weather, and travel time", "The menu, the decor, and the wine list", "The restaurant's social media, reviews, and website design"], explain: "Everything above rolls up into knowing the business, knowing the deal, and walking in with the right mentality." }
   ];
   const questions = rawQuestions.map(q => {
     const options = shuffle([q.correct, ...q.wrong]);
@@ -136,6 +107,8 @@ let moduleResults = {};
   });
 
   document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -148,106 +121,8 @@ let moduleResults = {};
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
-    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
-})();
-
-/* ============ CATEGORIZE THE CHECKLIST (sort) ============ */
-(function() {
-  const pool = [
-    "Confirm the DM and GM names",
-    "Check GMV in the market over the last 30 days",
-    "Identify 3 nearby restaurants already on Seated",
-    "Confirm open tables in their ERB for today and this week",
-    "Decide what take rate you're proposing",
-    "Reflect on what you learned on the appt-setting call",
-    "Identify your urgency lever",
-    "Prepare for an objection you anticipate"
-  ];
-  const categories = ["Know the Business", "Know the Deal", "Close Mentality"];
-  const answers = {
-    "Confirm the DM and GM names": "Know the Business",
-    "Check GMV in the market over the last 30 days": "Know the Business",
-    "Identify 3 nearby restaurants already on Seated": "Know the Business",
-    "Confirm open tables in their ERB for today and this week": "Know the Deal",
-    "Decide what take rate you're proposing": "Know the Deal",
-    "Reflect on what you learned on the appt-setting call": "Close Mentality",
-    "Identify your urgency lever": "Close Mentality",
-    "Prepare for an objection you anticipate": "Close Mentality"
-  };
-
-  let poolOrder = shuffle(pool);
-  let placed = {}; categories.forEach(c => placed[c] = []);
-  let selected = null;
-  const poolEl = document.getElementById("cat-pool");
-  const slotsEl = document.getElementById("cat-slots");
-
-  function isPlaced(v) { return categories.some(c => placed[c].includes(v)); }
-  function renderPool() {
-    poolEl.innerHTML = "";
-    poolOrder.forEach(val => {
-      if (isPlaced(val)) return;
-      const btn = document.createElement("button");
-      btn.className = "pool-tile" + (selected === val ? " selected" : "");
-      btn.textContent = val;
-      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
-      poolEl.appendChild(btn);
-    });
-  }
-  function renderSlots() {
-    slotsEl.innerHTML = "";
-    categories.forEach(cat => {
-      const box = document.createElement("div");
-      box.className = "sort-box";
-      box.dataset.cat = cat;
-      const items = placed[cat].map(v => '<div>' + v + '</div>').join("");
-      box.innerHTML = '<span style="font-size:14px;font-weight:700;">' + cat + '</span><div class="items">' + (items || '<div style="color:var(--ink-secondary);">\u2014</div>') + '</div>';
-      box.addEventListener("click", () => {
-        if (selected && placed[cat].length < 3 && !isPlaced(selected)) { placed[cat].push(selected); selected = null; renderPool(); renderSlots(); }
-        else if (!selected && placed[cat].length > 0) { placed[cat].pop(); renderPool(); renderSlots(); }
-      });
-      slotsEl.appendChild(box);
-    });
-  }
-  document.getElementById("cat-check").addEventListener("click", () => {
-    let correctCount = 0, totalPlaced = 0;
-    categories.forEach(cat => {
-      const box = slotsEl.querySelector('[data-cat="'+cat+'"]');
-      const divs = box.querySelectorAll(".items > div");
-      placed[cat].forEach((val, idx) => {
-        totalPlaced++;
-        const div = divs[idx];
-        if (answers[val] === cat) { div.style.background = "var(--success-bg)"; div.style.color = "var(--success)"; correctCount++; }
-        else { div.style.background = "var(--danger-bg)"; div.style.color = "var(--danger)"; }
-      });
-    });
-    document.getElementById("cat-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
-    moduleResults["Categorize the Checklist"] = { correct: correctCount, total: 8 };
-    document.getElementById("cat-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
-  renderPool(); renderSlots();
-})();
-
-/* ============ SUBMIT MODULE (aggregate) ============ */
-(function() {
-  const expected = ["Quiz", "Categorize the Checklist"];
-  document.getElementById("submit-module-btn").addEventListener("click", () => {
-    const rep = getRep();
-    if (!rep) return;
-    const missing = expected.filter(c => !moduleResults[c]);
-    const fb = document.getElementById("submit-module-feedback");
-    if (missing.length > 0) {
-      fb.style.color = "var(--danger)";
-      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
-      return;
-    }
-    let totalCorrect = 0, totalPossible = 0;
-    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
-    fb.style.color = "";
-    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
-    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
-      document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+    submitScore(MODULE_NAME, "Full Module", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });
   });
 })();
