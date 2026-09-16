@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Objection Handling — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 36px; }
+  .section h2 { font-size: 19px; margin: 0 0 4px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: bold; font-size: 14px; margin: 0 0 4px; }
+  .quiz-q p.hint { font-size: 12px; color: var(--ink-secondary); margin: 0 0 8px; font-style: italic; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .quiz-opt.selected { border-color: var(--ink); border-width: 2px; }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-opt.missed { border-color: var(--success); background: var(--success-bg); color: var(--success); border-style: dashed; }
+  .quiz-explain { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 0; display: none; }
+  .checkbox-mark { display: inline-block; width: 16px; margin-right: 6px; font-weight: bold; }
+  .pool-tile {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--gold-tint); font-size: 13px; font-weight: bold; cursor: pointer; text-align: left;
+  }
+  .pool-tile.selected { border-color: var(--ink); border-width: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Advanced Objection Handling</h1>
+  <p class="subtitle">Pricing, cannibalization, competitors, order form terms, and the FAQ every rep should know cold.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Source document</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Review this before taking the quiz below.</p>
+    </div>
+    <a class="dl" href="https://docs.google.com/document/d/1HdpYFWC0ohc1XUyTcZVhGmwC_1CKm1W7Yzofvr0-o5U/edit" target="_blank" rel="noopener">View doc</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+  </div>
+
+  <!-- ============ QUIZ ============ -->
+  <div class="section card" id="quiz-section">
+    <h2>Quiz</h2>
+    <p class="desc">Pricing, cannibalization, competitors, FAQ, and order form terms.</p>
+    <div id="quiz-questions"></div>
+    <button class="primary" id="quiz-submit">Submit quiz</button>
+    <p class="feedback" id="quiz-feedback"></p>
+    <p class="score-note" id="quiz-score-note"></p>
+  </div>
+
+  <!-- ============ CHOOSE ALL THAT APPLY ============ -->
+  <div class="section card" id="multi-section">
+    <h2>Choose All That Apply</h2>
+    <p class="desc">Some questions have more than one correct answer — select every one that applies.</p>
+    <div id="multi-questions"></div>
+    <button class="primary" id="multi-submit">Submit answers</button>
+    <p class="feedback" id="multi-feedback"></p>
+    <p class="score-note" id="multi-score-note"></p>
+  </div>
+
+  <!-- ============ TRANSACTION THRESHOLDS MATCH ============ -->
+  <div class="section card" id="tt-section">
+    <h2>Max Value Per Transaction</h2>
+    <p class="desc">Tap a billing rate, then tap the transaction range it belongs to.</p>
+    <div id="tt-slots"></div>
+    <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
+    <div class="pool" id="tt-pool"></div>
+    <button class="primary" id="tt-check">Check answers</button>
+    <p class="feedback" id="tt-feedback"></p>
+    <p class="score-note" id="tt-score-note"></p>
+  </div>
+
+  <!-- ============ COMPETITORS MATCH ============ -->
+  <div class="section card" id="cm-section">
+    <h2>Competitors Match</h2>
+    <p class="desc">Tap a description, then tap the competitor it matches.</p>
+    <div class="pool column" id="cm-pool"></div>
+    <div id="cm-slots" style="margin-top:12px;"></div>
+    <button class="primary" id="cm-check">Check answers</button>
+    <p class="feedback" id="cm-feedback"></p>
+    <p class="score-note" id="cm-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Advanced Objection Handling";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const nameError = document.getElementById("name-error");
+  return requireName(nameInput, nameError);
+}
+
+/* ============ QUIZ ============ */
+(function() {
+  const rawQuestions = [
+    { prompt: "Per the Golden Rules, who controls the call?", correct: "Whoever asks questions", wrong: ["Whoever talks the most", "Whoever brings up price first", "Whoever mentions the competitor first"], explain: "Asking real questions -- not talking the most -- is what controls the conversation." },
+    { prompt: "For \"Margins too low / % too high,\" what's the core reframe?", correct: "Look at margin on the INCREMENTAL table, not overall margin -- fixed costs don't change, only F&B (~30%)", wrong: ["Offer to lower the rate immediately to match their margin", "Explain that margins don't matter for marketing spend", "Suggest they raise menu prices to compensate"], explain: "A guest on an incremental table nets far more than the overall 5% margin suggests, since fixed costs don't change." },
+    { prompt: "In the incremental math example, a $100 check with ~30% F&B cost and a 20% Seated fee nets the restaurant how much pure profit?", correct: "$50", wrong: ["$20", "$70", "$0"], explain: "$70 gross profit (after ~30% F&B cost) minus $20 Seated fee = $50 net incremental profit on a table that would've produced $0." },
+    { prompt: "For \"I need to run the numbers,\" what's the recommended response?", correct: "Ask what numbers specifically -- there are no numbers to run if they have empty seats", wrong: ["Offer to send a full financial breakdown by email", "Agree and follow up again next week", "Ask them to sign now and cancel later if the numbers don't work"], explain: "This is usually a smokescreen -- dig for the real objection instead of accepting it at face value." },
+    { prompt: "What rate range is recommended when a prospect asks to start at 5%?", correct: "21-26% on slower days, 15-20% on busier days (average at least 18%)", wrong: ["Always start at exactly 5% and raise later", "A flat 10% regardless of day", "Whatever rate the competitor is charging"], explain: "Starting low rarely gets raised later -- a low rate also means less exposure since diners filter by reward rate." },
+    { prompt: "How does Seated calculate what it bills on, regarding tax and tip?", correct: "Bills on the cleared amount minus ~18% for tips and state-specific tax", wrong: ["Bills on the full cleared amount including tip and tax", "Bills a flat fee regardless of check size", "Bills only on alcohol sales"], explain: "This is designed to benefit operators -- they're only ever paying on food and beverage." },
+    { prompt: "What retention rate and partner count does Seated cite when addressing cannibalization concerns?", correct: "99% retention, 2,500+ partners", wrong: ["50% retention, 500 partners", "99% retention, 100 partners", "There's no retention data available"], explain: "A high retention rate across thousands of partners is used as evidence against cannibalization concerns -- they wouldn't stay if it wasn't working." },
+    { prompt: "What example restaurant is cited to counter cannibalization concerns?", correct: "Malibu Farm -- booked out every weekend but still makes $20K/month from Seated", wrong: ["A restaurant that closed due to overbooking", "A restaurant with no online presence", "A restaurant that left the platform"], explain: "If Seated were just cannibalizing existing traffic, a fully-booked restaurant like this would have left long ago." },
+    { prompt: "What does Seated use instead of integrating directly with a restaurant's POS?", correct: "The restaurant's Merchant ID (MID)", wrong: ["A dedicated Seated tablet at the host stand", "Manual entry by restaurant staff after each visit", "A QR code scanned at checkout"], explain: "Seated captures the MID by swiping a card through the POS once -- no ongoing integration needed." },
+    { prompt: "For \"You'll only send guests during peak times,\" what's the core response?", correct: "The majority of volume comes at off-peak times, and rates can be customized by day", wrong: ["Peak-time traffic is unavoidable and can't be controlled", "Seated only works with restaurants that have no peak times", "Restaurants must accept all traffic regardless of timing"], explain: "Members book last-minute and peak times are usually already taken -- most Seated volume fills off-peak gaps." },
+    { prompt: "Why can't Seated block specific days or times for a restaurant?", correct: "To feature the restaurant on partners like Bilt, Citi, and Dinova, Seated needs to show full availability", wrong: ["It's a technical limitation with no workaround", "Restaurants are never allowed to influence scheduling", "Blocking times would violate card network rules"], explain: "Blocking would remove the restaurant from those high-value partner channels entirely -- customizing rates by day is the alternative." },
+    { prompt: "For \"We're already full most of the time,\" what's the reframe?", correct: "Think of Seated as an insurance policy -- going from 85% to 95% full", wrong: ["Seated only works with restaurants that are empty most nights", "This objection can't be addressed and the call should end", "Suggest they lower prices to attract more guests independently"], explain: "A 5-10% lift in occupancy sounds small day-to-day but adds up significantly over a year." },
+    { prompt: "For \"I need to talk to my partner first,\" what's the recommended first question?", correct: "\"If the decision were entirely up to you, would you try it?\"", wrong: ["\"When can I speak to your partner directly?\"", "\"Can you get their number for me?\"", "\"Why do you need their approval?\""], explain: "This surfaces whether the partner objection is real, or a stand-in for something else." },
+    { prompt: "For \"I don't want to discount my brand,\" what's the key point made?", correct: "Guests pay full price -- Seated is not a discount, and 15 Michelin Star restaurants partner with Seated", wrong: ["Discounting is necessary to compete in this market", "Seated requires a percentage off the menu price", "Only budget restaurants use Seated"], explain: "The more a guest spends, the more they earn back -- this incentivizes higher spend, not lower prices." },
+    { prompt: "What's the response to staffing concerns about extra guest volume?", correct: "It adds a few extra turns at slower times, not a full shift change -- no partner has needed to add staff because of it", wrong: ["Restaurants should plan to hire 1-2 additional staff members", "Seated requires dedicated staff to manage the program", "This is a valid reason to decline the partnership"], explain: "Framed as icing on the cake, not a complete shift change." },
+    { prompt: "What's the key difference Seated highlights versus Blackbird?", correct: "Blackbird is crypto-focused loyalty for regulars in a few cities (NYC, SF, LA); Seated drives incremental new diners nationwide with simple rewards", wrong: ["Blackbird and Seated are functionally identical products", "Seated only operates in the same 3 cities as Blackbird", "Blackbird focuses on corporate dining, Seated does not"], explain: "Different audience, different reward mechanism, much broader geographic reach for Seated." },
+    { prompt: "What's the key difference Seated highlights versus inKind?", correct: "inKind is an upfront-capital/prepaid-credit financing tool; Seated drives repeatable weekly demand, not one-time redemptions", wrong: ["inKind and Seated charge restaurants the exact same way", "Seated is also a financing tool for restaurants", "inKind focuses on new diner acquisition like Seated"], explain: "Think loyalty and marketing engine (Seated) versus a financing tool (inKind)." },
+    { prompt: "What's the positioning line used across ALL competitor objections?", correct: "\"We have very different audiences and offer a completely different product -- Seated is a complement, not a replacement\"", wrong: ["\"Our competitors are inferior products\"", "\"You should cancel your other platforms before signing with us\"", "\"We match any competitor's rate automatically\""], explain: "Seated positions itself as additive to existing tools, not a replacement for them." },
+    { prompt: "Roughly what's the revenue split between the restaurant and Seated?", correct: "Roughly 75% to the restaurant, 25% to Seated (not fixed)", wrong: ["50/50 split, fixed", "90% to Seated, 10% to the restaurant", "100% to the restaurant, Seated earns nothing"], explain: "The exact split can vary and isn't locked -- the majority always goes back to the restaurant." },
+    { prompt: "What's the caveat about sharing a guest's last 4 card digits if they paid with Apple Pay?", correct: "The POS sees the Apple Pay card's last 4, but Seated sends the real card's last 4 -- they won't match", wrong: ["Apple Pay transactions are never tracked at all", "Apple Pay always shows the same last 4 in both systems", "Apple Pay guests are excluded from rewards entirely"], explain: "This is a known discrepancy worth explaining proactively so it doesn't look like an error." },
+    { prompt: "What's the referral bonus for referring a new restaurant partner?", correct: "$250 Seated Reward, once the referred restaurant stays live for 90 days", wrong: ["$1,000 cash paid immediately upon signing", "A permanent rate reduction on your own account", "There is no referral program"], explain: "The reward is a Seated credit usable in their store, not a cash payment, and requires 90 days live." },
+    { prompt: "What's Restaurant Success's SLA for responding to a cancellation request?", correct: "Within 24 hours", wrong: ["Within 1 week", "Within 30 days", "There's no defined SLA"], explain: "RS responds within 24 hours and works to schedule the required offboarding call." },
+    { prompt: "About when can a restaurant typically revisit or adjust their rate?", correct: "Around the 4-month mark", wrong: ["After 30 days", "After 1 year minimum", "Rates can never be adjusted once set"], explain: "This gives enough time to gather data before evaluating a rate change with Restaurant Success." },
+    { prompt: "About how long does the average go-live timeline take?", correct: "About 10 business days", wrong: ["Same day", "60+ days", "6 months"], explain: "This is tied to card networks (Amex, Mastercard, Visa) confirming everything on their end." },
+    { prompt: "After cancellation, for how long might a restaurant continue receiving invoices?", correct: "Up to 16 weeks", wrong: ["Invoices stop immediately", "Up to 1 year", "Up to 6 months"], explain: "This covers remaining redemptions or partner program cycles already in motion before cancellation -- no new charges are generated." },
+    { prompt: "What's the observation window before Seated measures guest overlap (cannibalization)?", correct: "90 days", wrong: ["7 days", "30 days", "1 year"], explain: "The first 90 days establishes a baseline -- every guest in that window counts as business the restaurant already had." },
+    { prompt: "What's the network average guest overlap rate after the 90-day baseline?", correct: "12-14%", wrong: ["1-2%", "40-50%", "74%"], explain: "That means 86-88% of transactions are net-new guests brought in by Seated. (74% is the internal break-even reference, not the actual average.)" }
+  ];
+  const questions = rawQuestions.map(q => {
+    const options = shuffle([q.correct, ...q.wrong]);
+    return { prompt: q.prompt, options: options, correct: options.indexOf(q.correct), explain: q.explain };
+  });
+  const answers = new Array(questions.length).fill(null);
+  const container = document.getElementById("quiz-questions");
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        answers[qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = q.explain;
+    div.appendChild(explain);
+    container.appendChild(div);
+  });
+
+  document.getElementById("quiz-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      qDivs[qi].querySelector(".quiz-explain").style.display = "block";
+      if (answers[qi] === q.correct) correctCount++;
+    });
+    document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
+    submitScore(MODULE_NAME, "Quiz", rep, correctCount, questions.length).then(res => {
+      document.getElementById("quiz-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ CHOOSE ALL THAT APPLY ============ */
+(function() {
+  const rawQuestions = [
+    {
+      prompt: "Which of these are among the Golden Rules' tactics or mindset points?",
+      options: ["Find the real objection (peel the onion)", "Whoever asks questions controls the call", "Always end with a non-obvious question", "Never read scripts word-for-word -- internalize", "Always quote the exact percentage upfront", "Give prospects a week to think it over before following up"],
+      correctIndexes: [0,1,2,3]
+    },
+    {
+      prompt: "Which of the following are true about how Seated bills restaurants?",
+      options: ["Bills on the cleared amount minus ~18% for tips and state tax", "Bills weekly via ACH or credit card", "Integrates directly with the restaurant's POS system", "Uses the restaurant's Merchant ID (MID) instead of a POS integration", "Charges a flat monthly subscription fee regardless of guests sent"],
+      correctIndexes: [0,1,3]
+    },
+    {
+      prompt: "Which of the following are true about the guest overlap / cannibalization methodology?",
+      options: ["Overlap is measured using card network + last 4 digits", "Measurement starts immediately from day one live", "The first 90 days establishes a baseline before measuring overlap", "74% is the actual average overlap rate reps should quote to prospects", "The network average overlap rate is 12-14%"],
+      correctIndexes: [0,2,4]
+    }
+  ];
+
+  const container = document.getElementById("multi-questions");
+  const state = rawQuestions.map(() => new Set());
+
+  rawQuestions.forEach((q, qi) => {
+    const correctValues = q.correctIndexes.map(i => q.options[i]);
+    const shuffledOptions = shuffle(q.options);
+
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + (qi + 1) + '. ' + q.prompt + '</p><p class="hint">Select all that apply.</p>';
+    shuffledOptions.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.innerHTML = '<span class="checkbox-mark">\u2610</span>' + opt;
+      btn.addEventListener("click", () => {
+        if (state[qi].has(opt)) { state[qi].delete(opt); btn.classList.remove("selected"); btn.querySelector(".checkbox-mark").textContent = "\u2610"; }
+        else { state[qi].add(opt); btn.classList.add("selected"); btn.querySelector(".checkbox-mark").textContent = "\u2611"; }
+      });
+      btn.dataset.value = opt;
+      div.appendChild(btn);
+    });
+    const explain = document.createElement("p");
+    explain.className = "quiz-explain";
+    explain.textContent = "Correct: " + correctValues.join("; ");
+    div.appendChild(explain);
+    div.dataset.correctValues = JSON.stringify(correctValues);
+    container.appendChild(div);
+  });
+
+  document.getElementById("multi-submit").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    const qDivs = container.querySelectorAll(".quiz-q");
+    qDivs.forEach((div, qi) => {
+      const correctValues = JSON.parse(div.dataset.correctValues);
+      const selected = state[qi];
+      let allRight = selected.size === correctValues.length;
+      div.querySelectorAll(".quiz-opt").forEach(btn => {
+        const val = btn.dataset.value;
+        const isCorrect = correctValues.includes(val);
+        const isSelected = selected.has(val);
+        if (isCorrect && isSelected) btn.classList.add("correct");
+        else if (!isCorrect && isSelected) { btn.classList.add("incorrect"); allRight = false; }
+        else if (isCorrect && !isSelected) { btn.classList.add("missed"); allRight = false; }
+      });
+      div.querySelector(".quiz-explain").style.display = "block";
+      if (allRight) correctCount++;
+    });
+    document.getElementById("multi-feedback").textContent = correctCount + " / " + qDivs.length + " fully correct.";
+    submitScore(MODULE_NAME, "Choose All That Apply", rep, correctCount, qDivs.length).then(res => {
+      document.getElementById("multi-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+})();
+
+/* ============ TRANSACTION THRESHOLDS MATCH ============ */
+(function() {
+  const ranges = ["$0 \u2013 $1,999.99", "$2,000 \u2013 $3,999.99", "Over $4,000"];
+  const pool = ["Billed at your standard agreed-upon rate", "Billed at the lower of your agreed-upon rate or 10%", "No charge to the restaurant", "Billed at a flat 25%", "Billed at double your agreed-upon rate"];
+  const answers = {
+    "Billed at your standard agreed-upon rate": "$0 \u2013 $1,999.99",
+    "Billed at the lower of your agreed-upon rate or 10%": "$2,000 \u2013 $3,999.99",
+    "No charge to the restaurant": "Over $4,000"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  ranges.forEach(r => placed[r] = null);
+  let selected = null;
+  const poolEl = document.getElementById("tt-pool");
+  const slotsEl = document.getElementById("tt-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    ranges.forEach(range => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.style.alignItems = "flex-start";
+      row.dataset.range = range;
+      row.innerHTML = '<span class="slot-label" style="min-width:140px;font-weight:700;">' + range + '</span><span class="slot-val" style="flex:1;">' + (placed[range] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[range]) { selected = null; placed[range] = null; }
+        else if (selected) { placed[range] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("tt-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    ranges.forEach(range => {
+      const row = slotsEl.querySelector('[data-range="'+range+'"] .slot-val');
+      if (answers[placed[range]] === range) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("tt-feedback").textContent = correctCount + " of " + ranges.length + " correct.";
+    submitScore(MODULE_NAME, "Transaction Thresholds", rep, correctCount, ranges.length).then(res => {
+      document.getElementById("tt-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+
+/* ============ COMPETITORS MATCH ============ */
+(function() {
+  const competitors = ["Rewards Network", "inKind", "Blackbird"];
+  const pool = [
+    "Cash loans repaid via reward % on transactions -- loan funds go to repayment, not restaurant revenue",
+    "Upfront capital tool -- diners buy prepaid credit, restaurants repay via fulfilled tabs",
+    "Loyalty for regulars, crypto-savvy crowd, primarily NYC, SF, and LA only"
+  ];
+  const answers = {
+    "Cash loans repaid via reward % on transactions -- loan funds go to repayment, not restaurant revenue": "Rewards Network",
+    "Upfront capital tool -- diners buy prepaid credit, restaurants repay via fulfilled tabs": "inKind",
+    "Loyalty for regulars, crypto-savvy crowd, primarily NYC, SF, and LA only": "Blackbird"
+  };
+
+  let poolOrder = shuffle(pool);
+  let placed = {};
+  competitors.forEach(c => placed[c] = null);
+  let selected = null;
+  const poolEl = document.getElementById("cm-pool");
+  const slotsEl = document.getElementById("cm-slots");
+
+  function renderPool() {
+    poolEl.innerHTML = "";
+    poolOrder.forEach(val => {
+      if (Object.values(placed).includes(val)) return;
+      const btn = document.createElement("button");
+      btn.className = "pool-tile" + (selected === val ? " selected" : "");
+      btn.textContent = val;
+      btn.addEventListener("click", () => { selected = (selected === val) ? null : val; renderPool(); });
+      poolEl.appendChild(btn);
+    });
+  }
+  function renderSlots() {
+    slotsEl.innerHTML = "";
+    competitors.forEach(comp => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      row.style.alignItems = "flex-start";
+      row.dataset.comp = comp;
+      row.innerHTML = '<span class="slot-label" style="min-width:110px;font-weight:700;">' + comp + '</span><span class="slot-val" style="flex:1;">' + (placed[comp] || "\u2014") + '</span>';
+      row.addEventListener("click", () => {
+        if (placed[comp]) { selected = null; placed[comp] = null; }
+        else if (selected) { placed[comp] = selected; selected = null; }
+        renderPool(); renderSlots();
+      });
+      slotsEl.appendChild(row);
+    });
+  }
+  document.getElementById("cm-check").addEventListener("click", () => {
+    const rep = getRep();
+    if (!rep) return;
+    let correctCount = 0;
+    competitors.forEach(comp => {
+      const row = slotsEl.querySelector('[data-comp="'+comp+'"] .slot-val');
+      if (answers[placed[comp]] === comp) { row.className = "slot-val correct"; row.style.flex = "1"; correctCount++; }
+      else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
+    });
+    document.getElementById("cm-feedback").textContent = correctCount + " of " + competitors.length + " correct.";
+    submitScore(MODULE_NAME, "Competitors Match", rep, correctCount, competitors.length).then(res => {
+      document.getElementById("cm-score-note").textContent = res.recorded ? "Score recorded." : "Score not recorded — check connection.";
+    });
+  });
+  renderPool(); renderSlots();
+})();
+</script>
+</body>
+</html>
