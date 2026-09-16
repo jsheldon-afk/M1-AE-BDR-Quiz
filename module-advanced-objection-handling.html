@@ -54,9 +54,7 @@
     <h2>Quiz</h2>
     <p class="desc">Pricing, cannibalization, competitors, FAQ, and order form terms.</p>
     <div id="quiz-questions"></div>
-    <button class="primary" id="quiz-submit">Submit quiz</button>
     <p class="feedback" id="quiz-feedback"></p>
-    <p class="score-note" id="quiz-score-note"></p>
   </div>
 
   <!-- ============ CHOOSE ALL THAT APPLY ============ -->
@@ -64,9 +62,7 @@
     <h2>Choose All That Apply</h2>
     <p class="desc">Some questions have more than one correct answer — select every one that applies.</p>
     <div id="multi-questions"></div>
-    <button class="primary" id="multi-submit">Submit answers</button>
     <p class="feedback" id="multi-feedback"></p>
-    <p class="score-note" id="multi-score-note"></p>
   </div>
 
   <!-- ============ TRANSACTION THRESHOLDS MATCH ============ -->
@@ -76,9 +72,7 @@
     <div id="tt-slots"></div>
     <div style="font-size:12px;color:var(--ink-secondary);margin:10px 0 6px;">BANK</div>
     <div class="pool" id="tt-pool"></div>
-    <button class="primary" id="tt-check">Check answers</button>
     <p class="feedback" id="tt-feedback"></p>
-    <p class="score-note" id="tt-score-note"></p>
   </div>
 
   <!-- ============ COMPETITORS MATCH ============ -->
@@ -87,15 +81,13 @@
     <p class="desc">Tap a description, then tap the competitor it matches.</p>
     <div class="pool column" id="cm-pool"></div>
     <div id="cm-slots" style="margin-top:12px;"></div>
-    <button class="primary" id="cm-check">Check answers</button>
     <p class="feedback" id="cm-feedback"></p>
-    <p class="score-note" id="cm-score-note"></p>
   </div>
 
   <!-- ============ SUBMIT MODULE ============ -->
   <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
-    <h2>Submit Module</h2>
-    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <h2>Submit</h2>
+    <p class="desc">One click grades every section above and submits your final module score.</p>
     <button class="primary" id="submit-module-btn">Submit module</button>
     <p class="feedback" id="submit-module-feedback"></p>
     <p class="score-note" id="submit-module-score-note"></p>
@@ -119,7 +111,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
-let moduleResults = {};
+let sectionGraders = [];
 
 /* ============ QUIZ ============ */
 (function() {
@@ -181,7 +173,7 @@ let moduleResults = {};
     container.appendChild(div);
   });
 
-  document.getElementById("quiz-submit").addEventListener("click", () => {
+  function gradeQuiz() {
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -194,9 +186,9 @@ let moduleResults = {};
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
-    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Quiz", correct: correctCount, total: questions.length };
+  }
+  sectionGraders.push(gradeQuiz);
 })();
 
 /* ============ CHOOSE ALL THAT APPLY ============ */
@@ -248,7 +240,7 @@ let moduleResults = {};
     container.appendChild(div);
   });
 
-  document.getElementById("multi-submit").addEventListener("click", () => {
+  function gradeChooseAllThatApply() {
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     qDivs.forEach((div, qi) => {
@@ -267,9 +259,9 @@ let moduleResults = {};
       if (allRight) correctCount++;
     });
     document.getElementById("multi-feedback").textContent = correctCount + " / " + qDivs.length + " fully correct.";
-    moduleResults["Choose All That Apply"] = { correct: correctCount, total: qDivs.length };
-    document.getElementById("multi-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Choose All That Apply", correct: correctCount, total: qDivs.length };
+  }
+  sectionGraders.push(gradeChooseAllThatApply);
 })();
 
 /* ============ TRANSACTION THRESHOLDS MATCH ============ */
@@ -316,7 +308,7 @@ let moduleResults = {};
       slotsEl.appendChild(row);
     });
   }
-  document.getElementById("tt-check").addEventListener("click", () => {
+  function gradeTransactionThresholds() {
     let correctCount = 0;
     ranges.forEach(range => {
       const row = slotsEl.querySelector('[data-range="'+range+'"] .slot-val');
@@ -324,9 +316,9 @@ let moduleResults = {};
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("tt-feedback").textContent = correctCount + " of " + ranges.length + " correct.";
-    moduleResults["Transaction Thresholds"] = { correct: correctCount, total: ranges.length };
-    document.getElementById("tt-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Transaction Thresholds", correct: correctCount, total: ranges.length };
+  }
+  sectionGraders.push(gradeTransactionThresholds);
   renderPool(); renderSlots();
 })();
 
@@ -378,7 +370,7 @@ let moduleResults = {};
       slotsEl.appendChild(row);
     });
   }
-  document.getElementById("cm-check").addEventListener("click", () => {
+  function gradeCompetitorsMatch() {
     let correctCount = 0;
     competitors.forEach(comp => {
       const row = slotsEl.querySelector('[data-comp="'+comp+'"] .slot-val');
@@ -386,28 +378,28 @@ let moduleResults = {};
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("cm-feedback").textContent = correctCount + " of " + competitors.length + " correct.";
-    moduleResults["Competitors Match"] = { correct: correctCount, total: competitors.length };
-    document.getElementById("cm-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Competitors Match", correct: correctCount, total: competitors.length };
+  }
+  sectionGraders.push(gradeCompetitorsMatch);
   renderPool(); renderSlots();
 })();
-/* ============ SUBMIT MODULE (aggregate) ============ */
+
+/* ============ SUBMIT MODULE (grade everything + aggregate) ============ */
 (function() {
-  const expected = ["Quiz", "Choose All That Apply", "Transaction Thresholds", "Competitors Match"];
   document.getElementById("submit-module-btn").addEventListener("click", () => {
     const rep = getRep();
     if (!rep) return;
-    const missing = expected.filter(c => !moduleResults[c]);
-    const fb = document.getElementById("submit-module-feedback");
-    if (missing.length > 0) {
-      fb.style.color = "var(--danger)";
-      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
-      return;
-    }
     let totalCorrect = 0, totalPossible = 0;
-    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    const breakdown = [];
+    sectionGraders.forEach(grade => {
+      const result = grade();
+      totalCorrect += result.correct;
+      totalPossible += result.total;
+      breakdown.push(result.name + ": " + result.correct + "/" + result.total);
+    });
+    const fb = document.getElementById("submit-module-feedback");
     fb.style.color = "";
-    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module (" + breakdown.join(", ") + ").";
     submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
       document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });

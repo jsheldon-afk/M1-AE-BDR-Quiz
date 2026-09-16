@@ -43,9 +43,7 @@
     <h2>Quiz</h2>
     <p class="desc">Every partner in the network, and what makes each one distinct.</p>
     <div id="quiz-questions"></div>
-    <button class="primary" id="quiz-submit">Submit quiz</button>
     <p class="feedback" id="quiz-feedback"></p>
-    <p class="score-note" id="quiz-score-note"></p>
   </div>
 
   <!-- ============ PARTNER MATCH ============ -->
@@ -54,15 +52,13 @@
     <p class="desc">Tap a fact, then tap the partner it describes.</p>
     <div class="pool column" id="pm-pool"></div>
     <div id="pm-slots" style="margin-top:12px;"></div>
-    <button class="primary" id="pm-check">Check answers</button>
     <p class="feedback" id="pm-feedback"></p>
-    <p class="score-note" id="pm-score-note"></p>
   </div>
 
   <!-- ============ SUBMIT MODULE ============ -->
   <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
-    <h2>Submit Module</h2>
-    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <h2>Submit</h2>
+    <p class="desc">One click grades every section above and submits your final module score.</p>
     <button class="primary" id="submit-module-btn">Submit module</button>
     <p class="feedback" id="submit-module-feedback"></p>
     <p class="score-note" id="submit-module-score-note"></p>
@@ -86,7 +82,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
-let moduleResults = {};
+let sectionGraders = [];
 
 /* ============ QUIZ ============ */
 (function() {
@@ -140,7 +136,7 @@ let moduleResults = {};
     container.appendChild(div);
   });
 
-  document.getElementById("quiz-submit").addEventListener("click", () => {
+  function gradeQuiz() {
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -153,9 +149,9 @@ let moduleResults = {};
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
-    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Quiz", correct: correctCount, total: questions.length };
+  }
+  sectionGraders.push(gradeQuiz);
 })();
 
 /* ============ PARTNER MATCH (1:1) ============ */
@@ -216,7 +212,7 @@ let moduleResults = {};
       slotsEl.appendChild(row);
     });
   }
-  document.getElementById("pm-check").addEventListener("click", () => {
+  function gradePartnerMatch() {
     let correctCount = 0;
     partners.forEach(partner => {
       const row = slotsEl.querySelector('[data-partner="'+partner+'"] .slot-val');
@@ -224,34 +220,33 @@ let moduleResults = {};
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("pm-feedback").textContent = correctCount + " of " + partners.length + " correct.";
-    moduleResults["Partner Match"] = { correct: correctCount, total: partners.length };
-    document.getElementById("pm-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Partner Match", correct: correctCount, total: partners.length };
+  }
+  sectionGraders.push(gradePartnerMatch);
   renderPool(); renderSlots();
 })();
-/* ============ SUBMIT MODULE (aggregate) ============ */
+
+/* ============ SUBMIT MODULE (grade everything + aggregate) ============ */
 (function() {
-  const expected = ["Quiz", "Partner Match"];
   document.getElementById("submit-module-btn").addEventListener("click", () => {
     const rep = getRep();
     if (!rep) return;
-    const missing = expected.filter(c => !moduleResults[c]);
-    const fb = document.getElementById("submit-module-feedback");
-    if (missing.length > 0) {
-      fb.style.color = "var(--danger)";
-      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
-      return;
-    }
     let totalCorrect = 0, totalPossible = 0;
-    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    const breakdown = [];
+    sectionGraders.forEach(grade => {
+      const result = grade();
+      totalCorrect += result.correct;
+      totalPossible += result.total;
+      breakdown.push(result.name + ": " + result.correct + "/" + result.total);
+    });
+    const fb = document.getElementById("submit-module-feedback");
     fb.style.color = "";
-    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module (" + breakdown.join(", ") + ").";
     submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
       document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });
   });
 })();
-
 </script>
 </body>
 </html>

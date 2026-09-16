@@ -62,9 +62,7 @@
     <h2>Quiz</h2>
     <p class="desc">The tech stack categories, key competitors, and how Seated fits alongside each.</p>
     <div id="quiz-questions"></div>
-    <button class="primary" id="quiz-submit">Submit quiz</button>
     <p class="feedback" id="quiz-feedback"></p>
-    <p class="score-note" id="quiz-score-note"></p>
   </div>
 
   <!-- ============ OBJECTION HANDLING MATCH ============ -->
@@ -73,9 +71,7 @@
     <p class="desc">Tap a positioning statement, then tap the business function it responds to.</p>
     <div class="pool column" id="oh-pool"></div>
     <div id="oh-slots" style="margin-top:12px;"></div>
-    <button class="primary" id="oh-check">Check answers</button>
     <p class="feedback" id="oh-feedback"></p>
-    <p class="score-note" id="oh-score-note"></p>
   </div>
 
   <!-- ============ BLACKBIRD VS SEATED ============ -->
@@ -84,15 +80,13 @@
     <p class="desc">Tap a fact, then tap which company it describes.</p>
     <div class="pool column" id="bv-pool"></div>
     <div id="bv-slots" style="margin-top:12px;"></div>
-    <button class="primary" id="bv-check">Check answers</button>
     <p class="feedback" id="bv-feedback"></p>
-    <p class="score-note" id="bv-score-note"></p>
   </div>
 
   <!-- ============ SUBMIT MODULE ============ -->
   <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
-    <h2>Submit Module</h2>
-    <p class="desc">Check every section above, then submit here once for your final module score.</p>
+    <h2>Submit</h2>
+    <p class="desc">One click grades every section above and submits your final module score.</p>
     <button class="primary" id="submit-module-btn">Submit module</button>
     <p class="feedback" id="submit-module-feedback"></p>
     <p class="score-note" id="submit-module-score-note"></p>
@@ -116,7 +110,7 @@ function getRep() {
   const nameError = document.getElementById("name-error");
   return requireName(nameInput, nameError);
 }
-let moduleResults = {};
+let sectionGraders = [];
 
 /* ============ QUIZ ============ */
 (function() {
@@ -164,7 +158,7 @@ let moduleResults = {};
     container.appendChild(div);
   });
 
-  document.getElementById("quiz-submit").addEventListener("click", () => {
+  function gradeQuiz() {
     let correctCount = 0;
     const qDivs = container.querySelectorAll(".quiz-q");
     questions.forEach((q, qi) => {
@@ -177,9 +171,9 @@ let moduleResults = {};
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    moduleResults["Quiz"] = { correct: correctCount, total: questions.length };
-    document.getElementById("quiz-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Quiz", correct: correctCount, total: questions.length };
+  }
+  sectionGraders.push(gradeQuiz);
 })();
 
 /* ============ OBJECTION HANDLING MATCH (1:1, no distractors) ============ */
@@ -236,7 +230,7 @@ let moduleResults = {};
       slotsEl.appendChild(row);
     });
   }
-  document.getElementById("oh-check").addEventListener("click", () => {
+  function gradeObjectionHandlingMatch() {
     let correctCount = 0;
     categories.forEach(cat => {
       const row = slotsEl.querySelector('[data-cat="'+cat+'"] .slot-val');
@@ -244,9 +238,9 @@ let moduleResults = {};
       else { row.className = "slot-val incorrect"; row.style.flex = "1"; }
     });
     document.getElementById("oh-feedback").textContent = correctCount + " of " + categories.length + " correct.";
-    moduleResults["Objection Handling Match"] = { correct: correctCount, total: categories.length };
-    document.getElementById("oh-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Objection Handling Match", correct: correctCount, total: categories.length };
+  }
+  sectionGraders.push(gradeObjectionHandlingMatch);
   renderPool(); renderSlots();
 })();
 
@@ -307,7 +301,7 @@ let moduleResults = {};
       slotsEl.appendChild(box);
     });
   }
-  document.getElementById("bv-check").addEventListener("click", () => {
+  function gradeBlackbirdVsSeated() {
     let correctCount = 0, totalPlaced = 0;
     companies.forEach(company => {
       const box = slotsEl.querySelector('[data-company="'+company+'"]');
@@ -320,34 +314,33 @@ let moduleResults = {};
       });
     });
     document.getElementById("bv-feedback").textContent = correctCount + " of " + totalPlaced + " placed so far are correct.";
-    moduleResults["Blackbird vs Seated"] = { correct: correctCount, total: 8 };
-    document.getElementById("bv-score-note").textContent = "Saved — submit the whole module below when you're done.";
-  });
+    return { name: "Blackbird vs Seated", correct: correctCount, total: 8 };
+  }
+  sectionGraders.push(gradeBlackbirdVsSeated);
   renderPool(); renderSlots();
 })();
-/* ============ SUBMIT MODULE (aggregate) ============ */
+
+/* ============ SUBMIT MODULE (grade everything + aggregate) ============ */
 (function() {
-  const expected = ["Quiz", "Objection Handling Match", "Blackbird vs Seated"];
   document.getElementById("submit-module-btn").addEventListener("click", () => {
     const rep = getRep();
     if (!rep) return;
-    const missing = expected.filter(c => !moduleResults[c]);
-    const fb = document.getElementById("submit-module-feedback");
-    if (missing.length > 0) {
-      fb.style.color = "var(--danger)";
-      fb.textContent = "Please check your answers in: " + missing.join(", ") + " before submitting.";
-      return;
-    }
     let totalCorrect = 0, totalPossible = 0;
-    expected.forEach(c => { totalCorrect += moduleResults[c].correct; totalPossible += moduleResults[c].total; });
+    const breakdown = [];
+    sectionGraders.forEach(grade => {
+      const result = grade();
+      totalCorrect += result.correct;
+      totalPossible += result.total;
+      breakdown.push(result.name + ": " + result.correct + "/" + result.total);
+    });
+    const fb = document.getElementById("submit-module-feedback");
     fb.style.color = "";
-    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module.";
+    fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module (" + breakdown.join(", ") + ").";
     submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
       document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });
   });
 })();
-
 </script>
 </body>
 </html>
