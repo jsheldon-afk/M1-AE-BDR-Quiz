@@ -65,7 +65,11 @@ const MODULE_MONTHS = {
 const ALL_MODULES = Object.keys(MODULE_MONTHS);
 
 function addDays(dateStr, days) {
-  const d = new Date(dateStr + "T00:00:00");
+  // Sheets sometimes stores dates as full ISO datetimes (e.g. after auto-converting
+  // a typed date), so just grab the YYYY-MM-DD portion regardless of what's attached.
+  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   d.setDate(d.getDate() + days);
   return d;
 }
@@ -148,7 +152,7 @@ function render(roster, scores, settings) {
 
     html += '<tr class="rep-row" data-idx="' + idx + '">' +
       '<td>' + (person.name || person.email) + '</td>' +
-      '<td>' + (startDate || '\u2014') + '</td>' +
+      '<td>' + (startDate ? String(startDate).slice(0, 10) : '\u2014') + '</td>' +
       '<td>' + overallBadge + '</td>' +
       '</tr>';
 
