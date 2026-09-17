@@ -64,14 +64,18 @@ const MODULE_MONTHS = {
 };
 const ALL_MODULES = Object.keys(MODULE_MONTHS);
 
-function addDays(dateStr, days) {
-  // Sheets sometimes stores dates as full ISO datetimes (e.g. after auto-converting
-  // a typed date), so just grab the YYYY-MM-DD portion regardless of what's attached.
-  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+function dueDateForMonth(startDateStr, monthTag) {
+  // Sheets sometimes stores dates as full ISO datetimes, so just grab the
+  // YYYY-MM-DD portion regardless of what's attached.
+  const match = String(startDateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return null;
-  const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  d.setDate(d.getDate() + days);
-  return d;
+  const startYear = Number(match[1]);
+  const startMonthIdx = Number(match[2]) - 1; // zero-based
+  const targetMonthIdx = startMonthIdx + monthTag; // monthTag is 0, 1, or 2
+  const targetYear = startYear + Math.floor(targetMonthIdx / 12);
+  const normalizedMonthIdx = ((targetMonthIdx % 12) + 12) % 12;
+  // Day 0 of the following month = the last day of the target month.
+  return new Date(targetYear, normalizedMonthIdx + 1, 0);
 }
 
 function loadSchedule() {
@@ -80,16 +84,15 @@ function loadSchedule() {
 
   Promise.all([
     fetch(SCORE_ENDPOINT + "?roster=true").then(r => r.json()),
-    fetch(SCORE_ENDPOINT + "?data=true").then(r => r.json()),
-    fetch(SCORE_ENDPOINT + "?settings=true").then(r => r.json())
-  ]).then(([rosterRes, scoresRes, settings]) => {
-    render(rosterRes.rows || [], scoresRes.rows || [], settings);
+    fetch(SCORE_ENDPOINT + "?data=true").then(r => r.json())
+  ]).then(([rosterRes, scoresRes]) => {
+    render(rosterRes.rows || [], scoresRes.rows || []);
   }).catch(err => {
     content.innerHTML = '<p class="empty">Could not load the schedule. Check the Apps Script deployment. (' + err + ')</p>';
   });
 }
 
-function render(roster, scores, settings) {
+function render(roster, scores) {
   const content = document.getElementById("content");
   const summaryLine = document.getElementById("summary-line");
 
@@ -99,7 +102,6 @@ function render(roster, scores, settings) {
     return;
   }
 
-  const monthDays = [settings.month0Days, settings.month1Days, settings.month2Days];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -123,7 +125,7 @@ function render(roster, scores, settings) {
 
     const moduleRows = ALL_MODULES.map(moduleName => {
       const month = MODULE_MONTHS[moduleName];
-      const dueDate = startDate ? addDays(startDate, monthDays[month]) : null;
+      const dueDate = startDate ? dueDateForMonth(startDate, month) : null;
       const key = email + "||" + moduleName;
       const isDone = !!completed[key];
       let status, statusClass, dueLabel;
