@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Schedule — Seated Certification Program</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-secondary); font-weight: 600; border-bottom: 2px solid var(--ink); }
+  tr.rep-row { cursor: pointer; }
+  tr.rep-row:hover { background: var(--gold-tint); }
+  tr.rep-row td:first-child { font-weight: 600; }
+  .detail-row { display: none; }
+  .detail-row.open { display: table-row; }
+  .detail-row td { background: #fff; padding: 0; }
+  .detail-inner { padding: 10px 10px 14px 24px; }
+  .detail-inner table { font-size: 12.5px; }
+  .detail-inner th { border-bottom: 1px solid var(--line); }
+  .status { font-weight: 600; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; display: inline-block; }
+  .status.completed { color: var(--success); background: var(--success-bg); }
+  .status.upcoming { color: var(--ink-secondary); background: var(--gold-tint); }
+  .status.overdue { color: var(--danger); background: var(--danger-bg); }
+  .refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .loading, .empty { font-size: 13px; color: var(--ink-secondary); padding: 20px 0; }
+  .summary-badge { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Schedule</h1>
+  <p class="subtitle">Every rep's completion status against their deadlines. Click a row for the per-module breakdown.</p>
+
+  <div class="refresh-row">
+    <span id="summary-line" style="font-size:13px;color:var(--ink-secondary);"></span>
+    <button class="secondary" id="refresh-btn">Refresh</button>
+  </div>
+
+  <div id="content">
+    <p class="loading">Loading schedule...</p>
+  </div>
+
+  <p style="font-size:13px;color:var(--ink-secondary);margin-top:24px;">Not seeing someone? <a href="add-rep.html" style="color:var(--gold);font-weight:600;">Add them to the roster</a>. Deadlines are set in the Settings tab of the Scores sheet, editable any time.</p>
+</div>
+
+<script>
+const SCORE_ENDPOINT = "https://script.google.com/macros/s/AKfycbxFJJKa4QhN1sirX2UAEd7oI9m98R2bjX6k09BOwgAd9THjHz1B5R3j6gvtSC2zFXwG/exec";
+
+// Module name -> month tag, matching the homepage's Month 0/1/2 grouping.
+const MODULE_MONTHS = {
+  "Restaurants 101": 0,
+  "Cold Call Training": 0,
+  "Objection Handling": 0,
+  "API Partners": 1,
+  "Competitive Landscape": 1,
+  "Ramping Quota, Commission & Expectations": 1,
+  "Setting Meetings That Hold": 1,
+  "Product Economics Calculator": 2,
+  "Advanced Objection Handling": 2,
+  "Pre-Pitch Research": 2,
+  "Pipeline Management": 2
+};
+const ALL_MODULES = Object.keys(MODULE_MONTHS);
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function loadSchedule() {
+  const content = document.getElementById("content");
+  content.innerHTML = '<p class="loading">Loading schedule...</p>';
+
+  Promise.all([
+    fetch(SCORE_ENDPOINT + "?roster=true").then(r => r.json()),
+    fetch(SCORE_ENDPOINT + "?data=true").then(r => r.json()),
+    fetch(SCORE_ENDPOINT + "?settings=true").then(r => r.json())
+  ]).then(([rosterRes, scoresRes, settings]) => {
+    render(rosterRes.rows || [], scoresRes.rows || [], settings);
+  }).catch(err => {
+    content.innerHTML = '<p class="empty">Could not load the schedule. Check the Apps Script deployment. (' + err + ')</p>';
+  });
+}
+
+function render(roster, scores, settings) {
+  const content = document.getElementById("content");
+  const summaryLine = document.getElementById("summary-line");
+
+  if (roster.length === 0) {
+    content.innerHTML = '<p class="empty">No one on the roster yet. <a href="add-rep.html" style="color:var(--gold);font-weight:600;">Add a rep</a> to get started.</p>';
+    summaryLine.textContent = "";
+    return;
+  }
+
+  const monthDays = [settings.month0Days, settings.month1Days, settings.month2Days];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Index completed "Full Module" scores by email + module name
+  const completed = {};
+  scores.forEach(s => {
+    if (s.component === "Full Module" && s.email) {
+      const key = s.email.trim().toLowerCase() + "||" + s.module;
+      completed[key] = s;
+    }
+  });
+
+  let totalOverdue = 0, totalUpcoming = 0, totalCompleted = 0;
+
+  let html = '<table><thead><tr><th>Rep</th><th>Start Date</th><th>Status</th></tr></thead><tbody>';
+
+  roster.forEach((person, idx) => {
+    const email = (person.email || "").trim().toLowerCase();
+    const startDate = person.startDate;
+    let repOverdue = 0, repUpcoming = 0, repCompleted = 0;
+
+    const moduleRows = ALL_MODULES.map(moduleName => {
+      const month = MODULE_MONTHS[moduleName];
+      const dueDate = startDate ? addDays(startDate, monthDays[month]) : null;
+      const key = email + "||" + moduleName;
+      const isDone = !!completed[key];
+      let status, statusClass, dueLabel;
+      if (isDone) {
+        status = "Completed"; statusClass = "completed"; repCompleted++;
+        dueLabel = completed[key].percent + " correct";
+      } else if (dueDate && dueDate < today) {
+        status = "Overdue"; statusClass = "overdue"; repOverdue++;
+        dueLabel = "Was due " + dueDate.toLocaleDateString();
+      } else if (dueDate) {
+        status = "Upcoming"; statusClass = "upcoming"; repUpcoming++;
+        dueLabel = "Due " + dueDate.toLocaleDateString();
+      } else {
+        status = "No start date"; statusClass = "upcoming";
+        dueLabel = "Add a start date to compute a deadline";
+      }
+      return { moduleName, status, statusClass, dueLabel };
+    });
+
+    totalOverdue += repOverdue; totalUpcoming += repUpcoming; totalCompleted += repCompleted;
+
+    let overallBadge;
+    if (repOverdue > 0) overallBadge = '<span class="status overdue">' + repOverdue + ' overdue</span>';
+    else if (repUpcoming > 0) overallBadge = '<span class="status upcoming">' + repUpcoming + ' upcoming</span>';
+    else overallBadge = '<span class="status completed">All caught up</span>';
+
+    html += '<tr class="rep-row" data-idx="' + idx + '">' +
+      '<td>' + (person.name || person.email) + '</td>' +
+      '<td>' + (startDate || '\u2014') + '</td>' +
+      '<td>' + overallBadge + '</td>' +
+      '</tr>';
+
+    html += '<tr class="detail-row" id="detail-' + idx + '"><td colspan="3"><div class="detail-inner">' +
+      '<table><thead><tr><th>Module</th><th>Status</th><th>Detail</th></tr></thead><tbody>';
+    moduleRows.forEach(mr => {
+      html += '<tr>' +
+        '<td>' + mr.moduleName + '</td>' +
+        '<td><span class="status ' + mr.statusClass + '">' + mr.status + '</span></td>' +
+        '<td>' + mr.dueLabel + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div></td></tr>';
+  });
+
+  html += '</tbody></table>';
+  content.innerHTML = html;
+  summaryLine.innerHTML =
+    '<span class="summary-badge status overdue">' + totalOverdue + ' overdue</span>' +
+    '<span class="summary-badge status upcoming">' + totalUpcoming + ' upcoming</span>' +
+    '<span class="summary-badge status completed">' + totalCompleted + ' completed</span>';
+
+  document.querySelectorAll(".rep-row").forEach(row => {
+    row.addEventListener("click", () => {
+      document.getElementById("detail-" + row.dataset.idx).classList.toggle("open");
+    });
+  });
+}
+
+document.getElementById("refresh-btn").addEventListener("click", loadSchedule);
+loadSchedule();
+</script>
+</body>
+</html>

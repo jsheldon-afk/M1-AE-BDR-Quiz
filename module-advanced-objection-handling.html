@@ -47,7 +47,9 @@
   <div class="card name-field">
     <label for="rep-name">Your name</label>
     <input type="text" id="rep-name" placeholder="First and last name">
-    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first — needed before submitting any section below.</p>
+    <label for="rep-email" style="margin-top:14px;">Your email</label>
+    <input type="email" id="rep-email" placeholder="you@seatedapp.io">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name and a valid email first.</p>
   </div>
 
   <!-- ============ QUIZ ============ -->
@@ -109,8 +111,9 @@ function shuffle(arr) {
 }
 function getRep() {
   const nameInput = document.getElementById("rep-name");
+  const emailInput = document.getElementById("rep-email");
   const nameError = document.getElementById("name-error");
-  return requireName(nameInput, nameError);
+  return requireNameAndEmail(nameInput, emailInput, nameError);
 }
 let sectionGraders = [];
 
@@ -401,7 +404,7 @@ let sectionGraders = [];
     const fb = document.getElementById("submit-module-feedback");
     fb.style.color = "";
     fb.textContent = totalCorrect + " / " + totalPossible + " correct across the whole module (" + breakdown.join(", ") + ").";
-    submitScore(MODULE_NAME, "Full Module", rep, totalCorrect, totalPossible).then(res => {
+    submitScore(MODULE_NAME, "Full Module", rep.name, totalCorrect, totalPossible, rep.email).then(res => {
       document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });
   });

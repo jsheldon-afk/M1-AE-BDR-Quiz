@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Add Rep — Seated Certification Program</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Add a Rep</h1>
+  <p class="subtitle">Add someone to the roster so their certification schedule can be tracked. Their start date determines when each module's deadline falls.</p>
+
+  <div class="card">
+    <label for="add-name">Full name</label>
+    <input type="text" id="add-name" placeholder="First and last name" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:var(--cream);margin-bottom:16px;">
+
+    <label for="add-email">Email</label>
+    <input type="email" id="add-email" placeholder="you@seatedapp.io" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:var(--cream);margin-bottom:16px;">
+
+    <label for="add-start-date">Start date</label>
+    <input type="date" id="add-start-date" style="width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;background:var(--cream);margin-bottom:20px;">
+
+    <button class="primary" id="add-rep-btn">Add to roster</button>
+    <p class="feedback" id="add-feedback"></p>
+  </div>
+
+  <p style="font-size:13px;color:var(--ink-secondary);">Already on the roster? Check the <a href="schedule.html" style="color:var(--gold);font-weight:600;">schedule page</a> to see completion status.</p>
+</div>
+
+<script src="score.js"></script>
+<script>
+document.getElementById("add-rep-btn").addEventListener("click", () => {
+  const name = document.getElementById("add-name").value.trim();
+  const email = document.getElementById("add-email").value.trim();
+  const startDate = document.getElementById("add-start-date").value;
+  const fb = document.getElementById("add-feedback");
+
+  if (!name || !email || email.indexOf("@") === -1 || !startDate) {
+    fb.style.color = "var(--danger)";
+    fb.textContent = "Fill in a name, valid email, and start date first.";
+    return;
+  }
+
+  submitRoster(email, name, startDate).then(res => {
+    fb.style.color = res.recorded ? "var(--success)" : "var(--danger)";
+    fb.textContent = res.recorded
+      ? name + " added to the roster with a start date of " + startDate + "."
+      : "Something went wrong — check your connection and try again.";
+    if (res.recorded) {
+      document.getElementById("add-name").value = "";
+      document.getElementById("add-email").value = "";
+      document.getElementById("add-start-date").value = "";
+    }
+  });
+});
+</script>
+</body>
+</html>
