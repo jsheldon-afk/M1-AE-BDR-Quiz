@@ -45,8 +45,9 @@
   <p style="font-size:13px;color:var(--ink-secondary);margin-top:24px;">Not seeing someone? <a href="add-rep.html" style="color:var(--gold);font-weight:600;">Add them to the roster</a>. Deadlines are set in the Settings tab of the Scores sheet, editable any time.</p>
 </div>
 
+<script src="score.js"></script>
 <script>
-const SCORE_ENDPOINT = "https://script.google.com/macros/s/AKfycbxFJJKa4QhN1sirX2UAEd7oI9m98R2bjX6k09BOwgAd9THjHz1B5R3j6gvtSC2zFXwG/exec";
+
 
 // Module name -> month tag, matching the homepage's Month 0/1/2 grouping.
 const MODULE_MONTHS = {
@@ -64,18 +65,68 @@ const MODULE_MONTHS = {
 };
 const ALL_MODULES = Object.keys(MODULE_MONTHS);
 
+// Only these 4 modules require ongoing quarterly recertification.
+const RECERT_MODULES = [
+  "Product Economics Calculator",
+  "Advanced Objection Handling",
+  "Pre-Pitch Research",
+  "Pipeline Management"
+];
+const RECERT_MONTHS = 3;
+
 function dueDateForMonth(startDateStr, monthTag) {
-  // Sheets sometimes stores dates as full ISO datetimes, so just grab the
-  // YYYY-MM-DD portion regardless of what's attached.
   const match = String(startDateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return null;
   const startYear = Number(match[1]);
-  const startMonthIdx = Number(match[2]) - 1; // zero-based
-  const targetMonthIdx = startMonthIdx + monthTag; // monthTag is 0, 1, or 2
+  const startMonthIdx = Number(match[2]) - 1;
+  const targetMonthIdx = startMonthIdx + monthTag;
   const targetYear = startYear + Math.floor(targetMonthIdx / 12);
   const normalizedMonthIdx = ((targetMonthIdx % 12) + 12) % 12;
-  // Day 0 of the following month = the last day of the target month.
   return new Date(targetYear, normalizedMonthIdx + 1, 0);
+}
+
+function addMonths(date, months) {
+  const d = new Date(date.getTime());
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+// Returns the last day of (year, absoluteMonthIdx), where absoluteMonthIdx
+// can be any integer (negative or > 11) -- JS Date normalizes the year
+// rollover correctly. Building fresh from (year, month, 0) avoids the
+// classic "Jan 31 + 1 month = Mar 3" style overflow bug entirely, since we
+// never add months to an existing day-31 date.
+function endOfAbsoluteMonth(year, absoluteMonthIdx) {
+  return new Date(year, absoluteMonthIdx + 1, 0);
+}
+
+// Natural (non-overridden) recert due date, anchored to the rep's Month 2
+// due date -- reps who started the same day always share the same
+// boundaries. lastCompletionDate only determines which boundary is next.
+function naturalNextRecertDate(startDate, lastCompletionDate) {
+  const startYear = startDate.getFullYear();
+  const baseMonthIdx = startDate.getMonth() + 2; // M2's month, may exceed 11
+  let cycleMonthIdx = baseMonthIdx + RECERT_MONTHS;
+  let due = endOfAbsoluteMonth(startYear, cycleMonthIdx);
+  while (lastCompletionDate && due <= lastCompletionDate) {
+    cycleMonthIdx += RECERT_MONTHS;
+    due = endOfAbsoluteMonth(startYear, cycleMonthIdx);
+  }
+  return due;
+}
+
+// Honors a manual override if it was set after the rep's last completion
+// (i.e., it targets their current open cycle).
+function resolveRecertDueDate(startDate, lastCompletionDate, overrideEntry) {
+  const natural = naturalNextRecertDate(startDate, lastCompletionDate);
+  if (overrideEntry) {
+    const overrideSetOn = new Date(overrideEntry.setOn);
+    if (!lastCompletionDate || overrideSetOn > lastCompletionDate) {
+      const m = String(overrideEntry.dueDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    }
+  }
+  return natural;
 }
 
 function loadSchedule() {
@@ -84,15 +135,16 @@ function loadSchedule() {
 
   Promise.all([
     fetch(SCORE_ENDPOINT + "?roster=true").then(r => r.json()),
-    fetch(SCORE_ENDPOINT + "?data=true").then(r => r.json())
-  ]).then(([rosterRes, scoresRes]) => {
-    render(rosterRes.rows || [], scoresRes.rows || []);
+    fetch(SCORE_ENDPOINT + "?data=true").then(r => r.json()),
+    fetch(SCORE_ENDPOINT + "?recertOverrides=true").then(r => r.json())
+  ]).then(([rosterRes, scoresRes, overridesRes]) => {
+    render(rosterRes.rows || [], scoresRes.rows || [], overridesRes.rows || []);
   }).catch(err => {
     content.innerHTML = '<p class="empty">Could not load the schedule. Check the Apps Script deployment. (' + err + ')</p>';
   });
 }
 
-function render(roster, scores) {
+function render(roster, scores, overrides) {
   const content = document.getElementById("content");
   const summaryLine = document.getElementById("summary-line");
 
@@ -105,18 +157,32 @@ function render(roster, scores) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Index completed "Full Module" scores by email + module name
+  // Index completed "Full Module" scores by email + module name -- keep the
+  // most recent one per pair.
   const completed = {};
   scores.forEach(s => {
     if (s.component === "Full Module" && s.email) {
       const key = s.email.trim().toLowerCase() + "||" + s.module;
-      completed[key] = s;
+      const ts = new Date(s.timestamp);
+      if (!completed[key] || ts > new Date(completed[key].timestamp)) {
+        completed[key] = s;
+      }
+    }
+  });
+
+  // Most recent override per email + module.
+  const overridesByKey = {};
+  overrides.forEach(o => {
+    if (!o.email) return;
+    const key = o.email.trim().toLowerCase() + "||" + o.module;
+    if (!overridesByKey[key] || new Date(o.setOn) > new Date(overridesByKey[key].setOn)) {
+      overridesByKey[key] = o;
     }
   });
 
   let totalOverdue = 0, totalUpcoming = 0, totalCompleted = 0;
 
-  let html = '<table><thead><tr><th>Rep</th><th>Start Date</th><th>Status</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th>Rep</th><th>Start Date</th><th>Status</th><th></th></tr></thead><tbody>';
 
   roster.forEach((person, idx) => {
     const email = (person.email || "").trim().toLowerCase();
@@ -145,6 +211,38 @@ function render(roster, scores) {
       return { moduleName, status, statusClass, dueLabel };
     });
 
+    // Recertification rows -- only appear once a rep has completed that
+    // module at least once. Due dates are anchored to the rep's start
+    // date, not their completion date, so same-start-date reps share
+    // identical boundaries. A manual override (if set) takes precedence
+    // for the current open cycle.
+    const recertRows = [];
+    const startDateObj = startDate ? (() => { const m = String(startDate).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null; })() : null;
+    RECERT_MODULES.forEach(moduleName => {
+      const key = email + "||" + moduleName;
+      const last = completed[key];
+      if (!last || !startDateObj) return; // no initial completion yet -- not due for recert
+      const lastDate = new Date(last.timestamp);
+      const overrideEntry = overridesByKey[key];
+      const recertDue = resolveRecertDueDate(startDateObj, lastDate, overrideEntry);
+      let status, statusClass, dueLabel;
+      if (recertDue < today) {
+        status = "Recert Overdue"; statusClass = "overdue"; repOverdue++;
+        dueLabel = "Was due " + recertDue.toLocaleDateString();
+      } else {
+        status = "Recert Upcoming"; statusClass = "upcoming";
+        dueLabel = "Due " + recertDue.toLocaleDateString();
+        const soonCutoff = new Date(today); soonCutoff.setDate(soonCutoff.getDate() + 30);
+        if (recertDue <= soonCutoff) repUpcoming++;
+      }
+      recertRows.push({
+        moduleName: moduleName + " (recert)",
+        status, statusClass, dueLabel,
+        editableModule: moduleName,
+        editableEmail: person.email || ""
+      });
+    });
+
     totalOverdue += repOverdue; totalUpcoming += repUpcoming; totalCompleted += repCompleted;
 
     let overallBadge;
@@ -156,15 +254,25 @@ function render(roster, scores) {
       '<td>' + (person.name || person.email) + '</td>' +
       '<td>' + (startDate ? String(startDate).slice(0, 10) : '\u2014') + '</td>' +
       '<td>' + overallBadge + '</td>' +
+      '<td><button class="secondary remove-btn" data-email="' + (person.email || '').replace(/"/g, '&quot;') + '" data-name="' + (person.name || person.email || '').replace(/"/g, '&quot;') + '">Remove</button></td>' +
       '</tr>';
 
-    html += '<tr class="detail-row" id="detail-' + idx + '"><td colspan="3"><div class="detail-inner">' +
-      '<table><thead><tr><th>Module</th><th>Status</th><th>Detail</th></tr></thead><tbody>';
+    html += '<tr class="detail-row" id="detail-' + idx + '"><td colspan="4"><div class="detail-inner">' +
+      '<table><thead><tr><th>Module</th><th>Status</th><th>Detail</th><th></th></tr></thead><tbody>';
     moduleRows.forEach(mr => {
       html += '<tr>' +
         '<td>' + mr.moduleName + '</td>' +
         '<td><span class="status ' + mr.statusClass + '">' + mr.status + '</span></td>' +
         '<td>' + mr.dueLabel + '</td>' +
+        '<td></td>' +
+        '</tr>';
+    });
+    recertRows.forEach(mr => {
+      html += '<tr>' +
+        '<td>' + mr.moduleName + '</td>' +
+        '<td><span class="status ' + mr.statusClass + '">' + mr.status + '</span></td>' +
+        '<td>' + mr.dueLabel + '</td>' +
+        '<td><button class="secondary edit-recert-btn" data-email="' + mr.editableEmail.replace(/"/g, '&quot;') + '" data-module="' + mr.editableModule.replace(/"/g, '&quot;') + '">Edit</button></td>' +
         '</tr>';
     });
     html += '</tbody></table></div></td></tr>';
@@ -180,6 +288,53 @@ function render(roster, scores) {
   document.querySelectorAll(".rep-row").forEach(row => {
     row.addEventListener("click", () => {
       document.getElementById("detail-" + row.dataset.idx).classList.toggle("open");
+    });
+  });
+
+  document.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation(); // don't also toggle the row's detail panel
+      const email = btn.dataset.email;
+      const name = btn.dataset.name;
+      if (!confirm("Remove " + name + " (" + email + ") from the active roster? Their past scores are kept, but they'll stop appearing here and stop receiving deadline alerts.")) {
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Removing...";
+      removeRosterEntry(email).then(res => {
+        if (res.recorded) {
+          loadSchedule();
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Remove";
+          alert("Something went wrong removing them -- check your connection and try again.");
+        }
+      });
+    });
+  });
+
+  document.querySelectorAll(".edit-recert-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const email = btn.dataset.email;
+      const moduleName = btn.dataset.module;
+      const input = prompt("New recert due date for " + moduleName + " (YYYY-MM-DD):", "");
+      if (!input) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(input.trim())) {
+        alert("Please enter a date in YYYY-MM-DD format, e.g. 2026-12-31.");
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+      setRecertOverride(email, moduleName, input.trim()).then(res => {
+        if (res.recorded) {
+          loadSchedule();
+        } else {
+          btn.disabled = false;
+          btn.textContent = "Edit";
+          alert("Something went wrong saving that -- check your connection and try again.");
+        }
+      });
     });
   });
 }

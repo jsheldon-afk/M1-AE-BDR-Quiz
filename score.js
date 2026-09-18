@@ -39,6 +39,33 @@ function submitRoster(email, name, startDate) {
   }).then(() => ({ recorded: true })).catch(() => ({ recorded: false }));
 }
 
+// Removes a rep from the Roster tab by email (used by schedule.html).
+// Their historical scores are untouched -- this only stops future tracking/alerts.
+function removeRosterEntry(email) {
+  if (!SCORE_ENDPOINT) {
+    return Promise.resolve({ recorded: false });
+  }
+  return fetch(SCORE_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ type: "remove_roster", email: email })
+  }).then(() => ({ recorded: true })).catch(() => ({ recorded: false }));
+}
+
+// Sets a manual recert due-date override for one rep + module (used by schedule.html).
+function setRecertOverride(email, moduleName, dueDate) {
+  if (!SCORE_ENDPOINT) {
+    return Promise.resolve({ recorded: false });
+  }
+  return fetch(SCORE_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ type: "recert_override", email: email, module: moduleName, dueDate: dueDate })
+  }).then(() => ({ recorded: true })).catch(() => ({ recorded: false }));
+}
+
 function requireName(inputEl, errorEl) {
   const val = inputEl.value.trim();
   if (!val) {

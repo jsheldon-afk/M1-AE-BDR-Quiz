@@ -1,0 +1,390 @@
+/**
+ * SEATED CERTIFICATION PROGRAM — SCORES, ROSTER, SCHEDULE, RECERTIFICATION, AND ALERTS
+ * ---------------------------------------------------------------------------------------
+ * Handles:
+ * 1. Score submissions from quiz/module pages (doPost, default)
+ * 2. Roster additions from the Add Rep page (doPost, type: "roster")
+ * 3. Roster removals from the Schedule page (doPost, type: "remove_roster")
+ * 4. Manual recert date overrides from the Schedule page (doPost, type: "recert_override")
+ * 5. Reading data back out for the dashboard and schedule pages (doGet)
+ * 6. Daily deadline alerts -- both initial certification AND quarterly
+ *    recertification for the 4 Month 2 modules -- to reps, plus a daily
+ *    summary digest to the manager email below.
+ *
+ * RECERT SCHEDULING: recert cycles are anchored to each rep's own Month 2
+ * due date (itself derived from their start date), not to when they happen
+ * to complete things. Two reps who started on the same day always share the
+ * same recert cycle boundaries, regardless of completion timing.
+ *
+ * REMINDER CADENCE: an "upcoming" warning is sent once per cycle. Once
+ * something is overdue, the rep is re-reminded every 7 days until they
+ * complete it. The manager digest always shows the full current picture.
+ *
+ * SETUP / REDEPLOY:
+ * 1. Open the Scores sheet -> Extensions -> Apps Script.
+ * 2. Select all existing code, delete it, paste this whole file in.
+ * 3. Update MANAGER_EMAIL below if needed.
+ * 4. Save, then Deploy -> Manage deployments -> pencil icon -> New version -> Deploy.
+ * 5. If you haven't already: run "createDailyTrigger" once from the function
+ *    dropdown and approve the permissions prompt.
+ */
+
+var MANAGER_EMAIL = "jsheldon@seatedapp.io";
+var WARNING_DAYS_BEFORE = 3;
+var OVERDUE_REMINDER_DAYS = 7; // how often to re-remind once something is overdue
+var RECERT_MONTHS = 3;
+
+var MODULE_MONTHS = {
+  "Restaurants 101": 0,
+  "Cold Call Training": 0,
+  "Objection Handling": 0,
+  "API Partners": 1,
+  "Competitive Landscape": 1,
+  "Ramping Quota, Commission & Expectations": 1,
+  "Setting Meetings That Hold": 1,
+  "Product Economics Calculator": 2,
+  "Advanced Objection Handling": 2,
+  "Pre-Pitch Research": 2,
+  "Pipeline Management": 2
+};
+
+var RECERT_MODULES = [
+  "Product Economics Calculator",
+  "Advanced Objection Handling",
+  "Pre-Pitch Research",
+  "Pipeline Management"
+];
+
+function getOrCreateSheet(name, headers) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(headers);
+  }
+  return sheet;
+}
+
+function ensureScoresEmailColumn(sheet) {
+  var headerRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
+  var headers = headerRange.getValues()[0];
+  if (headers.indexOf("Email") === -1) {
+    sheet.getRange(1, headers.length + 1).setValue("Email");
+  }
+}
+
+function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+
+  if (data.type === "roster") {
+    var rosterSheet = getOrCreateSheet("Roster", ["Email", "Name", "Start Date", "Added"]);
+    rosterSheet.appendRow([data.email || "", data.name || "", data.startDate || "", new Date().toISOString()]);
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (data.type === "remove_roster") {
+    var sheet = getOrCreateSheet("Roster", ["Email", "Name", "Start Date", "Added"]);
+    var values = sheet.getDataRange().getValues();
+    var targetEmail = String(data.email || "").trim().toLowerCase();
+    for (var i = values.length - 1; i >= 1; i--) {
+      if (String(values[i][0] || "").trim().toLowerCase() === targetEmail) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (data.type === "recert_override") {
+    var overrideSheet = getOrCreateSheet("RecertOverrides", ["Email", "Module", "Override Due Date", "Set On"]);
+    overrideSheet.appendRow([data.email || "", data.module || "", data.dueDate || "", new Date().toISOString()]);
+    return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var scoresSheet = getOrCreateSheet("Scores", ["Timestamp", "Rep", "Module", "Component", "Correct", "Total", "Percent"]);
+  ensureScoresEmailColumn(scoresSheet);
+
+  var rep = data.rep || "Unknown";
+  var email = data.email || "";
+  var module = data.module || "Unknown";
+  var component = data.component || "Unknown";
+  var correct = Number(data.correct) || 0;
+  var total = Number(data.total) || 0;
+  var percent = total > 0 ? Math.round((correct / total) * 100) : 0;
+  var timestamp = data.timestamp || new Date().toISOString();
+
+  var lastCol = scoresSheet.getLastColumn();
+  var row = new Array(lastCol).fill("");
+  row[0] = timestamp; row[1] = rep; row[2] = module; row[3] = component;
+  row[4] = correct; row[5] = total; row[6] = percent + "%";
+  row[lastCol - 1] = email;
+  scoresSheet.appendRow(row);
+
+  return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var param = e && e.parameter ? e.parameter : {};
+
+  if (param.data === "true") {
+    var scoresSheet = getOrCreateSheet("Scores", ["Timestamp", "Rep", "Module", "Component", "Correct", "Total", "Percent"]);
+    ensureScoresEmailColumn(scoresSheet);
+    var values = scoresSheet.getDataRange().getValues();
+    var headers = values.shift();
+    var emailIdx = headers.indexOf("Email");
+    var rows = values
+      .filter(function(row) { return row[0] !== ""; })
+      .map(function(row) {
+        return {
+          timestamp: row[0], rep: row[1], module: row[2], component: row[3],
+          correct: row[4], total: row[5], percent: row[6],
+          email: emailIdx > -1 ? row[emailIdx] : ""
+        };
+      });
+    return ContentService.createTextOutput(JSON.stringify({ rows: rows })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (param.roster === "true") {
+    var rosterSheet = getOrCreateSheet("Roster", ["Email", "Name", "Start Date", "Added"]);
+    var rvalues = rosterSheet.getDataRange().getValues();
+    rvalues.shift();
+    var rrows = rvalues
+      .filter(function(row) { return row[0] !== ""; })
+      .map(function(row) { return { email: row[0], name: row[1], startDate: row[2], added: row[3] }; });
+    return ContentService.createTextOutput(JSON.stringify({ rows: rrows })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (param.recertOverrides === "true") {
+    var overrideSheet = getOrCreateSheet("RecertOverrides", ["Email", "Module", "Override Due Date", "Set On"]);
+    var ovalues = overrideSheet.getDataRange().getValues();
+    ovalues.shift();
+    var orows = ovalues
+      .filter(function(row) { return row[0] !== ""; })
+      .map(function(row) { return { email: row[0], module: row[1], dueDate: row[2], setOn: row[3] }; });
+    return ContentService.createTextOutput(JSON.stringify({ rows: orows })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: "Score collector is running." }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function dueDateForMonth(startDate, monthTag) {
+  var startYear = startDate.getFullYear();
+  var startMonthIdx = startDate.getMonth();
+  var targetMonthIdx = startMonthIdx + monthTag;
+  var targetYear = startYear + Math.floor(targetMonthIdx / 12);
+  var normalizedMonthIdx = ((targetMonthIdx % 12) + 12) % 12;
+  return new Date(targetYear, normalizedMonthIdx + 1, 0);
+}
+
+function addMonths(date, months) {
+  var d = new Date(date.getTime());
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+// Returns the last day of (year, absoluteMonthIdx), where absoluteMonthIdx
+// can be any integer -- avoids the classic day-31-overflow bug that comes
+// from adding months to an existing end-of-month date (e.g. naively adding
+// 3 months to March 31 lands on July 1, not June 30, because June has 30
+// days). Building fresh from (year, month, 0) sidesteps this entirely.
+function endOfAbsoluteMonth(year, absoluteMonthIdx) {
+  return new Date(year, absoluteMonthIdx + 1, 0);
+}
+
+/**
+ * The natural (non-overridden) next recert due date. Anchored to the rep's
+ * Month 2 due date (start-date derived), so reps who started the same day
+ * always share the same boundaries -- completion timing only determines
+ * which boundary they're currently working toward, not where the
+ * boundaries themselves fall.
+ */
+function naturalNextRecertDate(startDate, lastCompletionDate) {
+  var startYear = startDate.getFullYear();
+  var baseMonthIdx = startDate.getMonth() + 2; // M2's month, may exceed 11
+  var cycleMonthIdx = baseMonthIdx + RECERT_MONTHS;
+  var due = endOfAbsoluteMonth(startYear, cycleMonthIdx);
+  while (lastCompletionDate && due <= lastCompletionDate) {
+    cycleMonthIdx += RECERT_MONTHS;
+    due = endOfAbsoluteMonth(startYear, cycleMonthIdx);
+  }
+  return due;
+}
+
+/**
+ * Resolves the actual due date to use, honoring a manual override if one
+ * was set after the rep's last completion (i.e., it targets their current
+ * open cycle, not one they've already satisfied since).
+ */
+function resolveRecertDueDate(startDate, lastCompletionDate, overrideEntry) {
+  var natural = naturalNextRecertDate(startDate, lastCompletionDate);
+  if (overrideEntry) {
+    var overrideSetOn = new Date(overrideEntry.setOn);
+    if (!lastCompletionDate || overrideSetOn > lastCompletionDate) {
+      return new Date(overrideEntry.dueDate + "T00:00:00");
+    }
+  }
+  return natural;
+}
+
+function checkDeadlinesAndAlert() {
+  var rosterSheet = getOrCreateSheet("Roster", ["Email", "Name", "Start Date", "Added"]);
+  var scoresSheet = getOrCreateSheet("Scores", ["Timestamp", "Rep", "Module", "Component", "Correct", "Total", "Percent"]);
+  ensureScoresEmailColumn(scoresSheet);
+  var alertsSheet = getOrCreateSheet("AlertsSent", ["Email", "Module", "AlertType", "DateSent"]);
+  var overrideSheet = getOrCreateSheet("RecertOverrides", ["Email", "Module", "Override Due Date", "Set On"]);
+
+  var rosterData = rosterSheet.getDataRange().getValues();
+  rosterData.shift();
+
+  var scoresData = scoresSheet.getDataRange().getValues();
+  var scoresHeaders = scoresData.shift();
+  var emailIdx = scoresHeaders.indexOf("Email");
+
+  var lastCompletion = {}; // email||module -> most recent completion Date
+  scoresData.forEach(function(row) {
+    if (row[3] === "Full Module" && emailIdx > -1 && row[emailIdx]) {
+      var key = String(row[emailIdx]).trim().toLowerCase() + "||" + row[2];
+      var ts = new Date(row[0]);
+      if (isNaN(ts.getTime())) return;
+      if (!lastCompletion[key] || ts > lastCompletion[key]) lastCompletion[key] = ts;
+    }
+  });
+
+  var overrideData = overrideSheet.getDataRange().getValues();
+  overrideData.shift();
+  var overridesByKey = {}; // email||module -> most recent override entry
+  overrideData.forEach(function(row) {
+    if (!row[0]) return;
+    var key = String(row[0]).trim().toLowerCase() + "||" + row[1];
+    var entry = { dueDate: row[2], setOn: row[3] };
+    if (!overridesByKey[key] || new Date(entry.setOn) > new Date(overridesByKey[key].setOn)) {
+      overridesByKey[key] = entry;
+    }
+  });
+
+  // Most recent DateSent per exact alert key (email||module||type[||cycle]).
+  var alertsData = alertsSheet.getDataRange().getValues();
+  alertsData.shift();
+  var lastSentMap = {};
+  alertsData.forEach(function(row) {
+    var key = String(row[0]).trim().toLowerCase() + "||" + row[1] + "||" + row[2];
+    var sentDate = new Date(row[3]);
+    if (!lastSentMap[key] || sentDate > lastSentMap[key]) lastSentMap[key] = sentDate;
+  });
+
+  function shouldSend(key, type) {
+    var lastSent = lastSentMap[key];
+    if (!lastSent) return true;
+    if (type === "upcoming") return false; // warn once per cycle only
+    var daysSince = (todayMs - lastSent.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSince >= OVERDUE_REMINDER_DAYS; // overdue: re-remind periodically
+  }
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var todayMs = today.getTime();
+  var warningCutoff = new Date(today);
+  warningCutoff.setDate(warningCutoff.getDate() + WARNING_DAYS_BEFORE);
+
+  var managerLines = [];
+  var newAlertRows = [];
+  var tz = Session.getScriptTimeZone();
+
+  rosterData.forEach(function(person) {
+    var email = String(person[0] || "").trim();
+    var name = person[1] || email;
+    var startDateRaw = person[2];
+    if (!email || !startDateRaw) return;
+    var startDate = new Date(startDateRaw);
+    if (isNaN(startDate.getTime())) return;
+
+    var repItemsToEmail = [];
+
+    // --- Initial certification deadlines (all 11 modules) ---
+    Object.keys(MODULE_MONTHS).forEach(function(moduleName) {
+      var ckey = email.toLowerCase() + "||" + moduleName;
+      if (lastCompletion[ckey]) return; // already done at least once
+
+      var month = MODULE_MONTHS[moduleName];
+      var dueDate = dueDateForMonth(startDate, month);
+      var type = null;
+      if (dueDate < today) type = "overdue";
+      else if (dueDate <= warningCutoff) type = "upcoming";
+      if (!type) return;
+
+      var dueDateStr = Utilities.formatDate(dueDate, tz, "MMM d, yyyy");
+      managerLines.push(name + " (" + email + ") \u2014 " + moduleName + ": " +
+        (type === "overdue" ? "OVERDUE (was due " + dueDateStr + ")" : "due " + dueDateStr));
+
+      var alertKey = email.toLowerCase() + "||" + moduleName + "||" + type;
+      if (shouldSend(alertKey, type)) {
+        repItemsToEmail.push({ module: moduleName, type: type, dueDateStr: dueDateStr });
+        newAlertRows.push([email, moduleName, type, new Date().toISOString()]);
+      }
+    });
+
+    // --- Recertification deadlines (only the 4 designated modules, only
+    //     once a rep has completed that module at least once before) ---
+    RECERT_MODULES.forEach(function(moduleName) {
+      var ckey = email.toLowerCase() + "||" + moduleName;
+      var last = lastCompletion[ckey];
+      if (!last) return; // no initial completion yet
+
+      var overrideEntry = overridesByKey[ckey];
+      var recertDue = resolveRecertDueDate(startDate, last, overrideEntry);
+
+      var type = null;
+      if (recertDue < today) type = "overdue";
+      else if (recertDue <= warningCutoff) type = "upcoming";
+      if (!type) return;
+
+      var dueDateStr = Utilities.formatDate(recertDue, tz, "MMM d, yyyy");
+      managerLines.push(name + " (" + email + ") \u2014 " + moduleName + " [RECERT]: " +
+        (type === "overdue" ? "OVERDUE (was due " + dueDateStr + ")" : "due " + dueDateStr));
+
+      // Cycle-specific key (includes the due date) so a new cycle always
+      // gets its own fresh set of reminders.
+      var alertKey = email.toLowerCase() + "||" + moduleName + "-recert-" + dueDateStr + "||" + type;
+      if (shouldSend(alertKey, type)) {
+        repItemsToEmail.push({ module: moduleName + " (recertification)", type: type, dueDateStr: dueDateStr });
+        newAlertRows.push([email, moduleName + "-recert-" + dueDateStr, type, new Date().toISOString()]);
+      }
+    });
+
+    if (repItemsToEmail.length > 0) {
+      var bodyLines = repItemsToEmail.map(function(item) {
+        return "- " + item.module + ": " + (item.type === "overdue" ? "OVERDUE (was due " + item.dueDateStr + ")" : "due " + item.dueDateStr);
+      });
+      var body = "Hi " + name + ",\n\n" +
+        "Here's where you stand on your Seated certification modules:\n\n" +
+        bodyLines.join("\n") +
+        "\n\nComplete them here: https://jsheldon-afk.github.io/M1-AE-BDR-Quiz/\n\n" +
+        "- Seated Certification Program";
+      MailApp.sendEmail(email, "Seated Certification: modules needing attention", body);
+    }
+  });
+
+  newAlertRows.forEach(function(row) { alertsSheet.appendRow(row); });
+
+  if (managerLines.length > 0) {
+    var managerBody = "Certification status \u2014 anyone currently within " + WARNING_DAYS_BEFORE +
+      " days of a deadline, or overdue (includes quarterly recertification):\n\n" + managerLines.join("\n") +
+      "\n\nFull schedule: https://jsheldon-afk.github.io/M1-AE-BDR-Quiz/schedule.html";
+    MailApp.sendEmail(MANAGER_EMAIL, "Seated Certification: daily deadline summary", managerBody);
+  }
+}
+
+function createDailyTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(function(t) {
+    if (t.getHandlerFunction() === "checkDeadlinesAndAlert") {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+  ScriptApp.newTrigger("checkDeadlinesAndAlert")
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+}
