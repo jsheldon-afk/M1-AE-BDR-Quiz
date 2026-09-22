@@ -396,3 +396,37 @@ button.secondary:hover { border-color: var(--gold); color: var(--ink); }
   padding: 5px 13px;
   margin-bottom: 16px;
 }
+
+/* ============ COMING SOON SECTION ============ */
+
+.track.coming-soon .track-name {
+  color: var(--ink-muted);
+}
+
+.module-row.disabled {
+  color: var(--ink-muted);
+  cursor: default;
+  opacity: 0.6;
+}
+.module-row.disabled:hover {
+  padding-left: 4px;
+  background: none;
+}
+.module-row.disabled .module-title {
+  color: var(--ink-muted);
+}
+.module-row.disabled .module-desc {
+  color: var(--ink-muted);
+}
+
+.coming-soon-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted);
+  background: var(--line);
+  border-radius: 999px;
+  padding: 4px 11px;
+  white-space: nowrap;
+}
