@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Product Economics Calculator — Seated M1 Module</title>
+<title>Simple Product Economics Calculator — Seated M1 Module</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -33,8 +33,8 @@
 <body>
 <div class="wrap">
   <a class="back-link" href="index.html">&larr; All modules</a>
-  <h1>Product Economics Calculator</h1>
-  <span class="month-badge">Month 2</span>
+  <h1>Simple Product Economics Calculator</h1>
+  <span class="month-badge">Month 1</span>
   <p class="subtitle">The incremental math behind Seated -- and how to run it live for a prospect on the phone.</p>
 
   <div class="resource-card">
@@ -58,7 +58,9 @@
   <div class="card name-field">
     <label for="rep-name">Your name</label>
     <input type="text" id="rep-name" placeholder="First and last name">
-    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name first.</p>
+    <label for="rep-email" style="margin-top:14px;">Your email</label>
+    <input type="email" id="rep-email" placeholder="you@seatedapp.io">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name and a valid email first.</p>
   </div>
 
   <!-- ============ QUIZ ============ -->
@@ -86,8 +88,9 @@ function shuffle(arr) {
 }
 function getRep() {
   const nameInput = document.getElementById("rep-name");
+  const emailInput = document.getElementById("rep-email");
   const nameError = document.getElementById("name-error");
-  return requireName(nameInput, nameError);
+  return requireNameAndEmail(nameInput, emailInput, nameError);
 }
 
 /* ============ QUIZ ============ */
@@ -152,7 +155,7 @@ function getRep() {
       if (answers[qi] === q.correct) correctCount++;
     });
     document.getElementById("quiz-feedback").textContent = correctCount + " / " + questions.length + " correct.";
-    submitScore(MODULE_NAME, "Full Module", rep, correctCount, questions.length).then(res => {
+    submitScore(MODULE_NAME, "Full Module", rep.name, correctCount, questions.length, rep.email).then(res => {
       document.getElementById("quiz-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
     });
   });

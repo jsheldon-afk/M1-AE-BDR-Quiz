@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Advanced Product Economics Calculator — Seated M1 Module</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .section { margin-bottom: 40px; }
+  .section h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 21px; letter-spacing: -0.005em; margin: 0 0 6px; }
+  .section .desc { font-size: 13px; color: var(--ink-secondary); margin: 0 0 14px; }
+  .quiz-q { margin-bottom: 18px; }
+  .quiz-q p.prompt { font-weight: 600; font-size: 14.5px; margin: 0 0 10px; line-height: 1.45; }
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 12px 14px; margin-bottom: 6px;
+    border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 13.5px; cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .quiz-opt.selected { border-color: var(--gold); border-width: 2px; background: var(--gold-tint); }
+  .quiz-opt.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .quiz-opt.incorrect { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .quiz-explain { font-size: 12.5px; color: var(--ink-secondary); margin: 8px 0 0; display: none; }
+  .exercise-box {
+    background: var(--gold-tint);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .exercise-box p.exercise-label {
+    margin: 0 0 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .exercise-box ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .exercise-box li {
+    font-size: 13.5px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .exercise-box li:last-child { margin-bottom: 0; }
+  .tab-heading {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink-secondary);
+    margin: 0 0 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back-link" href="index.html">&larr; All modules</a>
+  <h1>Advanced Product Economics Calculator</h1>
+  <span class="month-badge">Month 2</span>
+  <p class="subtitle">The full economics toolkit, in depth: nightly margin, the cost of an empty table, new guest economics, and margin by occupancy. This is a hands-on module — go use the live tool for each exercise before answering.</p>
+
+  <div class="resource-card">
+    <div>
+      <p style="margin:0;font-weight:bold;font-size:14px;">Live calculator</p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-secondary);">Open this in another tab and keep it open through all 4 parts below.</p>
+    </div>
+    <a class="dl" href="https://jsheldon-afk.github.io/restaurant-economics-calculators/" target="_blank" rel="noopener">Open calculator</a>
+  </div>
+
+  <div class="card name-field">
+    <label for="rep-name">Your name</label>
+    <input type="text" id="rep-name" placeholder="First and last name">
+    <label for="rep-email" style="margin-top:14px;">Your email</label>
+    <input type="email" id="rep-email" placeholder="you@seatedapp.io">
+    <p id="name-error" style="display:none;color:var(--danger);font-size:13px;margin-top:6px;">Enter your name and a valid email first.</p>
+  </div>
+
+  <!-- ============ TAB 1 ============ -->
+  <div class="section card" id="tab1-section">
+    <p class="tab-heading">Part 1 of 4</p>
+    <h2>Nightly Profit Margin</h2>
+    <p class="desc">Does adding Seated guests to a night of service help or hurt, in dollars and in margin %?</p>
+
+    <div class="exercise-box">
+      <p class="exercise-label">Go do this in the live tool first</p>
+      <ol>
+        <li>On the "Nightly Profit Margin" tab, with the default numbers untouched, read the callout: does blended margin go up or down when Seated guests are added? By how much?</li>
+        <li>Slowly raise the "Seated reward rate" input. Find the point where the callout flips from "margin improves" to "margin dips." What rate did that happen at, and why?</li>
+        <li>Set "Guests without Seated" to 0, leaving Seated guests at 10. What happens to the "Without Seated" column's profit and margin, and why does that make sense given fixed costs don't disappear?</li>
+      </ol>
+    </div>
+
+    <div id="tab1-questions"></div>
+  </div>
+
+  <!-- ============ TAB 2 ============ -->
+  <div class="section card" id="tab2-section">
+    <p class="tab-heading">Part 2 of 4</p>
+    <h2>The Cost of an Empty Table</h2>
+    <p class="desc">What is an empty seat actually costing the restaurant, and what would filling some of them be worth?</p>
+
+    <div class="exercise-box">
+      <p class="exercise-label">Go do this in the live tool first</p>
+      <ol>
+        <li>On "The Cost of an Empty Table" tab, enter a realistic week (or use the defaults). What's the weekly gross profit left on the table? What's that annualized?</li>
+        <li>Look at the "Occupancy by day" bars. Which day is weakest, and by how much (in missed gross profit) compared to the strongest day?</li>
+        <li>Drag the "Share of empty seats captured" slider. At roughly what % capture does the added annual gross profit cross $500,000?</li>
+      </ol>
+    </div>
+
+    <div id="tab2-questions"></div>
+  </div>
+
+  <!-- ============ TAB 3 ============ -->
+  <div class="section card" id="tab3-section">
+    <p class="tab-heading">Part 3 of 4</p>
+    <h2>New Guest Economics</h2>
+    <p class="desc">Is Seated bringing incremental business, or just serving people who'd have come anyway?</p>
+
+    <div class="exercise-box">
+      <p class="exercise-label">Go do this in the live tool first</p>
+      <ol>
+        <li>With defaults, read the breakeven repeat-guest rate from the stat card. Does "the simple way to think about it" match "Net new profit from Seated" above it? (It should, always.)</li>
+        <li>Lower "New guest rate" until "Net new profit from Seated" turns negative. What rate caused it, and how does that compare to the breakeven rate at the default reward rate?</li>
+        <li>In your own words, explain to a partner why a "regular" guest still costs money even though they generate zero incremental sales.</li>
+      </ol>
+    </div>
+
+    <div id="tab3-questions"></div>
+  </div>
+
+  <!-- ============ TAB 4 ============ -->
+  <div class="section card" id="tab4-section">
+    <p class="tab-heading">Part 4 of 4</p>
+    <h2>Profit Margin by Occupancy</h2>
+    <p class="desc">How does margin trend as occupancy climbs, where Seated is responsible for filling seats above baseline?</p>
+
+    <div class="exercise-box">
+      <p class="exercise-label">Go do this in the live tool first</p>
+      <ol>
+        <li>With defaults, read the "Breakeven occupancy" stat card. Find that same crossing point in the chart/table below -- which occupancy column is the first with a positive (gold) margin?</li>
+        <li>Drag "Baseline occupancy" down to 50%. Does breakeven occupancy go up or down? Why, in terms of how much of the chart is now "Seated fills the rest" territory?</li>
+        <li>Look at the chart's leftmost bars (very low occupancy, deep red, hatched). Why doesn't a -410% margin mean the model is broken?</li>
+      </ol>
+    </div>
+
+    <div id="tab4-questions"></div>
+  </div>
+
+  <!-- ============ SYNTHESIS ============ -->
+  <div class="section card" id="synthesis-section">
+    <p class="tab-heading">To close</p>
+    <h2>Synthesis</h2>
+    <p class="desc">Connecting what you just saw across all four tabs.</p>
+    <div id="synthesis-questions"></div>
+  </div>
+
+  <!-- ============ SUBMIT MODULE ============ -->
+  <div class="section card" id="submit-module-section" style="border: 2px solid var(--gold);">
+    <h2>Submit</h2>
+    <p class="desc">One click grades every question above and submits your final module score.</p>
+    <button class="primary" id="submit-module-btn">Submit module</button>
+    <p class="feedback" id="submit-module-feedback"></p>
+    <p class="score-note" id="submit-module-score-note"></p>
+  </div>
+
+</div>
+
+<script src="score.js"></script>
+<script>
+const MODULE_NAME = "Advanced Product Economics Calculator";
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getRep() {
+  const nameInput = document.getElementById("rep-name");
+  const emailInput = document.getElementById("rep-email");
+  const nameError = document.getElementById("name-error");
+  return requireNameAndEmail(nameInput, emailInput, nameError);
+}
+
+const QUESTION_SETS = {
+  "tab1-questions": [
+    {
+      prompt: "Why can blended margin improve when adding Seated guests, even though Seated charges a fee?",
+      correct: "Seated guests carry none of the fixed costs, so their higher margin pulls the blended average up",
+      wrong: [
+        "Seated guests always spend more per check than regular guests",
+        "The F&B cost percentage is automatically lower for Seated guests",
+        "Fixed costs decrease automatically once Seated guests are added"
+      ]
+    },
+    {
+      prompt: "Does adding Seated guests always hurt blended margin?",
+      correct: "No -- it depends on whether the reward rate outweighs the fixed-cost dilution benefit",
+      wrong: [
+        "Yes -- the reward rate always outweighs any benefit",
+        "No -- margin always improves regardless of reward rate",
+        "Yes -- but only when F&B cost is above 30%"
+      ]
+    }
+  ],
+  "tab2-questions": [
+    {
+      prompt: "If a restaurant's weekly missed gross profit from empty seats is $31,500, what's the annualized figure?",
+      correct: "$1,638,000",
+      wrong: ["$378,000", "$1,500,000", "$3,150,000"]
+    },
+    {
+      prompt: "Why does an empty seat cost money even if no one else was asking for a table that night?",
+      correct: "The restaurant already paid the fixed costs of that seat being available, whether or not it was filled",
+      wrong: [
+        "Empty seats increase food waste automatically",
+        "Staff must be paid overtime to cover empty sections",
+        "It triggers a penalty from the reservation platform"
+      ]
+    }
+  ],
+  "tab3-questions": [
+    {
+      prompt: "What's the core economic difference between a new Seated guest and a regular Seated guest?",
+      correct: "A new guest generates a real gain (check minus F&B cost minus reward fee); a regular guest is pure cost with no offsetting gain",
+      wrong: [
+        "A new guest pays a higher average check than a regular guest",
+        "A regular guest always orders more expensive menu items",
+        "There's no real difference -- both cost the same to serve"
+      ]
+    },
+    {
+      prompt: "What's the breakeven repeat-rate formula?",
+      correct: "1 minus (reward rate divided by (1 minus F&B cost %))",
+      wrong: [
+        "Reward rate divided by F&B cost %",
+        "1 minus (F&B cost % divided by reward rate)",
+        "Reward rate multiplied by (1 minus F&B cost %)"
+      ]
+    },
+    {
+      prompt: "Is it true that even a few repeat customers among Seated guests means Seated isn't worth it?",
+      correct: "No -- the breakeven repeat rate is usually well above 50%, so a modest share of new guests easily outweighs many regulars",
+      wrong: [
+        "Yes -- any repeat guests immediately make Seated unprofitable",
+        "Yes -- but only if the reward rate is above 15%",
+        "No -- repeat guests are actually more profitable than new guests"
+      ]
+    }
+  ],
+  "tab4-questions": [
+    {
+      prompt: "Why does Seated's fee on the Profit Margin by Occupancy view only apply above the baseline occupancy?",
+      correct: "Seated is only responsible for filling seats beyond what the restaurant would achieve on its own -- the fee never applies to seats they'd have filled anyway",
+      wrong: [
+        "The fee formula only works correctly for occupancy rates above 50%",
+        "Baseline occupancy already includes an estimated Seated contribution",
+        "Fixed costs are excluded once baseline occupancy is reached"
+      ]
+    },
+    {
+      prompt: "A restaurant is at 60% occupancy, with a calculated breakeven occupancy of 69%. What does this mean for profitability?",
+      correct: "They're currently below breakeven, meaning at this occupancy level they're operating at a loss",
+      wrong: [
+        "They're above breakeven and comfortably profitable",
+        "Breakeven occupancy is irrelevant unless they're using Seated",
+        "They need to lower their average check to reach profitability"
+      ]
+    }
+  ],
+  "synthesis-questions": [
+    {
+      prompt: "How does the \"new guest gain / regular guest loss\" math from New Guest Economics explain the margin behavior seen in Nightly Profit Margin?",
+      correct: "Both come down to the same idea -- Seated guests, especially new ones, aren't burdened by fixed costs the way baseline guests are, so their economics are structurally better even after the reward fee",
+      wrong: [
+        "They're unrelated -- one is about margin, the other is about guest acquisition",
+        "Nightly Profit Margin assumes all Seated guests are new, while New Guest Economics does not",
+        "The two tabs use different F&B cost assumptions, which explains the different outcomes"
+      ]
+    }
+  ]
+};
+
+const allAnswers = {};
+const allQuestions = {};
+
+Object.keys(QUESTION_SETS).forEach(containerId => {
+  const rawQuestions = QUESTION_SETS[containerId];
+  const questions = rawQuestions.map(q => {
+    const options = shuffle([q.correct, ...q.wrong]);
+    return { prompt: q.prompt, options: options, correct: options.indexOf(q.correct) };
+  });
+  allQuestions[containerId] = questions;
+  allAnswers[containerId] = new Array(questions.length).fill(null);
+
+  const container = document.getElementById(containerId);
+  questions.forEach((q, qi) => {
+    const div = document.createElement("div");
+    div.className = "quiz-q";
+    div.innerHTML = '<p class="prompt">' + q.prompt + '</p>';
+    q.options.forEach((opt, oi) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-opt";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => {
+        allAnswers[containerId][qi] = oi;
+        [...div.querySelectorAll(".quiz-opt")].forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+      });
+      div.appendChild(btn);
+    });
+    container.appendChild(div);
+  });
+});
+
+document.getElementById("submit-module-btn").addEventListener("click", () => {
+  const rep = getRep();
+  if (!rep) return;
+
+  let totalCorrect = 0, totalQuestions = 0;
+
+  Object.keys(QUESTION_SETS).forEach(containerId => {
+    const questions = allQuestions[containerId];
+    const answers = allAnswers[containerId];
+    const container = document.getElementById(containerId);
+    const qDivs = container.querySelectorAll(".quiz-q");
+    questions.forEach((q, qi) => {
+      totalQuestions++;
+      const optBtns = qDivs[qi].querySelectorAll(".quiz-opt");
+      optBtns.forEach((b, oi) => {
+        if (oi === q.correct) b.classList.add("correct");
+        else if (oi === answers[qi]) b.classList.add("incorrect");
+      });
+      if (answers[qi] === q.correct) totalCorrect++;
+    });
+  });
+
+  const fb = document.getElementById("submit-module-feedback");
+  fb.textContent = totalCorrect + " / " + totalQuestions + " correct across all 4 parts.";
+  submitScore(MODULE_NAME, "Full Module", rep.name, totalCorrect, totalQuestions, rep.email).then(res => {
+    document.getElementById("submit-module-score-note").textContent = res.recorded ? "Module score recorded." : "Score not recorded — check connection.";
+  });
+});
+</script>
+</body>
+</html>
