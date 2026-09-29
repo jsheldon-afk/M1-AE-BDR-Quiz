@@ -5,21 +5,48 @@
 <title>Seated Certification Program</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
+<style>
+  details.track { margin: 0; border-bottom: 1px solid var(--line); }
+  details.track summary {
+    list-style: none; cursor: pointer; padding: 20px 4px;
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 14px;
+  }
+  details.track summary::-webkit-details-marker { display: none; }
+  details.track summary::after {
+    content: "+"; font-size: 22px; line-height: 1; color: var(--gold); font-weight: 400;
+    grid-column: 3; grid-row: 1 / span 2; transition: transform 0.2s ease;
+  }
+  details.track[open] summary::after { transform: rotate(45deg); }
+  details.track summary:hover { background: linear-gradient(to right, var(--gold-tint), transparent 50%); }
+  details.track .track-name { font-size: 22px; color: var(--ink); margin: 0; grid-column: 1; }
+  details.track .track-count {
+    grid-column: 2; grid-row: 1 / span 2; font-size: 12px; font-weight: 600; color: var(--gold);
+    background: var(--gold-tint); padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  details.track .track-desc { grid-column: 1; margin: 2px 0 0; }
+  details.track .module-list { margin-bottom: 8px; }
+  details.track .module-list li:last-child .module-row { border-bottom: none; }
+  details.track.coming-soon .track-name { color: var(--ink-muted); }
+  details.track.coming-soon .track-count { color: var(--ink-muted); background: #F1EEE8; }
+</style>
 </head>
 <body>
 <div class="wrap">
 
   <div class="program-header">
     <h1>Seated Certification Program</h1>
-    <p class="subtitle">Eleven modules, organized by the month they need to be completed. Each one scores and saves on submission.</p>
+    <p class="subtitle">Modules grouped by the month they need to be completed. Tap a month to see its modules. Each one scores and saves on submission.</p>
     <a class="dashboard-link" href="dashboard.html">View the results dashboard &rarr;</a>
     <a class="dashboard-link" href="schedule.html" style="margin-left:20px;">View the schedule &rarr;</a>
     <a class="dashboard-link" href="add-rep.html" style="margin-left:20px;">Add a rep &rarr;</a>
   </div>
 
-  <div class="track">
-    <p class="track-name">Month 0</p>
-    <p class="track-desc">Before ramp begins</p>
+  <details class="track">
+    <summary>
+      <span class="track-name">Month 0</span>
+      <span class="track-count">3 quizzes</span>
+      <span class="track-desc">Before ramp begins</span>
+    </summary>
     <ul class="module-list">
       <li><a class="module-row" href="module-restaurants-101.html">
         <div class="module-row-top">
@@ -43,11 +70,14 @@
         <p class="module-desc">11 real objections straight from the Cold Call Hub, and the correct response to each.</p>
       </a></li>
     </ul>
-  </div>
+  </details>
 
-  <div class="track">
-    <p class="track-name">Month 1</p>
-    <p class="track-desc">First month on the job</p>
+  <details class="track">
+    <summary>
+      <span class="track-name">Month 1</span>
+      <span class="track-count">5 quizzes</span>
+      <span class="track-desc">First month on the job</span>
+    </summary>
     <ul class="module-list">
       <li><a class="module-row" href="module-api-partners.html">
         <div class="module-row-top">
@@ -85,11 +115,14 @@
         <p class="module-desc">Make a copy of the live calculator, run 3 real scenarios, and learn the incremental math behind every pitch.</p>
       </a></li>
     </ul>
-  </div>
+  </details>
 
-  <div class="track">
-    <p class="track-name">Month 2</p>
-    <p class="track-desc">Deepening the fundamentals</p>
+  <details class="track">
+    <summary>
+      <span class="track-name">Month 2</span>
+      <span class="track-count">4 quizzes</span>
+      <span class="track-desc">Deepening the fundamentals</span>
+    </summary>
     <ul class="module-list">
       <li><a class="module-row" href="module-advanced-product-economics-calculator.html">
         <div class="module-row-top">
@@ -120,11 +153,31 @@
         <p class="module-desc">Stages, hygiene, the missed meeting protocol, and the Monday weekly reset. 10-question quiz plus 4 exercises.</p>
       </a></li>
     </ul>
-  </div>
+  </details>
 
-  <div class="track coming-soon">
-    <p class="track-name">To Come</p>
-    <p class="track-desc">Planned modules, not yet built</p>
+  <details class="track">
+    <summary>
+      <span class="track-name">Supplementary</span>
+      <span class="track-count">1 quiz</span>
+      <span class="track-desc">One-time modules with a set due date</span>
+    </summary>
+    <ul class="module-list">
+      <li><a class="module-row" href="module-nonstandard-payment-terms.html">
+        <div class="module-row-top">
+          <span class="module-title">Non-Standard Payment Terms &amp; Additional MIDs</span>
+          <span class="module-time">Due Oct 9 &middot; ~10–15 min</span>
+        </div>
+        <p class="module-desc">The terms request form, what you can offer, and logging extra MIDs on the onboarding case. 15-question quiz plus 2 exercises.</p>
+      </a></li>
+    </ul>
+  </details>
+
+  <details class="track coming-soon">
+    <summary>
+      <span class="track-name">To Come</span>
+      <span class="track-count">5 planned</span>
+      <span class="track-desc">Planned modules, not yet built</span>
+    </summary>
     <ul class="module-list">
       <li><div class="module-row disabled">
         <div class="module-row-top">
@@ -157,7 +210,7 @@
         </div>
       </div></li>
     </ul>
-  </div>
+  </details>
 
 </div>
 </body>

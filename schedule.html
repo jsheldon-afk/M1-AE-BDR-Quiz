@@ -66,6 +66,22 @@ const MODULE_MONTHS = {
 };
 const ALL_MODULES = Object.keys(MODULE_MONTHS);
 
+// Supplementary modules: one-time, fixed due date, no recert.
+// Everyone on the roster shares the same dueDate. Reps who start after it
+// get newHireDays from their start date instead, so they aren't overdue on day one.
+const SUPPLEMENTARY_MODULES = {
+  "Non-Standard Payment Terms & Additional MIDs": { dueDate: "2026-10-09", newHireDays: 30 }
+};
+function supplementaryDueDate(startDateStr, cfg) {
+  const d = String(cfg.dueDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const fixed = new Date(Number(d[1]), Number(d[2]) - 1, Number(d[3]));
+  const s = String(startDateStr || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!s) return fixed;
+  const hireDue = new Date(Number(s[1]), Number(s[2]) - 1, Number(s[3]) + cfg.newHireDays);
+  return hireDue > fixed ? hireDue : fixed;
+}
+
+
 // Only these 4 modules require ongoing quarterly recertification.
 const RECERT_MODULES = [
   "Advanced Product Economics Calculator",
@@ -210,6 +226,24 @@ function render(roster, scores, overrides) {
         dueLabel = "Add a start date to compute a deadline";
       }
       return { moduleName, status, statusClass, dueLabel };
+    });
+
+    // Supplementary rows: one-time deadline, shared across the roster.
+    Object.keys(SUPPLEMENTARY_MODULES).forEach(moduleName => {
+      const dueDate = supplementaryDueDate(startDate, SUPPLEMENTARY_MODULES[moduleName]);
+      const key = email + "||" + moduleName;
+      let status, statusClass, dueLabel;
+      if (completed[key]) {
+        status = "Completed"; statusClass = "completed"; repCompleted++;
+        dueLabel = completed[key].percent + " correct";
+      } else if (dueDate < today) {
+        status = "Overdue"; statusClass = "overdue"; repOverdue++;
+        dueLabel = "Was due " + dueDate.toLocaleDateString();
+      } else {
+        status = "Upcoming"; statusClass = "upcoming"; repUpcoming++;
+        dueLabel = "Due " + dueDate.toLocaleDateString();
+      }
+      moduleRows.push({ moduleName: moduleName + " (supplementary)", status, statusClass, dueLabel });
     });
 
     // Recertification rows -- only appear once a rep has completed that
