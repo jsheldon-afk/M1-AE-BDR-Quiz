@@ -21,7 +21,7 @@
   .su-hero h1 { font-size: 52px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 16px; }
   .su-lead { font-size: 18px; line-height: 1.6; color: var(--ink-secondary); max-width: 54ch; margin: 0; }
 
-  .su-triangle { margin: 36px 0 8px; }
+  .su-triangle { margin: 36px auto 8px; max-width: 640px; }
   .su-triangle svg { width: 100%; height: auto; display: block; }
   .su-triangle .edge { stroke: var(--gold); stroke-width: 2; fill: none; }
   .su-triangle .edge.back { stroke: var(--ink-muted); stroke-dasharray: 5 6; }
@@ -32,6 +32,7 @@
   .su-triangle .node-name { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 21px; fill: var(--ink); }
   .su-triangle .node-tag { font-family: 'Inter', sans-serif; font-size: 14px; fill: var(--gold); font-weight: 600; }
 
+  .su-triangle .loop-center { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 24px; fill: var(--ink-secondary); }
   .su-flow { font-size: 15px; color: var(--ink-secondary); max-width: 60ch; margin: 8px 0 0; }
 
   .pillar {
@@ -46,6 +47,8 @@
   .status.soon { color: var(--ink-muted); background: #F1EEE8; }
   .pillar-body > p { margin: 0 0 16px; font-size: 15.5px; max-width: 58ch; }
 
+  .pills { list-style: none; padding: 0; margin: 0 0 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .pills li { font-size: 13.5px; font-weight: 600; color: var(--gold); background: var(--gold-tint); border-radius: 999px; padding: 6px 13px; }
   .track-strip { list-style: none; padding: 0; margin: 0 0 22px; border-top: 1px solid var(--line); }
   .track-strip li { display: flex; justify-content: space-between; gap: 16px; padding: 11px 2px; border-bottom: 1px solid var(--line); font-size: 15px; }
   .track-strip span:last-child { color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -129,30 +132,24 @@
     <p class="su-lead">Seated University is built to set every AE and BDR up to succeed. It gives you and your manager one shared framework to quickly diagnose what is holding results back, and a clear plan to improve them.</p>
 
     <div class="su-triangle">
-      <svg viewBox="0 0 640 450" role="img" aria-labelledby="tri-title tri-desc">
-        <title id="tri-title">The Seated University triangle</title>
-        <desc id="tri-desc">Knowledge drives Effort, Effort drives Outcome, and gaps in Outcome point back to what to improve.</desc>
+      <svg viewBox="-50 0 740 600" role="img" aria-labelledby="tri-title tri-desc">
+        <title id="tri-title">The Seated University loop</title>
+        <desc id="tri-desc">Knowledge drives Effort, Effort drives Outcome, and Outcome shows where to improve Knowledge, in a continuous loop.</desc>
         <defs>
-          <marker id="arrow-gold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <marker id="arrow-gold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="#A9812E"/>
           </marker>
-          <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" fill="#9A9184"/>
-          </marker>
         </defs>
+        <path class="edge" d="M150.9,425.2 A214,214 0 0 0 482.0,433.8" marker-end="url(#arrow-gold)"/>
+        <path class="edge" d="M533.5,308.2 A214,214 0 0 0 393.2,92.9" marker-end="url(#arrow-gold)"/>
+        <path class="edge" d="M257.4,89.4 A214,214 0 0 0 106.0,297.0" marker-end="url(#arrow-gold)"/>
 
-        <line class="edge" x1="186" y1="370" x2="452" y2="370" marker-end="url(#arrow-gold)"/>
-        <text class="edge-label" x="320" y="336" text-anchor="middle"><tspan x="320">knowing the why and how</tspan><tspan x="320" dy="20">drives competency</tspan></text>
+        <text class="edge-label" x="320" y="548" text-anchor="middle"><tspan x="320">product and systems knowledge</tspan><tspan x="320" dy="20">drives easy effort</tspan></text>
+        <text class="edge-label" x="548" y="150"><tspan x="548">smart, consistent</tspan><tspan x="548" dy="20">effort drives</tspan><tspan x="548" dy="20">easy results</tspan></text>
+        <text class="edge-label" x="92" y="150" text-anchor="end"><tspan x="92">the numbers</tspan><tspan x="92" dy="20">show where</tspan><tspan x="92" dy="20">to improve</tspan></text>
 
-        <line class="edge" x1="483" y1="317" x2="358" y2="136" marker-end="url(#arrow-gold)"/>
-        <text class="edge-label" x="440" y="206">
-          <tspan x="440">smart, consistent effort</tspan><tspan x="440" dy="20">drives easy results</tspan>
-        </text>
-
-        <line class="edge back" x1="282" y1="136" x2="157" y2="317" marker-end="url(#arrow-muted)"/>
-        <text class="edge-label" x="200" y="206" text-anchor="end">
-          <tspan x="200">the numbers show</tspan><tspan x="200" dy="20">where to improve</tspan>
-        </text>
+        <text class="loop-center" x="320" y="290" text-anchor="middle">Every gap</text>
+        <text class="loop-center" x="320" y="318" text-anchor="middle">has a plan</text>
 
         <a class="node" href="#outcome" aria-label="Outcome: jump to section">
           <circle cx="320" cy="80" r="62"/>
@@ -172,7 +169,7 @@
       </svg>
     </div>
 
-    <p class="su-flow">Knowledge and Effort are the base; Outcome naturally comes from both of these working. When you know why and how a behavior makes you successful, you do it consistently. When you do the behaviors consistently, the numbers follow. And when a number is short, we now have a plan on how to improve.</p>
+    <p class="su-flow">Each part feeds the next, and Outcome naturally comes from Knowledge and Effort working together. When you know why and how a behavior makes you successful, you do it consistently. When you do the behaviors consistently, the numbers follow. And when a number is short, we now have a plan on how to improve.</p>
   </section>
 
   <section class="pillar" id="knowledge">
@@ -182,7 +179,10 @@
       <span class="status live">Live</span>
     </div>
     <div class="pillar-body">
-      <p>Tested, scored modules built from our live training decks: restaurants, the ARP cold call method, objections, partners, competitors, economics, and pipeline. Each module has a due date, and you recertify on a set cycle anchored to your start date, so what you learned in month one is still sharp in month six.</p>
+      <p>Scored modules built from our live training decks. Recertify on a set cycle so it stays sharp.</p>
+      <ul class="pills" aria-label="Topics covered">
+        <li>Restaurants 101</li><li>ARP cold calls</li><li>Objections</li><li>API partners</li><li>Competitors</li><li>Product economics</li><li>Pipeline</li><li>Comp plan</li>
+      </ul>
       <ul class="track-strip">
         <li><span>Month 0: before ramp begins</span><span>3 modules</span></li>
         <li><span>Month 1: first month on the job</span><span>5 modules</span></li>
@@ -282,8 +282,8 @@
   </section>
 
   <section class="reading">
-    <h2>Reading your triangle</h2>
-    <p>Every rep will see all three sides together, measured against the standard and next to the team. The point isn't a grade. It's knowing exactly where to put your energy.</p>
+    <h2>Reading your loop</h2>
+    <p>Every rep will see all three parts together, measured against the standard and next to the team. The point isn't a grade. It's knowing exactly where to put your energy.</p>
     <dl class="diag">
       <div class="diag-row"><dt>Knowledge is short</dt><dd>Start here. Retake or recertify the modules you missed before changing anything else.</dd></div>
       <div class="diag-row"><dt>Knowledge is solid, Effort is short</dt><dd>You know what to do; the gap is doing it. Pick one behavior with your manager and make it a habit.</dd></div>
