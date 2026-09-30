@@ -29,8 +29,12 @@
   .su-triangle .node circle { fill: #fff; stroke: var(--gold); stroke-width: 2; transition: fill 0.15s ease; }
   .su-triangle .node:hover circle, .su-triangle .node:focus-visible circle { fill: var(--gold-tint); }
   .su-triangle .node:focus { outline: none; }
-  .su-triangle .node-name { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 21px; fill: var(--ink); }
-  .su-triangle .node-tag { font-family: 'Inter', sans-serif; font-size: 14px; fill: var(--gold); font-weight: 600; }
+  .su-triangle .node-name { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 24px; fill: var(--ink); }
+  .su-triangle .outcome circle { fill: var(--ink); stroke: var(--ink); }
+  .su-triangle .outcome:hover circle, .su-triangle .outcome:focus-visible circle { fill: #3A2F1F; }
+  .su-triangle .outcome .node-name { fill: #fff; font-size: 30px; }
+  .su-triangle .outcome .node-tag { fill: #D9B25E; font-size: 16px; }
+  .su-triangle .node-tag { font-family: 'Inter', sans-serif; font-size: 15px; fill: var(--gold); font-weight: 600; }
 
   .su-triangle .loop-center { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 24px; fill: var(--ink-secondary); }
   .su-flow { font-size: 15px; color: var(--ink-secondary); max-width: 60ch; margin: 8px 0 0; }
@@ -132,39 +136,39 @@
     <p class="su-lead">Seated University is built to set every AE and BDR up to succeed. It gives you and your manager one shared framework to quickly diagnose what is holding results back, and a clear plan to improve them.</p>
 
     <div class="su-triangle">
-      <svg viewBox="-50 0 740 600" role="img" aria-labelledby="tri-title tri-desc">
-        <title id="tri-title">The Seated University loop</title>
+      <svg viewBox="-50 0 740 640" role="img" aria-labelledby="tri-title tri-desc">
+        <title id="tri-title">The Seated University success feedback loop</title>
         <desc id="tri-desc">Knowledge drives Effort, Effort drives Outcome, and Outcome shows where to improve Knowledge, in a continuous loop.</desc>
         <defs>
           <marker id="arrow-gold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="#A9812E"/>
           </marker>
         </defs>
-        <path class="edge" d="M150.9,425.2 A214,214 0 0 0 482.0,433.8" marker-end="url(#arrow-gold)"/>
-        <path class="edge" d="M533.5,308.2 A214,214 0 0 0 393.2,92.9" marker-end="url(#arrow-gold)"/>
-        <path class="edge" d="M257.4,89.4 A214,214 0 0 0 106.0,297.0" marker-end="url(#arrow-gold)"/>
+        <path class="edge" d="M160.3,456.4 A214,214 0 0 0 473.4,463.2" marker-end="url(#arrow-gold)"/>
+        <path class="edge" d="M534.0,313.6 A214,214 0 0 0 421.5,125.6" marker-end="url(#arrow-gold)"/>
+        <path class="edge" d="M226.8,121.4 A214,214 0 0 0 106.2,304.2" marker-end="url(#arrow-gold)"/>
 
-        <text class="edge-label" x="320" y="548" text-anchor="middle"><tspan x="320">product and systems knowledge</tspan><tspan x="320" dy="20">drives easy effort</tspan></text>
-        <text class="edge-label" x="548" y="150"><tspan x="548">smart, consistent</tspan><tspan x="548" dy="20">effort drives</tspan><tspan x="548" dy="20">easy results</tspan></text>
-        <text class="edge-label" x="92" y="150" text-anchor="end"><tspan x="92">the numbers</tspan><tspan x="92" dy="20">show where</tspan><tspan x="92" dy="20">to improve</tspan></text>
+        <text class="edge-label" x="320" y="592" text-anchor="middle"><tspan x="320">product and systems knowledge</tspan><tspan x="320" dy="20">drives easy effort</tspan></text>
+        <text class="edge-label" x="556" y="170"><tspan x="556">smart, consistent</tspan><tspan x="556" dy="20">effort drives</tspan><tspan x="556" dy="20">easy results</tspan></text>
+        <text class="edge-label" x="84" y="170" text-anchor="end"><tspan x="84">the numbers</tspan><tspan x="84" dy="20">show where</tspan><tspan x="84" dy="20">to improve</tspan></text>
 
-        <text class="loop-center" x="320" y="290" text-anchor="middle">Every gap</text>
-        <text class="loop-center" x="320" y="318" text-anchor="middle">has a plan</text>
+        <text class="loop-center" x="320" y="318" text-anchor="middle">Success</text>
+        <text class="loop-center" x="320" y="348" text-anchor="middle">Feedback Loop</text>
 
-        <a class="node" href="#outcome" aria-label="Outcome: jump to section">
-          <circle cx="320" cy="80" r="62"/>
-          <text class="node-name" x="320" y="80" text-anchor="middle">Outcome</text>
-          <text class="node-tag" x="320" y="102" text-anchor="middle">Get rewarded</text>
+        <a class="node outcome" href="#outcome" aria-label="Outcome: jump to section">
+          <circle cx="320" cy="100" r="92"/>
+          <text class="node-name" x="320" y="102" text-anchor="middle">Outcome</text>
+          <text class="node-tag" x="320" y="130" text-anchor="middle">Get rewarded</text>
         </a>
         <a class="node" href="#knowledge" aria-label="Knowledge: jump to section">
-          <circle cx="120" cy="370" r="62"/>
-          <text class="node-name" x="120" y="370" text-anchor="middle">Knowledge</text>
-          <text class="node-tag" x="120" y="392" text-anchor="middle">Know it</text>
+          <circle cx="120" cy="390" r="74"/>
+          <text class="node-name" x="120" y="390" text-anchor="middle">Knowledge</text>
+          <text class="node-tag" x="120" y="415" text-anchor="middle">Know it</text>
         </a>
         <a class="node" href="#effort" aria-label="Effort: jump to section">
-          <circle cx="520" cy="370" r="62"/>
-          <text class="node-name" x="520" y="370" text-anchor="middle">Effort</text>
-          <text class="node-tag" x="520" y="392" text-anchor="middle">Do it</text>
+          <circle cx="520" cy="390" r="74"/>
+          <text class="node-name" x="520" y="390" text-anchor="middle">Effort</text>
+          <text class="node-tag" x="520" y="415" text-anchor="middle">Do it</text>
         </a>
       </svg>
     </div>
