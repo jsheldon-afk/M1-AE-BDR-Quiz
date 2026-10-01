@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tracking preview — Seated University</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap.tp { max-width: 1180px; }
+  .tp h1 { font-size: 40px; margin: 0 0 6px; }
+  .lede { color: var(--ink-secondary); margin: 0 0 18px; max-width: 66ch; }
+  .preview-banner { background: var(--gold-tint); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 0 0 28px; }
+  .controls { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; background: #F1ECE2; padding: 5px; border-radius: 12px; }
+  .tab { min-height: 44px; padding: 0 18px; border: none; border-radius: 9px; background: transparent; font: inherit; font-weight: 600; color: var(--ink-secondary); cursor: pointer; }
+  .tab[aria-selected="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(28,24,16,.08); }
+  .tab:focus-visible, select:focus-visible, .linkbtn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .picker { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-secondary); }
+  .picker select { min-height: 44px; min-width: 260px; padding: 0 12px; border: 1px solid #D6CBB4; border-radius: 10px; background: #fff; font: inherit; color: var(--ink); }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .chip { font-size: 12.5px; font-weight: 600; padding: 4px 11px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+  .g { background: #E3EEDF; color: #2A4A2E; } .y { background: #FBEBC8; color: #6E4A0E; } .r { background: #F6DED4; color: #8A3A26; } .n { background: #F3EFE7; color: #3F382E; }
+  .dk { background: var(--ink); color: #fff; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+  thead th { background: #F4EFE5; color: var(--ink-secondary); font-size: 12.5px; font-weight: 600; padding: 11px 10px; white-space: nowrap; }
+  th.l, td.l { text-align: left; padding-left: 16px; }
+  .grp th { text-align: left; padding: 14px 16px 6px; font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 17px; color: var(--ink); border-top: 1px solid var(--line); background: #fff; }
+  tbody tr.m { border-top: 1px solid #F1ECE2; }
+  td { padding: 5px 4px; }
+  td.lab { padding: 8px 16px; font-weight: 600; min-width: 210px; }
+  td.std { padding: 8px 10px; color: var(--ink-secondary); font-size: 13.5px; white-space: nowrap; }
+  .cell { display: block; text-align: center; padding: 7px 6px; border-radius: 8px; font-weight: 600; min-width: 76px; }
+  td.trend { text-align: center; color: var(--ink-secondary); font-weight: 600; padding: 8px 14px; }
+  .stage-row td { padding: 6px 4px 10px; text-align: center; font-size: 12px; color: #6F665A; }
+  .section-gap { margin-top: 28px; }
+  h2.sec { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 24px; margin: 0 0 12px; }
+  .goals { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .gcard { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .gcard .wk { font-size: 12.5px; font-weight: 600; color: var(--ink-secondary); }
+  .gcard .tag { font-size: 12px; font-weight: 600; color: #8A6820; }
+  .gcard .txt { font-weight: 600; }
+  .row3 { display: flex; gap: 6px; flex-wrap: wrap; }
+  .score { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 22px; text-align: center; }
+  td .cell.big { font-size: 16px; padding: 9px 6px; }
+  tr.sel td { background: #FBF6EA; }
+  .focus b { display: block; } .focus span { font-size: 13.5px; color: var(--ink-secondary); }
+  .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+  .tp-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .tp-card h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 19px; margin: 0 0 6px; }
+  .tp-card p { margin: 0; font-size: 14px; color: #3F382E; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; }
+  .stat .k { display: block; font-size: 12.5px; color: var(--ink-secondary); font-weight: 600; }
+  .stat .v { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 22px; }
+  .detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+  .ml { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid #F1ECE2; }
+  .ml .val { display: flex; align-items: center; gap: 8px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sub { font-size: 12.5px; font-weight: 600; color: #8A6820; margin-top: 12px; display: block; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 34px; height: 34px; border-radius: 9px; border: 1px solid #D6CBB4; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; color: #6F665A; }
+  .dot.on { border: 2px solid var(--ink); background: #F4EFE5; color: var(--ink); }
+  .linkbtn { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: #8A6820; cursor: pointer; min-height: 32px; }
+  .hidden { display: none !important; }
+  @media (max-width: 760px) { .how, .detail { grid-template-columns: 1fr; } .tp h1 { font-size: 32px; } }
+</style>
+</head>
+<body>
+<div class="wrap tp">
+  <a class="back-link" href="index.html">&larr; Seated University</a>
+  <p class="preview-banner"><strong>Sample data.</strong> These reps aren't real. This shows how tracking will look once check-ins are coming in every week.</p>
+  <h1>Tracking</h1>
+  <p class="lede">Every weekly check-in feeds three views: one rep's numbers week over week, an overview of how often each rep is hitting on Knowledge, Effort and Outcome, and the manager's weekly review.</p>
+
+  <div class="controls">
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" aria-selected="true" data-view="wow">Week over week</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="score">Overview</button>
+      <button class="tab" role="tab" aria-selected="false" data-view="mgr">Manager review</button>
+    </div>
+    <label class="picker">Rep<select id="rep"></select></label>
+  </div>
+
+  <!-- WEEK OVER WEEK -->
+  <div id="view-wow">
+    <div class="legend"><span class="chip g">✓ On standard</span><span class="chip y">≈ Within 10%</span><span class="chip r">✕ Below standard</span><span class="chip n">No standard</span></div>
+    <div class="panel"><table id="wowTable"></table></div>
+    <p class="lede" style="margin-top: 12px; font-size: 14px" id="wowNote"></p>
+    <div class="section-gap">
+      <h2 class="sec">Goals, week by week</h2>
+      <div class="goals" id="goalHistory"></div>
+    </div>
+  </div>
+
+  <!-- SCORECARD -->
+  <div id="view-score" class="hidden">
+    <div class="legend"><span class="chip g">✓ 80%+</span><span class="chip y">≈ 60–79%</span><span class="chip r">✕ Under 60%</span></div>
+    <h2 class="sec">Last 4 weeks</h2>
+    <div class="panel"><table id="scoreTable"></table></div>
+    <div class="section-gap">
+      <h2 class="sec" id="overTimeTitle"></h2>
+      <div class="panel"><table id="overTime"></table></div>
+    </div>
+    <div class="section-gap">
+      <h2 class="sec">Month-end outcomes</h2>
+      <p class="lede" style="font-size: 14px">Logged by each rep in the first week of the month. Restaurants and points against goal, the share of restaurants not paid on, and take rate against the 18% standard.</p>
+      <div class="panel"><table id="monthTable"></table></div>
+    </div>
+    <div class="how">
+      <div class="tp-card"><h3>Knowledge</h3><p>Average quiz score on the modules due so far for the rep's stage. An overdue module counts as 0 until it's done.</p></div>
+      <div class="tp-card"><h3>Effort</h3><p>Commitments met each week, out of 5: check-in on time, working-on goal done (Partly counts half), and each of the 3 number goals.</p></div>
+      <div class="tp-card"><h3>Outcome</h3><p>Share of the standards for the rep's stage they hit each week. Month-end restaurants, points and take rate are tracked in the table above.</p></div>
+    </div>
+  </div>
+
+  <!-- MANAGER REVIEW -->
+  <div id="view-mgr" class="hidden">
+    <div class="controls" style="margin-bottom: 14px">
+      <h2 class="sec" style="margin: 0" id="mgrWeek"></h2>
+      <div class="stats" id="mgrStats"></div>
+    </div>
+    <div class="panel"><table id="mgrTable"></table></div>
+    <div class="detail" id="mgrDetail"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- standards & helpers ----------
+  var STD = { dpd: [125, 60], conn: [0.08, 0.10], conv: [0.25, 0.33], mpd: [2.5, 2], hold: [0.50, 0.57], win: [0.27, 0.37] };
+  var WEEKS = ['2026-08-17', '2026-08-24', '2026-08-31', '2026-09-07', '2026-09-14', '2026-09-21'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var parse = function (k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+  var short = function (k) { var d = parse(k); return MON[d.getMonth()] + ' ' + d.getDate(); };
+  var pct = function (x) { return Math.round(x * 100) + '%'; };
+  var r1 = function (x) { return Math.round(x * 10) / 10; };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  function stageAt(start, weekKey) {
+    var s = parse(start), d = parse(weekKey);
+    var m = (d.getFullYear() - s.getFullYear()) * 12 + d.getMonth() - s.getMonth(); if (d.getDate() < s.getDate()) m--;
+    m = Math.max(m, 0);
+    var ae = m < 6 ? [0, 0, 0, 0.25, 0.5, 0.75][m] : 1;
+    return { m: m, ae: ae, ramped: m >= 6, label: m >= 6 ? 'Ramped' : 'M' + m + (ae ? ' · ' + Math.round(ae * 100) + '% AE' : ' · AE/BDR') };
+  }
+  function band(v, t) { return v >= t ? 'g' : v >= t * 0.9 ? 'y' : 'r'; }
+  var SYM = { g: '✓ ', y: '≈ ', r: '✕ ', n: '' };
+
+  // ---------- fake reps: 6 weekly check-ins each ----------
+  // per week: [dials, days, dm, meetingsFromCalling, due, held, upcoming, missedOpen, rotMissed, cw, cl, winRate, followingUp, rotFollow]
+  var REPS = [
+    { name: 'Jordan Avery', start: '2026-06-01', knowledge: [80,82,85,88,88,88], months: { Aug: [3,4,180,250,17,3], Sep: [6,8,410,500,19,5] },
+      wk: [[490,5,30,8,7,4,6,4,1,0,1,.22,4,0],[520,5,38,11,9,6,7,4,1,1,0,.24,5,0],[590,5,49,13,11,7,7,5,2,1,1,.26,6,1],[605,5,48,12,10,7,6,5,2,1,0,.29,7,2],[355,5,18,5,6,4,5,5,3,2,1,.33,8,3],[480,5,35,10,9,5,7,6,3,1,1,.31,8,2]],
+      goals: [[100,25,8],[105,30,10],[110,40,12],[120,45,12],[120,45,12],[110,25,8]],
+      work: [['On call','Name-drop a local partner restaurant in every opener','Did it'],['On call','Name-drop a local partner restaurant in every opener','Did it'],['Follow-up','Text a confirmation the morning of every meeting','Partly'],['Follow-up','Send a recap within 1 hour of every demo','Did it'],['Follow-up','Send a recap within 1 hour of every demo','Partly'],['Pipeline / CRM','Reschedule or close every missed meeting older than 2 weeks','Didn\u2019t']],
+      ratings: [[3,2,3,2],[3,3,3,3],[2,2,3,2],[3,2,3,3],[3,2,3,2],[2,2,2,2]], onTime: [1,1,1,1,1,0],
+      submitted: 'Mon 9:40am', plan: 'review', next: [[115,30,10],['Pipeline / CRM','Reschedule or close every missed meeting older than 2 weeks','Retrying after last week']] },
+    { name: 'Sam Ortiz', start: '2026-08-10', knowledge: [40,48,55,58,62,62], months: { Aug: [0,0,0,0,null,0], Sep: [1,2,60,100,16,1] },
+      wk: [[540,5,27,5,4,2,4,2,0,0,0,0,0,0],[610,5,34,8,6,3,5,3,0,0,0,0,0,0],[640,5,41,10,8,5,6,3,1,0,0,0,0,0],[655,5,46,12,10,6,7,4,1,0,0,0,0,0],[630,5,44,11,11,7,6,4,1,0,0,0,0,0],[668,5,52,14,12,8,8,4,2,0,0,0,0,0]],
+      goals: [[100,25,5],[110,30,8],[120,35,10],[125,45,12],[125,45,12],[130,50,13]],
+      work: [['On call','Get past the gatekeeper with the owner-name ask','Partly'],['On call','Get past the gatekeeper with the owner-name ask','Did it'],['On call','Use the ARP steps on every objection','Partly'],['On call','Use the ARP steps on every objection','Did it'],['Demo prep','Research the restaurant before every booked meeting','Did it'],['On call','Ask for the meeting on the first objection','Did it']],
+      ratings: [[2,3,3,2],[3,3,3,3],[3,2,3,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,1,1,1,1],
+      submitted: 'Mon 8:15am', plan: 'agreed', next: [[130,50,14],['On call','Ask for the meeting on the first objection','Keep it going']] },
+    { name: 'Priya Nair', start: '2025-11-03', knowledge: [92,92,94,94,94,94], months: { Aug: [19,20,1350,1400,20.5,18], Sep: [22,20,1520,1400,21,21] },
+      wk: [[290,5,31,9,10,6,8,3,1,3,1,.38,10,2],[305,5,30,10,11,7,8,3,1,4,2,.40,11,2],[280,4,27,8,9,6,7,4,1,3,2,.39,12,3],[300,5,33,10,10,6,9,3,1,4,1,.41,11,2],[310,5,34,11,11,7,9,3,0,5,2,.42,10,1],[295,5,32,10,10,7,8,2,0,4,1,.43,9,1]],
+      goals: [[60,30,10],[60,30,10],[60,30,10],[60,32,10],[65,32,11],[65,32,11]],
+      work: [['Pipeline / CRM','Next step and date on every open opp','Did it'],['Follow-up','Send order form same day as a verbal yes','Did it'],['Follow-up','Send order form same day as a verbal yes','Partly'],['Demo prep','Bring two local partner examples to every demo','Did it'],['Demo prep','Bring two local partner examples to every demo','Did it'],['On call','Book the next meeting before hanging up','Did it']],
+      ratings: [[3,3,2,3],[3,3,3,3],[3,2,2,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,0,1,1,1],
+      submitted: 'Sun 7:02pm', plan: 'agreed', next: [[65,32,11],['Follow-up','Send the order form the same day as a verbal yes','']] },
+    { name: 'Marcus Lee', start: '2026-04-06', knowledge: [72,70,66,62,58,58], months: { Aug: [7,12,480,800,15,5], Sep: [6,14,400,900,14,4] },
+      wk: [[380,4,22,5,8,3,5,6,2,1,2,.24,7,2],[410,5,25,6,7,4,5,7,3,1,1,.23,8,3],[350,4,19,4,6,3,4,7,4,0,2,.21,8,4],[390,5,24,6,7,4,4,8,4,1,1,.22,9,4],[360,4,20,5,6,3,5,8,5,1,2,.21,9,5],[0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+      goals: [[110,30,8],[110,30,8],[115,30,8],[110,30,8],[110,30,8],[0,0,0]],
+      work: [['Follow-up','Confirm every meeting the day before','Partly'],['Follow-up','Confirm every meeting the day before','Didn\u2019t'],['On call','Run the full ARP on price objections','Partly'],['Pipeline / CRM','Clear missed meetings older than 2 weeks','Didn\u2019t'],['Pipeline / CRM','Clear missed meetings older than 2 weeks','Partly'],['','','']],
+      ratings: [[2,1,2,2],[2,1,2,1],[2,2,2,2],[1,1,2,1],[2,1,2,2],[0,0,0,0]], onTime: [1,0,1,0,1,0],
+      submitted: '', plan: 'missing', next: null }
+  ];
+
+  function weekMetrics(rep, i) {
+    var w = rep.wk[i], st = stageAt(rep.start, WEEKS[i]);
+    if (!w[0] && !w[1]) return { missing: true, st: st };
+    var S = function (k) { return STD[k][st.ramped ? 1 : 0]; };
+    var m = {
+      st: st, dpd: w[1] ? w[0] / w[1] : 0, conn: w[0] ? w[2] / w[0] : 0, conv: w[2] ? w[3] / w[2] : 0, mpd: w[3] / 5,
+      hold: w[4] ? w[5] / w[4] : null, rotm: (w[7] + w[6]) ? w[8] / (w[7] + w[6]) : 0, win: st.ae > 0 ? w[11] : null,
+      rotf: w[12] ? w[13] / w[12] : 0, cw: w[9], cl: w[10], dm: w[2], mc: w[3]
+    };
+    m.bands = {
+      dpd: band(m.dpd, S('dpd')), conn: band(m.conn, S('conn')), conv: band(m.conv, S('conv')), mpd: band(m.mpd, S('mpd')),
+      hold: m.hold === null ? 'n' : band(m.hold, S('hold')), win: m.win === null ? 'n' : band(m.win, S('win'))
+    };
+    var g = rep.goals[i];
+    m.goalsHit = (m.dpd >= g[0] ? 1 : 0) + (w[2] >= g[1] ? 1 : 0) + (w[3] >= g[2] ? 1 : 0);
+    m.work = rep.work[i][2];
+    m.effort = rep.ratings[i].reduce(function (a, b) { return a + b; }, 0) / 4;
+    return m;
+  }
+  // per week: Knowledge = quiz average on modules due (overdue = 0);
+  // Effort = commitments met (on time, working-on goal, 3 number goals; Partly = half);
+  // Outcome = share of the stage's standards hit (green)
+  function fronts(rep, i) {
+    var m = weekMetrics(rep, i);
+    var k = { v: rep.knowledge[i] / 100, hit: rep.knowledge[i], of: 100 };
+    if (m.missing) return { k: k, e: { hit: 0, of: 5 }, o: null, missing: true };
+    var work = m.work === 'Did it' ? 1 : m.work === 'Partly' ? 0.5 : 0;
+    var e = { hit: rep.onTime[i] + work + m.goalsHit, of: 5 };
+    var on = 0, judged = 0;
+    Object.keys(m.bands).forEach(function (b) { if (m.bands[b] !== 'n') { judged++; if (m.bands[b] === 'g') on++; } });
+    return { k: k, e: e, o: { hit: on, of: judged } };
+  }
+  function last4(rep) {
+    var e = [0, 0], o = [0, 0];
+    for (var i = 2; i < 6; i++) { var f = fronts(rep, i); e[0] += f.e.hit; e[1] += f.e.of; if (f.o) { o[0] += f.o.hit; o[1] += f.o.of; } }
+    return { k: rep.knowledge[5] / 100, e: e[1] ? e[0] / e[1] : null, o: o[1] ? o[0] / o[1] : null, eRaw: e, oRaw: o };
+  }
+
+  // ---------- rep picker & tabs ----------
+  var sel = document.getElementById('rep');
+  sel.innerHTML = REPS.map(function (r, i) { return '<option value="' + i + '">' + r.name + ' (' + stageAt(r.start, WEEKS[5]).label + ')</option>'; }).join('');
+  var view = 'wow';
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      view = t.dataset.view;
+      document.querySelectorAll('.tab').forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+      ['wow', 'score', 'mgr'].forEach(function (v) { document.getElementById('view-' + v).classList.toggle('hidden', v !== view); });
+    });
+  });
+  sel.addEventListener('change', render);
+
+  function cell(text, b, big) { return '<td><span class="cell ' + b + (big ? ' big' : '') + '">' + SYM[b] + text + '</span></td>'; }
+  function trend(vals, higherBetter) {
+    var xs = vals.filter(function (v) { return v !== null && v !== undefined; });
+    if (xs.length < 2) return '–';
+    var a = (xs[0] + (xs[1] !== undefined ? xs[1] : xs[0])) / 2, b = (xs[xs.length - 1] + xs[xs.length - 2]) / 2;
+    if (Math.abs(b - a) < Math.max(Math.abs(a) * 0.05, 0.01)) return '→';
+    var up = b > a; return (up === higherBetter) ? '↑ better' : '↓ worse';
+  }
+
+  function renderWow(rep) {
+    var ms = WEEKS.map(function (_, i) { return weekMetrics(rep, i); });
+    var head = '<thead><tr><th class="l">Metric</th><th class="l">Standard</th>' + WEEKS.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '<th>Trend</th></tr></thead>';
+    var stageRow = '<tr class="stage-row"><td></td><td></td>' + ms.map(function (m) { return '<td>' + m.st.label + '</td>'; }).join('') + '<td></td></tr>';
+    var stdTxt = function (k, fmt) { var st = ms[5].st; return '≥ ' + fmt(STD[k][st.ramped ? 1 : 0]); };
+    function line(label, std, get, b, fmt, higher) {
+      var vals = ms.map(function (m) { return m.missing ? null : get(m); });
+      return '<tr class="m"><td class="lab">' + label + '</td><td class="std">' + std + '</td>' +
+        ms.map(function (m, i) {
+          if (m.missing) return '<td><span class="cell r">Missed check-in</span></td>';
+          var v = vals[i]; if (v === null) return '<td><span class="cell n">–</span></td>';
+          return cell(fmt(v), b ? m.bands[b] : 'n');
+        }).join('') + '<td class="trend">' + trend(vals, higher) + '</td></tr>';
+    }
+    var grp = function (t) { return '<tr class="grp"><th colspan="9">' + t + '</th></tr>'; };
+    var html = head + '<tbody>' + stageRow +
+      grp('Top of funnel') +
+      line('Dials / day', stdTxt('dpd', function (x) { return x; }), function (m) { return m.dpd; }, 'dpd', function (v) { return Math.round(v); }, true) +
+      line('DM connect', stdTxt('conn', pct), function (m) { return m.conn; }, 'conn', pct, true) +
+      line('DM conversion', stdTxt('conv', pct), function (m) { return m.conv; }, 'conv', pct, true) +
+      line('Meetings from calling / day', stdTxt('mpd', function (x) { return x; }), function (m) { return m.mpd; }, 'mpd', r1, true) +
+      grp('Middle of funnel') +
+      line('Hold rate', stdTxt('hold', pct), function (m) { return m.hold; }, 'hold', pct, true) +
+      line('Rotting missed (% of pipeline)', 'No standard', function (m) { return m.rotm; }, null, pct, false) +
+      grp('Bottom of funnel') +
+      line('Win Rate (Rolling 30)', stdTxt('win', pct), function (m) { return m.win; }, 'win', pct, true) +
+      line('Closed won', 'No standard', function (m) { return m.cw; }, null, function (v) { return v; }, true) +
+      line('Rotting follow-ups (% of Following Up)', 'No standard', function (m) { return m.rotf; }, null, pct, false) +
+      grp('Effort') +
+      '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
+      '<tr class="m"><td class="lab">Working-on goal</td><td class="std">Did it</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.work, m.work === 'Did it' ? 'g' : m.work === 'Partly' ? 'y' : 'r'); }).join('') + '<td class="trend"></td></tr>' +
+      '<tr class="m"><td class="lab">Manager effort rating</td><td class="std">Out of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(r1(m.effort), m.effort >= 2.5 ? 'g' : m.effort >= 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.effort; }), true) + '</td></tr>' +
+      '</tbody>';
+    document.getElementById('wowTable').innerHTML = html;
+    var firstAE = -1; ms.forEach(function (m, i) { if (firstAE < 0 && m.st.ae > 0) firstAE = i; });
+    var note = firstAE > 0 ? rep.name.split(' ')[0] + ' reached M3 (25% AE) in the week of ' + short(WEEKS[firstAE]) + ', so win rate counts toward standard from that week. ' : '';
+    if (ms[5].missing) note += 'No check-in was submitted for the week of ' + short(WEEKS[5]) + '.';
+    document.getElementById('wowNote').textContent = note;
+    document.getElementById('goalHistory').innerHTML = WEEKS.map(function (k, i) {
+      var g = rep.goals[i], wk = rep.work[i], m = ms[i];
+      if (m.missing) return '<div class="gcard"><span class="wk">Week of ' + short(k) + '</span><span class="chip r" style="align-self:flex-start">No check-in submitted</span></div>';
+      var c = function (hit, t) { return '<span class="chip ' + (hit ? 'g' : 'r') + '">' + (hit ? '✓ ' : '✕ ') + t + '</span>'; };
+      var wb = wk[2] === 'Did it' ? 'g' : wk[2] === 'Partly' ? 'y' : 'r';
+      return '<div class="gcard"><span class="wk">Week of ' + short(k) + '</span>' +
+        '<div class="row3">' + c(m.dpd >= g[0], Math.round(m.dpd) + ' / ' + g[0] + ' calls') + c(m.dm >= g[1], m.dm + ' / ' + g[1] + ' DMs') + c(m.mc >= g[2], m.mc + ' / ' + g[2] + ' mtgs') + '</div>' +
+        '<span class="tag">' + esc(wk[0]) + '</span><span class="txt">' + esc(wk[1]) + '</span><span class="chip ' + wb + '" style="align-self:flex-start">' + SYM[wb] + esc(wk[2]) + '</span></div>';
+    }).join('');
+  }
+
+  function pctCell(v, sub) {
+    if (v === null || v === undefined) return '<td><span class="cell n big">–</span></td>';
+    var x = Math.round(v * 100), b = x >= 80 ? 'g' : x >= 60 ? 'y' : 'r';
+    return '<td><span class="cell ' + b + ' big">' + SYM[b] + x + '%' + (sub ? '<span style="display:block;font-size:12px;font-weight:500">' + sub + '</span>' : '') + '</span></td>';
+  }
+  function renderScore(selIdx) {
+    document.getElementById('scoreTable').innerHTML =
+      '<thead><tr><th class="l">Rep</th><th>Knowledge</th><th>Effort</th><th>Outcome</th></tr></thead><tbody>' +
+      REPS.map(function (r, i) {
+        var t = last4(r), st = stageAt(r.start, WEEKS[5]);
+        return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + st.label + '</span></td>' +
+          pctCell(t.k, 'quiz average') + pctCell(t.e, Math.round(t.eRaw[0] * 2) / 2 + ' of ' + t.eRaw[1] + ' commitments') + pctCell(t.o, t.oRaw[0] + ' of ' + t.oRaw[1] + ' standards') + '</tr>';
+      }).join('') + '</tbody>';
+
+    var rep = REPS[selIdx];
+    document.getElementById('overTimeTitle').textContent = rep.name + ' over time';
+    var fs = WEEKS.map(function (_, i) { return fronts(rep, i); });
+    var row = function (label, get, sub) {
+      return '<tr class="m"><td class="lab">' + label + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + sub + '</span></td>' +
+        fs.map(function (f) { var x = get(f); return x === null ? '<td><span class="cell r">Missed check-in</span></td>' : pctCell(x); }).join('') + '</tr>';
+    };
+    document.getElementById('overTime').innerHTML =
+      '<thead><tr><th class="l">Front</th>' + WEEKS.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      '<tr class="stage-row"><td></td>' + WEEKS.map(function (k) { return '<td>' + stageAt(rep.start, k).label + '</td>'; }).join('') + '</tr>' +
+      row('Knowledge', function (f) { return f.k.v; }, 'Quiz average, modules due') +
+      row('Effort', function (f) { return f.missing ? null : f.e.hit / f.e.of; }, 'Commitments met') +
+      row('Outcome', function (f) { return f.o ? (f.o.of ? f.o.hit / f.o.of : null) : null; }, 'Standards hit') + '</tbody>';
+    // month-end outcomes
+    var mcell = function (a, g) { if (!g) return '<td><span class="cell n">No goal</span></td>'; var x = a / g, b = x >= 1 ? 'g' : x >= 0.9 ? 'y' : 'r'; return '<td><span class="cell ' + b + '">' + SYM[b] + a + ' / ' + g + ' · ' + Math.round(x * 100) + '%</span></td>'; };
+    var npcell = function (att, paid) {
+      if (!att) return '<td><span class="cell n">–</span></td>';
+      var np = att - paid, x = np / att, b = np === 0 ? 'g' : 'r';
+      return '<td><span class="cell ' + b + '">' + (np === 0 ? '✓ 0%' : '! ' + Math.round(x * 100) + '% · ' + np + ' of ' + att) + '</span></td>';
+    };
+    var tcell = function (t) { if (t === null) return '<td><span class="cell n">–</span></td>'; var b = band(t, 18); return '<td><span class="cell ' + b + '">' + SYM[b] + t + '%</span></td>'; };
+    document.getElementById('monthTable').innerHTML =
+      '<thead><tr><th class="l" rowspan="2">Rep</th><th colspan="4">August</th><th colspan="4">September</th></tr><tr><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th></tr></thead><tbody>' +
+      REPS.map(function (r, i) {
+        var a = r.months.Aug, b = r.months.Sep;
+        return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '</td>' + mcell(a[0], a[1]) + npcell(a[0], a[5]) + mcell(a[2], a[3]) + tcell(a[4]) + mcell(b[0], b[1]) + npcell(b[0], b[5]) + mcell(b[2], b[3]) + tcell(b[4]) + '</tr>';
+      }).join('') + '</tbody>';
+  }
+
+  function renderMgr(selIdx) {
+    var k = WEEKS[5];
+    document.getElementById('mgrWeek').textContent = 'Week of ' + short(k);
+    var subs = REPS.filter(function (r) { return r.plan !== 'missing'; }).length;
+    var review = REPS.filter(function (r) { return r.plan === 'review'; }).length;
+    var rot = REPS.reduce(function (a, r) { var w = r.wk[5]; return a + w[8] + w[13]; }, 0);
+    document.getElementById('mgrStats').innerHTML = '<div class="stat"><span class="k">Submitted</span><span class="v">' + subs + ' of ' + REPS.length + '</span></div><div class="stat"><span class="k">Plans to review</span><span class="v">' + review + '</span></div><div class="stat"><span class="k">Rotting deals, team</span><span class="v">' + rot + '</span></div>';
+    var NAMES = { dpd: 'Dials', conn: 'DM connect', conv: 'DM conversion', mpd: 'Meetings / day', hold: 'Hold rate', win: 'Win rate' };
+    document.getElementById('mgrTable').innerHTML = '<thead><tr><th class="l">Rep</th><th class="l">Check-in</th><th class="l">Below standard</th><th class="l">Goals hit</th><th class="l">Working-on goal</th><th class="l">Plan</th><th class="l"><span class="hidden">Action</span></th></tr></thead><tbody>' +
+      REPS.map(function (r, i) {
+        var m = weekMetrics(r, 5), st = stageAt(r.start, k);
+        var td = function (x) { return '<td class="l" style="padding: 12px 10px 12px 16px">' + x + '</td>'; };
+        var name = '<b style="display:block">' + r.name + '</b><span style="font-size:12.5px;color:#6F665A">' + st.label + '</span>';
+        if (m.missing) return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td('<span style="color:#8A3A26;font-weight:600">Not submitted</span>') + td('–') + td('–') + td('–') + td('–') + td('<button class="linkbtn" data-pick="' + i + '">Send reminder</button>') + '</tr>';
+        var below = Object.keys(m.bands).filter(function (b) { return m.bands[b] === 'r'; }).map(function (b) { return NAMES[b]; });
+        var plan = r.plan === 'review' ? '<span class="chip dk">Needs review</span>' : '<span class="chip g">✓ Agreed</span>';
+        return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td(r.submitted) + td(below.length ? below.join(', ') : '<span class="chip g">✓ None</span>') + td(m.goalsHit + ' of 3') + td(m.work) + td(plan) + td('<button class="linkbtn" data-pick="' + i + '">' + (i === selIdx ? 'Viewing' : 'Open') + '</button>') + '</tr>';
+      }).join('') + '</tbody>';
+    document.querySelectorAll('[data-pick]').forEach(function (b) { b.addEventListener('click', function () { sel.value = b.dataset.pick; render(); }); });
+
+    var r = REPS[selIdx], m = weekMetrics(r, 5), w = r.wk[5], first = r.name.split(' ')[0];
+    if (m.missing) {
+      document.getElementById('mgrDetail').innerHTML = '<div class="tp-card"><h3>' + r.name + '</h3><p>No check-in this week. Last submitted on time 2 of the last 4 weeks. Worth raising in your 1:1 before the numbers.</p></div>';
+      return;
+    }
+    var ml = function (l, v, b) { return '<div class="ml"><span>' + l + '</span><span class="val">' + v + (b ? '<span class="chip ' + b + '">' + (b === 'g' ? '✓ On' : b === 'y' ? '≈ Close' : b === 'r' ? '✕ Below' : '') + '</span>' : '') + '</span></div>'; };
+    var dots = function (label, v) { return '<div class="ml"><span>' + label + '</span><span class="dots">' + [1, 2, 3].map(function (n) { return '<span class="dot' + (n === v ? ' on' : '') + '">' + n + '</span>'; }).join('') + '</span></div>'; };
+    var lastWork = r.work[5], next = r.next, g = next[0];
+    document.getElementById('mgrDetail').innerHTML =
+      '<div class="tp-card"><h3>' + first + '\u2019s week</h3>' +
+      '<span class="sub">Top of funnel</span>' + ml('Dials / day', Math.round(m.dpd), m.bands.dpd) + ml('DM connect', pct(m.conn), m.bands.conn) + ml('Meetings from calling', w[3] + ' · ' + pct(m.conv) + ' conv.', m.bands.conv) +
+      '<span class="sub">Middle of funnel</span>' + ml('Hold rate', w[5] + ' of ' + w[4] + ' · ' + pct(m.hold), m.bands.hold) + ml('Upcoming meetings', w[6]) + ml('Rotting missed meetings', w[8] + ' of ' + (w[6] + w[7]) + ' · ' + pct(m.rotm)) +
+      '<span class="sub">Bottom of funnel</span>' + ml('Closed won / lost', w[9] + ' / ' + w[10]) + (m.win !== null ? ml('Win Rate (Rolling 30)', pct(m.win), m.bands.win) : '') + ml('Rotting follow-ups', w[13] + ' of ' + w[12] + ' · ' + pct(m.rotf)) +
+      '</div>' +
+      '<div class="tp-card"><h3>Plan for the week of Sep 28</h3>' +
+      '<div class="ml"><span>Number goals</span><span class="val">' + g[0] + ' calls/day · ' + g[1] + ' DMs · ' + g[2] + ' meetings</span></div>' +
+      '<span class="sub">Last week\u2019s working-on goal: ' + esc(lastWork[0]) + '</span><p style="margin: 4px 0 0">' + esc(lastWork[1]) + ' <span class="chip ' + (lastWork[2] === 'Did it' ? 'g' : lastWork[2] === 'Partly' ? 'y' : 'r') + '">' + esc(lastWork[2]) + '</span></p>' +
+      '<span class="sub">This week\u2019s working-on goal: ' + esc(next[1][0]) + '</span><p style="margin: 4px 0 8px; font-weight: 600">' + esc(next[1][1]) + (next[1][2] ? ' <span style="font-weight:400;color:#6F665A">(' + esc(next[1][2]) + ')</span>' : '') + '</p>' +
+      '<span class="sub">Effort this week (manager)</span>' + dots('Demo prep', r.ratings[5][0]) + dots('Came to 1:1 prepared', r.ratings[5][1]) + dots('Coachability', r.ratings[5][2]) + dots('Put feedback into practice', r.ratings[5][3]) +
+      '</div>';
+  }
+
+  function render() {
+    var i = parseInt(sel.value, 10);
+    renderWow(REPS[i]); renderScore(i); renderMgr(i);
+  }
+  render();
+})();
+</script>
+</body>
+</html>

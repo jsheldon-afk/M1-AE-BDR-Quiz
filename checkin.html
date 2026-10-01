@@ -105,6 +105,19 @@
     </label>
   </div>
 
+  <!-- MONTH-END RECAP -->
+  <section id="monthEnd">
+    <h2 id="meTitle">Month-end recap</h2>
+    <p class="lede">Shows during the first week of each month. Log how last month finished, from your commission statement or Salesforce dashboard. (The preview always shows it.)</p>
+    <div class="ci-card">
+      <div class="grid-row head"><span>Outcome</span><span>Attained</span><span>Goal</span><span>% to goal</span></div>
+      <div class="grid-row"><label for="me_r">Restaurants</label><input class="num" id="me_r" type="number" min="0" value="6"><input class="num" id="me_rg" type="number" min="0" value="8" aria-label="Restaurants goal"><span class="res" id="me_rp"></span></div>
+      <div class="grid-row"><label for="me_paid">Restaurants getting paid on<span class="sub">Of the restaurants attained</span></label><input class="num" id="me_paid" type="number" min="0" value="5"><span class="std" id="me_paidof"></span><span class="res" id="me_np"></span></div>
+      <div class="grid-row"><label for="me_p">Points</label><input class="num" id="me_p" type="number" min="0" value="410"><input class="num" id="me_pg" type="number" min="0" value="500" aria-label="Points goal"><span class="res" id="me_pp"></span></div>
+      <div class="grid-row"><label for="me_t">Take Rate %<span class="sub">Average across last month's closed-won deals</span></label><input class="num" id="me_t" type="number" min="0" max="100" step="0.1" value="19"><span class="std">Standard 18%</span><span class="res" id="me_tp"></span></div>
+    </div>
+  </section>
+
   <!-- STEP 1 -->
   <section>
     <h2>1. Your numbers last week</h2>
@@ -348,6 +361,21 @@
     }
     $('pathExplain').textContent = 'Upcoming meetings held by the cutoff: ' + upsoon + ' × ' + pct(holdUse) + ' hold × ' + pct(win) + ' win = ' + fmt(fromUp, 1) +
       '. Following Up deals that aren\'t rotting: ' + Math.max(fu - rf, 0) + ' × ' + pct(win) + ' win = ' + fmt(fromFu, 1) + '. Rotting deals, missed meetings and meetings after the cutoff aren\'t counted for this month.';
+
+    // month-end recap
+    var prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    $('meTitle').textContent = 'Month-end recap: ' + MONTHS[prevMonth.getMonth()];
+    var toGoal = function (a, g) {
+      if (!g) return chip('na', 'No goal set');
+      var x = a / g; return pct(x) + ' ' + (x >= 1 ? chip('on', '✓ Hit') : x >= 0.9 ? chip('close', '≈ Close') : chip('below', '✕ Short'));
+    };
+    $('me_rp').innerHTML = toGoal(n('me_r'), n('me_rg'));
+    $('me_pp').innerHTML = toGoal(n('me_p'), n('me_pg'));
+    var att = n('me_r'), paid = Math.min(n('me_paid'), att), notPaid = att - paid;
+    $('me_paidof').textContent = 'of ' + att + ' attained';
+    $('me_np').innerHTML = att ? pct(notPaid / att) + ' not paid on ' + (notPaid ? chip('flag', '! ' + notPaid + ' not paid') : chip('on', '✓ All paid')) : '–';
+    var take = n('me_t') / 100;
+    $('me_tp').innerHTML = (n('me_t') + '%') + ' ' + judge(take, 0.18);
 
     // last week's goals
     var gcard = function (key, actual, goalV, unit) {
