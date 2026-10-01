@@ -62,6 +62,21 @@
   .dot.on { border: 2px solid var(--ink); background: #F4EFE5; color: var(--ink); }
   .linkbtn { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: #8A6820; cursor: pointer; min-height: 32px; }
   .hidden { display: none !important; }
+  .tfbar { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin: 0 0 16px; }
+  .tfbar .picker select { min-width: 250px; }
+  .seg { display: inline-flex; background: #F1ECE2; padding: 4px; border-radius: 10px; gap: 4px; }
+  .seg-b { min-height: 38px; padding: 0 14px; border: none; border-radius: 8px; background: transparent; font: inherit; font-weight: 600; font-size: 14px; color: var(--ink-secondary); cursor: pointer; }
+  .seg-b[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(28,24,16,.08); }
+  .seg-b:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .pin1 { position: sticky; left: 0; z-index: 2; background: #fff; }
+  .pin2 { position: sticky; left: 230px; z-index: 2; background: #fff; box-shadow: 1px 0 0 var(--line); }
+  thead .pin1, thead .pin2 { background: #F4EFE5; }
+  td.lab.pin1 { min-width: 230px; max-width: 230px; box-sizing: border-box; }
+  td.std.pin2, th.pin2 { min-width: 110px; }
+  .pin-grp { position: sticky; left: 16px; }
+  td.period, th.period { background: #FBF6EA; border-left: 1px solid var(--line); }
+  td.period .cell, td.trend { white-space: nowrap; }
+  @media (max-width: 760px) { .pin2 { position: static; box-shadow: none; } td.lab.pin1 { min-width: 160px; max-width: 160px; } }
   .viewas { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff; border: 1px dashed #CDBB93; border-radius: 12px; padding: 10px 14px; margin: 0 0 24px; }
   .viewas .muted { font-size: 13.5px; color: var(--ink-secondary); }
   .viewas .picker { flex-wrap: wrap; max-width: 100%; }
@@ -98,6 +113,21 @@
     <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end">
       <label class="picker" id="scopeWrap">Show<select id="scope"></select></label>
       <label class="picker" id="repWrap">Rep<select id="rep"></select></label>
+    </div>
+  </div>
+
+  <div class="tfbar" id="tfBar">
+    <label class="picker">Timeframe<select id="tf">
+      <option value="4">Last 4 weeks (about 30 days)</option>
+      <option value="6" selected>Last 6 weeks</option>
+      <option value="8">Last 8 weeks (about 60 days)</option>
+      <option value="13">Last 13 weeks (about 90 days)</option>
+      <option value="26">Last 26 weeks</option>
+      <option value="ytd">Year to date</option>
+    </select></label>
+    <div class="seg" role="group" aria-label="Show columns by">
+      <button type="button" class="seg-b" data-group="week" aria-pressed="true">By week</button>
+      <button type="button" class="seg-b" data-group="month" aria-pressed="false">By month</button>
     </div>
   </div>
 
@@ -269,8 +299,8 @@
   }
   function last4(rep) {
     var e = [0, 0], o = [0, 0];
-    for (var i = 2; i < 6; i++) { var f = fronts(rep, i); if (!f.e) continue; e[0] += f.e.hit; e[1] += f.e.of; if (f.o) { o[0] += f.o.hit; o[1] += f.o.of; } }
-    var k5 = rep.knowledge[5];
+    for (var i = Math.max(WEEKS.length - 4, 0); i < WEEKS.length; i++) { var f = fronts(rep, i); if (!f.e) continue; e[0] += f.e.hit; e[1] += f.e.of; if (f.o) { o[0] += f.o.hit; o[1] += f.o.of; } }
+    var k5 = rep.knowledge[WEEKS.length - 1];
     return { k: k5 === null || k5 === undefined ? null : k5 / 100, e: e[1] ? e[0] / e[1] : null, o: o[1] ? o[0] / o[1] : null, eRaw: e, oRaw: o };
   }
 
@@ -316,7 +346,7 @@
     var sc = scopeSel.value;
     VIS = REPS.map(function (_, i) { return i; }).filter(function (i) { return !REPS[i].exclude && (sc === 'org' || REPS[i].manager === sc.slice(5)); });
     var cur = sel.value;
-    sel.innerHTML = VIS.map(function (i) { var r = REPS[i]; return '<option value="' + i + '">' + r.name + ' (' + stageAt(r.start, WEEKS[5]).label + ')</option>'; }).join('');
+    sel.innerHTML = VIS.map(function (i) { var r = REPS[i]; return '<option value="' + i + '">' + r.name + ' (' + stageAt(r.start, WEEKS[WEEKS.length - 1]).label + ')</option>'; }).join('');
     if (VIS.indexOf(parseInt(cur, 10)) > -1) sel.value = cur;
   }
   var view = 'wow';
@@ -341,21 +371,83 @@
     return (up === higherBetter) ? '↑ better' : '↓ worse';
   }
 
+  // Timeframe and grouping for the week-over-week view
+  var TF_WEEKS = 6, GROUP = 'week';
+  function periods() {
+    if (GROUP === 'week') return WEEKS.map(function (k, i) { return { label: short(k), idxs: [i], key: k }; });
+    var out = [], byM = {};
+    WEEKS.forEach(function (k, i) { var d = parse(k), mk = d.getFullYear() + '-' + d.getMonth(); if (!byM[mk]) { byM[mk] = { label: MON[d.getMonth()] + (d.getMonth() === 0 || out.length === 0 ? ' ' + d.getFullYear() : ''), idxs: [], key: k }; out.push(byM[mk]); } byM[mk].idxs.push(i); });
+    return out;
+  }
+  // Combine weeks: counts are summed, then rates are worked out from the sums.
+  function aggMetrics(rep, idxs) {
+    var ms = idxs.map(function (i) { return weekMetrics(rep, i); });
+    var lastI = idxs[idxs.length - 1], st = stageAt(rep.start, WEEKS[lastI]);
+    var sub = []; ms.forEach(function (m, j) { if (!m.missing) sub.push(idxs[j]); });
+    if (!sub.length) return { missing: true, pre: ms.every(function (m) { return m.pre; }), st: st, weeks: idxs.length, missed: ms.filter(function (m) { return !m.pre; }).length };
+    var S = function (k) { return STD[k][st.ramped ? 1 : 0]; };
+    var t = { dials: 0, days: 0, dm: 0, mc: 0, due: 0, held: 0, cw: 0, cl: 0, inb: 0, gHit: 0, gOf: 0, wDid: 0, wOf: 0 };
+    sub.forEach(function (i) {
+      var w = rep.wk[i], m = weekMetrics(rep, i);
+      t.dials += w[0]; t.days += w[1]; t.dm += w[2]; t.mc += w[3]; t.due += w[4]; t.held += w[5]; t.cw += w[9]; t.cl += w[10]; t.inb += (w[14] || 0);
+      if (m.goalsHit !== null) { t.gHit += m.goalsHit; t.gOf += 3; }
+      if (m.hasWork && m.work) { t.wOf += 1; t.wDid += m.work === 'Did it' ? 1 : m.work === 'Partly' ? 0.5 : 0; }
+    });
+    var lw = rep.wk[sub[sub.length - 1]];
+    var a = {
+      st: st, weeks: idxs.length, submitted: sub.length, missed: ms.filter(function (m) { return m.missing && !m.pre; }).length,
+      dpd: t.days ? t.dials / t.days : 0, conn: t.dials ? t.dm / t.dials : 0, conv: t.dm ? t.mc / t.dm : 0, mpd: t.mc / (5 * sub.length),
+      hold: t.due ? t.held / t.due : null, win: st.ae > 0 ? lw[11] : null,
+      rotm: (lw[7] + lw[6]) ? lw[8] / (lw[7] + lw[6]) : 0, rotf: lw[12] ? lw[13] / lw[12] : 0,
+      cw: t.cw, mc: t.mc, inb: t.inb, selfShare: (t.mc + t.inb) ? t.mc / (t.mc + t.inb) : null,
+      gHit: t.gHit, gOf: t.gOf, wDid: t.wDid, wOf: t.wOf
+    };
+    a.bands = {
+      dpd: band(a.dpd, S('dpd')), conn: band(a.conn, S('conn')), conv: band(a.conv, S('conv')), mpd: band(a.mpd, S('mpd')),
+      hold: a.hold === null ? 'n' : band(a.hold, S('hold')), win: a.win === null ? 'n' : band(a.win, S('win'))
+    };
+    return a;
+  }
+
   function renderWow(rep) {
-    var ms = WEEKS.map(function (_, i) { return weekMetrics(rep, i); });
-    var head = '<thead><tr><th class="l">Metric</th><th class="l">Standard</th>' + WEEKS.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '<th>Trend</th></tr></thead>';
-    var stageRow = '<tr class="stage-row"><td></td><td></td>' + ms.map(function (m) { return '<td>' + m.st.label + '</td>'; }).join('') + '<td></td></tr>';
-    var stdTxt = function (k, fmt) { var st = ms[5].st; return '≥ ' + fmt(STD[k][st.ramped ? 1 : 0]); };
-    function line(label, std, get, b, fmt, higher) {
+    var ps = periods(), all = WEEKS.map(function (_, i) { return i; });
+    var ms = ps.map(function (p) { return aggMetrics(rep, p.idxs); });
+    var tot = aggMetrics(rep, all);
+    var unit = GROUP === 'week' ? 'Week of' : 'Month';
+    var head = '<thead><tr><th class="l pin1">Metric</th><th class="l pin2">Standard</th>' + ps.map(function (p) { return '<th>' + p.label + (GROUP === 'month' ? '<span style="display:block;font-weight:500;font-size:11.5px;color:#6F665A">' + p.idxs.length + ' wk' + (p.idxs.length === 1 ? '' : 's') + '</span>' : '') + '</th>'; }).join('') + '<th class="period">Period</th><th>Trend</th></tr></thead>';
+    var stageRow = '<tr class="stage-row"><td class="pin1"></td><td class="pin2"></td>' + ms.map(function (m) { return '<td>' + m.st.label + '</td>'; }).join('') + '<td class="period">' + WEEKS.length + ' weeks</td><td></td></tr>';
+    var latest = ms[ms.length - 1];
+    var stdTxt = function (k, fmt) { var st = latest.st; return '≥ ' + fmt(STD[k][st.ramped ? 1 : 0]); };
+    var miss = function (m) { return m.pre ? '<td><span class="cell n">–</span></td>' : '<td><span class="cell r">' + (GROUP === 'week' ? 'Missed check-in' : 'No check-ins') + '</span></td>'; };
+    function line(label, std, get, b, fmt, higher, isCount) {
       var vals = ms.map(function (m) { return m.missing ? null : get(m); });
-      return '<tr class="m"><td class="lab">' + label + '</td><td class="std">' + std + '</td>' +
+      // counts trend on a per-week basis, so a short month doesn't look like a drop
+      var tvals = isCount ? ms.map(function (m) { return m.missing || !m.submitted ? null : get(m) / m.submitted; }) : vals;
+      var tv = tot.missing ? null : get(tot);
+      return '<tr class="m"><td class="lab pin1">' + label + '</td><td class="std pin2">' + std + '</td>' +
         ms.map(function (m, i) {
-          if (m.missing) return m.pre ? '<td><span class="cell n">–</span></td>' : '<td><span class="cell r">Missed check-in</span></td>';
+          if (m.missing) return miss(m);
           var v = vals[i]; if (v === null) return '<td><span class="cell n">–</span></td>';
           return cell(fmt(v), b ? m.bands[b] : 'n');
-        }).join('') + '<td class="trend">' + trend(vals, higher) + '</td></tr>';
+        }).join('') +
+        '<td class="period">' + (tv === null ? '<span class="cell n">–</span>' : '<span class="cell ' + (b ? tot.bands[b] : 'n') + '">' + SYM[b ? tot.bands[b] : 'n'] + fmt(tv) + '</span>') + '</td>' +
+        '<td class="trend">' + trend(tvals, higher) + '</td></tr>';
     }
-    var grp = function (t) { return '<tr class="grp"><th colspan="9">' + t + '</th></tr>'; };
+    function ratioRow(label, std, num, den, fmtTxt, yellowAt) {
+      yellowAt = yellowAt || 0.66;
+      var vals = ms.map(function (m) { return m.missing || !m[den] ? null : m[num] / m[den]; });
+      var cellFor = function (m) {
+        if (m.missing) return miss(m);
+        if (!m[den]) return '<td><span class="cell n">–</span></td>';
+        var x = m[num] / m[den], b = x >= 1 ? 'g' : x >= yellowAt ? 'y' : 'r';
+        return cell(fmtTxt(m), b);
+      };
+      var tc = tot.missing || !tot[den] ? '<span class="cell n">–</span>' : (function () { var x = tot[num] / tot[den], b = x >= 1 ? 'g' : x >= yellowAt ? 'y' : 'r'; return '<span class="cell ' + b + '">' + SYM[b] + fmtTxt(tot) + '</span>'; })();
+      return '<tr class="m"><td class="lab pin1">' + label + '</td><td class="std pin2">' + std + '</td>' + ms.map(cellFor).join('') + '<td class="period">' + tc + '</td><td class="trend">' + trend(vals, true) + '</td></tr>';
+    }
+    var cols = ps.length + 4;
+    var grp = function (t) { return '<tr class="grp"><th colspan="' + cols + '"><span class="pin-grp">' + t + '</span></th></tr>'; };
+    var num = function (v) { return Math.round(v * 10) / 10; };
     var html = head + '<tbody>' + stageRow +
       grp('Opportunity creation standards') +
       line('Dials / day', stdTxt('dpd', function (x) { return x; }), function (m) { return m.dpd; }, 'dpd', function (v) { return Math.round(v); }, true) +
@@ -366,30 +458,45 @@
       line('Hold rate', stdTxt('hold', pct), function (m) { return m.hold; }, 'hold', pct, true) +
       line('Win Rate (Rolling 30)', stdTxt('win', pct), function (m) { return m.win; }, 'win', pct, true) +
       grp('Where meetings came from') +
-      line('Self-scheduled meetings', 'Goaled', function (m) { return m.mc; }, null, function (v) { return v; }, true) +
-      line('Inbound meetings', 'Not goaled', function (m) { return m.inb; }, null, function (v) { return v; }, null) +
+      line('Self-scheduled meetings', 'Goaled', function (m) { return m.mc; }, null, num, true, true) +
+      line('Inbound meetings', 'Not goaled', function (m) { return m.inb; }, null, num, null, true) +
       line('Self-scheduled share', 'No standard', function (m) { return m.selfShare; }, null, pct, null) +
       grp('Pipeline health') +
-      line('Closed won', 'No standard', function (m) { return m.cw; }, null, function (v) { return v; }, true) +
-      line('Rotting missed (% of pipeline)', 'No standard', function (m) { return m.rotm; }, null, pct, false) +
-      line('Rotting follow-ups (% of Following Up)', 'No standard', function (m) { return m.rotf; }, null, pct, false) +
+      line('Closed won', 'No standard', function (m) { return m.cw; }, null, num, true, true) +
+      line('Rotting missed (% of pipeline)', 'Latest week', function (m) { return m.rotm; }, null, pct, false) +
+      line('Rotting follow-ups (% of Following Up)', 'Latest week', function (m) { return m.rotf; }, null, pct, false) +
       grp('Effort') +
-      '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell ' + (m.pre ? 'n' : 'r') + '">–</span></td>' : m.goalsHit === null ? '<td><span class="cell n">No goals set</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
-      '<tr class="m"><td class="lab">Working-on goal</td><td class="std">Did it</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell ' + (m.pre ? 'n' : 'r') + '">–</span></td>' : !m.hasWork || !m.work ? '<td><span class="cell n">–</span></td>' : cell(m.work, m.work === 'Did it' ? 'g' : m.work === 'Partly' ? 'y' : 'r'); }).join('') + '<td class="trend"></td></tr>' +
+      ratioRow('Number goals hit', 'All of them', 'gHit', 'gOf', function (m) { return m.gHit + ' of ' + m.gOf; }) +
+      ratioRow('Working-on goal done', 'Every week', 'wDid', 'wOf', function (m) { return (m.wOf === 1 ? ({ 1: 'Did it', 0.5: 'Partly', 0: 'Didn\u2019t' })[m.wDid] : m.wDid + ' of ' + m.wOf); }, 0.5) +
+      '<tr class="m"><td class="lab pin1">Check-ins submitted</td><td class="std pin2">Every week</td>' + ms.map(function (m) {
+        if (m.pre) return '<td><span class="cell n">–</span></td>';
+        var n = m.missing ? 0 : m.submitted, of = n + (m.missed || 0), b = n === of ? 'g' : n >= of * 0.66 ? 'y' : 'r';
+        if (of === 1) return n ? cell('Submitted', 'g') : '<td><span class="cell r">Missed</span></td>';
+        return cell(n + ' of ' + of, b);
+      }).join('') + '<td class="period">' + (function () { var n = tot.missing ? 0 : tot.submitted, of = n + (tot.missed || 0); if (!of) return '<span class="cell n">–</span>'; var b = n === of ? 'g' : n >= of * 0.66 ? 'y' : 'r'; return '<span class="cell ' + b + '">' + SYM[b] + n + ' of ' + of + '</span>'; })() + '</td><td class="trend"></td></tr>' +
       '</tbody>';
     document.getElementById('wowTable').innerHTML = html;
-    var firstAE = -1; ms.forEach(function (m, i) { if (firstAE < 0 && m.st.ae > 0) firstAE = i; });
-    var note = firstAE > 0 ? rep.name.split(' ')[0] + ' reached M3 (25% AE) in the week of ' + short(WEEKS[firstAE]) + ', so win rate counts toward standard from that week. ' : '';
-    if (ms[5].missing) note += 'No check-in was submitted for the week of ' + short(WEEKS[5]) + '.';
+    var wrap = document.getElementById('wowTable').parentNode; wrap.scrollLeft = wrap.scrollWidth;
+
+    var wm = WEEKS.map(function (_, i) { return weekMetrics(rep, i); });
+    var firstAE = -1; wm.forEach(function (m, i) { if (firstAE < 0 && m.st.ae > 0) firstAE = i; });
+    var note = firstAE > 0 ? rep.name.split(' ')[0] + ' reached M3 (25% AE) in the week of ' + short(WEEKS[firstAE]) + ', so win rate counts toward standard from then. ' : '';
+    if (GROUP === 'month') note += 'Each month combines its weeks: counts are added up, then rates are worked out from the totals. Rotting and win rate use the latest week. ';
+    if (wm[wm.length - 1].missing && !wm[wm.length - 1].pre) note += 'No check-in was submitted for the week of ' + short(WEEKS[WEEKS.length - 1]) + '.';
     document.getElementById('wowNote').textContent = note;
-    document.getElementById('goalHistory').innerHTML = WEEKS.map(function (k, i) {
-      var g = rep.goals[i], wk = rep.work[i], m = ms[i];
+
+    // goal cards: most recent 8 weeks, newest first
+    var recent = WEEKS.map(function (k, i) { return i; }).slice(-8).reverse();
+    document.getElementById('goalHistory').innerHTML = recent.map(function (i) {
+      var k = WEEKS[i], g = rep.goals[i], wk = rep.work[i], m = wm[i];
+      if (m.pre) return '';
       if (m.missing) return '<div class="gcard"><span class="wk">Week of ' + short(k) + '</span><span class="chip r" style="align-self:flex-start">No check-in submitted</span></div>';
       var c = function (hit, t) { return '<span class="chip ' + (hit ? 'g' : 'r') + '">' + (hit ? '✓ ' : '✕ ') + t + '</span>'; };
       var wb = wk[2] === 'Did it' ? 'g' : wk[2] === 'Partly' ? 'y' : 'r';
+      var goalsSet = (g[0] + g[1] + g[2]) > 0;
       return '<div class="gcard"><span class="wk">Week of ' + short(k) + '</span>' +
-        '<div class="row3">' + c(m.dpd >= g[0], Math.round(m.dpd) + ' / ' + g[0] + ' calls') + c(m.dm >= g[1], m.dm + ' / ' + g[1] + ' DMs') + c(m.mc >= g[2], m.mc + ' / ' + g[2] + ' mtgs') + '</div>' +
-        '<span class="tag">' + esc(wk[0]) + '</span><span class="txt">' + esc(wk[1]) + '</span><span class="chip ' + wb + '" style="align-self:flex-start">' + SYM[wb] + esc(wk[2]) + '</span></div>';
+        (goalsSet ? '<div class="row3">' + c(m.dpd >= g[0], Math.round(m.dpd) + ' / ' + g[0] + ' calls') + c(m.dm >= g[1], m.dm + ' / ' + g[1] + ' DMs') + c(m.mc >= g[2], m.mc + ' / ' + g[2] + ' mtgs') + '</div>' : '<span class="muted" style="font-size:13px">No goals set the week before</span>') +
+        (wk[1] ? '<span class="tag">' + esc(wk[0]) + '</span><span class="txt">' + esc(wk[1]) + '</span>' + (wk[2] ? '<span class="chip ' + wb + '" style="align-self:flex-start">' + SYM[wb] + esc(wk[2]) + '</span>' : '') : '') + '</div>';
     }).join('');
   }
 
@@ -402,21 +509,31 @@
     document.getElementById('scoreTable').innerHTML =
       '<thead><tr><th class="l">Rep</th><th>Knowledge</th><th>Effort</th><th>Outcome</th></tr></thead><tbody>' +
       visible().map(function (i) { var r = REPS[i];
-        var t = last4(r), st = stageAt(r.start, WEEKS[5]);
+        var t = last4(r), st = stageAt(r.start, WEEKS[WEEKS.length - 1]);
         return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + st.label + '</span></td>' +
           pctCell(t.k, 'quiz average') + pctCell(t.e, Math.round(t.eRaw[0] * 2) / 2 + ' of ' + t.eRaw[1] + ' commitments') + pctCell(t.o, t.oRaw[0] + ' of ' + t.oRaw[1] + ' standards') + '</tr>';
       }).join('') + '</tbody>';
 
     var rep = REPS[selIdx];
     document.getElementById('overTimeTitle').textContent = rep.name + ' over time';
-    var fs = WEEKS.map(function (_, i) { return fronts(rep, i); });
+    var ps = periods();
+    var fs = ps.map(function (p) {
+      var parts = p.idxs.map(function (i) { return fronts(rep, i); }), live = parts.filter(function (f) { return !f.pre; });
+      var k = parts[parts.length - 1].k;
+      if (!live.length) return { k: k, pre: true, missing: true };
+      var sub = live.filter(function (f) { return !f.missing; });
+      if (!sub.length) return { k: k, missing: true };
+      var e = { hit: 0, of: 0 }, o = { hit: 0, of: 0 };
+      live.forEach(function (f) { if (f.e) { e.hit += f.e.hit; e.of += f.e.of; } if (f.o) { o.hit += f.o.hit; o.of += f.o.of; } });
+      return { k: k, e: e, o: o };
+    });
     var row = function (label, get, sub) {
-      return '<tr class="m"><td class="lab">' + label + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + sub + '</span></td>' +
+      return '<tr class="m"><td class="lab pin1">' + label + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + sub + '</span></td>' +
         fs.map(function (f) { var x = get(f); return x === 'PRE' ? '<td><span class="cell n">–</span></td>' : x === null ? '<td><span class="cell r">Missed check-in</span></td>' : pctCell(x); }).join('') + '</tr>';
     };
     document.getElementById('overTime').innerHTML =
-      '<thead><tr><th class="l">Front</th>' + WEEKS.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      '<tr class="stage-row"><td></td>' + WEEKS.map(function (k) { return '<td>' + stageAt(rep.start, k).label + '</td>'; }).join('') + '</tr>' +
+      '<thead><tr><th class="l pin1">Front</th>' + ps.map(function (p) { return '<th>' + p.label + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      '<tr class="stage-row"><td class="pin1"></td>' + ps.map(function (p) { return '<td>' + stageAt(rep.start, WEEKS[p.idxs[p.idxs.length - 1]]).label + '</td>'; }).join('') + '</tr>' +
       row('Knowledge', function (f) { return f.k.v; }, 'Quiz average, modules due') +
       row('Effort', function (f) { return f.pre ? 'PRE' : f.missing ? null : (f.e.of ? f.e.hit / f.e.of : 'PRE'); }, 'Commitments met') +
       row('Outcome', function (f) { return f.pre ? 'PRE' : f.o ? (f.o.of ? f.o.hit / f.o.of : 'PRE') : null; }, 'Standards hit') + '</tbody>';
@@ -437,17 +554,17 @@
   }
 
   function renderMgr(selIdx) {
-    var k = WEEKS[5];
+    var L = WEEKS.length - 1, k = WEEKS[L];
     document.getElementById('mgrWeek').textContent = 'Week of ' + short(k);
     var V = visible().map(function (i) { return REPS[i]; });
     var subs = V.filter(function (r) { return r.plan !== 'missing'; }).length;
     var review = V.filter(function (r) { return r.plan === 'review'; }).length;
-    var rot = V.reduce(function (a, r) { var w = r.wk[5]; return a + w[8] + w[13]; }, 0);
+    var rot = V.reduce(function (a, r) { var w = r.wk[L]; return a + w[8] + w[13]; }, 0);
     document.getElementById('mgrStats').innerHTML = '<div class="stat"><span class="k">Submitted</span><span class="v">' + subs + ' of ' + V.length + '</span></div><div class="stat"><span class="k">Plans to review</span><span class="v">' + review + '</span></div><div class="stat"><span class="k">Rotting deals</span><span class="v">' + rot + '</span></div>';
     var NAMES = { dpd: 'Dials', conn: 'DM connect', conv: 'DM conversion', mpd: 'Meetings / day', hold: 'Hold rate', win: 'Win rate' };
     document.getElementById('mgrTable').innerHTML = '<thead><tr><th class="l">Rep</th><th class="l">Check-in</th><th class="l">Below standard</th><th class="l">Goals hit</th><th class="l">Working-on goal</th><th class="l">Plan</th><th class="l"><span class="hidden">Action</span></th></tr></thead><tbody>' +
       visible().map(function (i) { var r = REPS[i];
-        var m = weekMetrics(r, 5), st = stageAt(r.start, k);
+        var m = weekMetrics(r, L), st = stageAt(r.start, k);
         var td = function (x) { return '<td class="l" style="padding: 12px 10px 12px 16px">' + x + '</td>'; };
         var name = '<b style="display:block">' + r.name + '</b><span style="font-size:12.5px;color:#6F665A">' + st.label + '</span>';
         if (m.missing) return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td('<span style="color:#8A3A26;font-weight:600">Not submitted</span>') + td('–') + td('–') + td('–') + td('–') + td(LIVE && r.email ? '<a class="linkbtn" href="mailto:' + r.email + '?subject=Your%20weekly%20check-in" target="_blank">Send reminder</a>' : '<button class="linkbtn" data-pick="' + i + '">Send reminder</button>') + '</tr>';
@@ -457,13 +574,13 @@
       }).join('') + '</tbody>';
     document.querySelectorAll('[data-pick]').forEach(function (b) { b.addEventListener('click', function () { sel.value = b.dataset.pick; render(); }); });
 
-    var r = REPS[selIdx], m = weekMetrics(r, 5), w = r.wk[5], first = r.name.split(' ')[0];
+    var r = REPS[selIdx], m = weekMetrics(r, L), w = r.wk[L], first = r.name.split(' ')[0];
     if (m.missing) {
       document.getElementById('mgrDetail').innerHTML = '<div class="tp-card"><h3>' + r.name + '</h3><p>No check-in this week. Last submitted on time 2 of the last 4 weeks. Worth raising in your 1:1 before the numbers.</p></div>';
       return;
     }
     var ml = function (l, v, b) { return '<div class="ml"><span>' + l + '</span><span class="val">' + v + (b ? '<span class="chip ' + b + '">' + (b === 'g' ? '✓ On' : b === 'y' ? '≈ Close' : b === 'r' ? '✕ Below' : '') + '</span>' : '') + '</span></div>'; };
-    var lastWork = r.work[5], next = r.next, g = next[0];
+    var lastWork = r.work[L], next = r.next, g = next[0];
     document.getElementById('mgrDetail').innerHTML =
       '<div class="tp-card"><h3>' + first + '\u2019s week</h3>' +
       '<span class="sub">Top of funnel</span>' + ml('Dials / day', Math.round(m.dpd), m.bands.dpd) + ml('DM connect', pct(m.conn), m.bands.conn) + ml('Self-scheduled meetings', w[3] + ' · ' + pct(m.conv) + ' conv.', m.bands.conv) + ml('Inbound meetings', m.inb) +
@@ -554,7 +671,7 @@
         return '<tr class="m"><td class="lab">' + r.name + '</td><td class="l">' + (r.email || emailFor(r.name)) + '</td>' +
           '<td class="l"><select data-edit="manager" data-i="' + i + '" aria-label="Manager for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;background:#fff;font:inherit">' + MANAGERS.map(function (m) { return opt(m, r.manager); }).join('') + '</select></td>' +
           '<td class="l"><input type="date" data-edit="start" data-i="' + i + '" value="' + r.start + '" aria-label="Start date for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;font:inherit"></td>' +
-          '<td class="l">' + stageAt(r.start, WEEKS[5]).label + '</td>' +
+          '<td class="l">' + stageAt(r.start, WEEKS[WEEKS.length - 1]).label + '</td>' +
           '<td class="l"><input type="checkbox" data-edit="exclude" data-i="' + i + '"' + (r.exclude ? ' checked' : '') + ' aria-label="Exclude ' + r.name + '" style="width:18px;height:18px"></td></tr>';
       }).join('') + '</tbody>';
     document.querySelectorAll('[data-edit]').forEach(function (el) {
@@ -572,9 +689,50 @@
       });
     });
   }
+  // ---------- timeframe controls ----------
+  function weeksFor(v) {
+    if (v !== 'ytd') return parseInt(v, 10);
+    var t = new Date(), jan = new Date(t.getFullYear(), 0, 1);
+    return Math.max(1, Math.min(53, Math.floor((t - jan) / (7 * 86400000))));
+  }
+  // Preview only: make up older sample weeks so longer timeframes have something to show.
+  var BASE = null;
+  function sampleWeeks(n) {
+    if (!BASE) BASE = { weeks: WEEKS.slice(), reps: REPS.map(function (r) { return JSON.parse(JSON.stringify(r)); }) };
+    var extra = Math.max(0, n - BASE.weeks.length), first = parse(BASE.weeks[0]);
+    var keys = [];
+    for (var e = extra; e >= 1; e--) { var d = new Date(first); d.setDate(d.getDate() - 7 * e); keys.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')); }
+    var all = keys.concat(BASE.weeks), take = all.slice(-n);
+    WEEKS = take;
+    REPS.forEach(function (r, ri) {
+      var b = BASE.reps[ri], pad = function (arr, mk) { var out = []; for (var e = extra; e >= 1; e--) out.push(mk(e)); return out.concat(arr).slice(-n); };
+      var jig = function (v, e) { return typeof v === 'number' && v > 1 ? Math.max(0, Math.round(v * (0.82 + ((e * 7 + ri * 3) % 9) / 30))) : v; };
+      r.wk = pad(b.wk, function (e) { var src = b.wk[(e - 1) % b.wk.length]; return src.map(function (v) { return jig(v, e); }); });
+      r.goals = pad(b.goals, function (e) { return b.goals[(e - 1) % b.goals.length].slice(); });
+      r.work = pad(b.work, function (e) { return b.work[(e - 1) % b.work.length].slice(); });
+      r.onTime = pad(b.onTime, function (e) { return (e + ri) % 5 ? 1 : 0; });
+      r.ratings = pad(b.ratings, function () { return [0, 0, 0, 0]; });
+      r.knowledge = pad(b.knowledge, function () { return b.knowledge[0]; });
+      r.active = WEEKS.map(function (k) { return k >= r.start; });
+    });
+  }
+  function onTimeframe() {
+    TF_WEEKS = weeksFor(document.getElementById('tf').value);
+    if (TF_WEEKS > 13 && GROUP === 'week') setGroup('month', true);
+    if (LIVE) loadLive(); else { sampleWeeks(TF_WEEKS); render(); }
+  }
+  function setGroup(g, quiet) {
+    GROUP = g;
+    document.querySelectorAll('.seg-b').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.group === g ? 'true' : 'false'); });
+    if (!quiet) render();
+  }
+  document.getElementById('tf').addEventListener('change', onTimeframe);
+  document.querySelectorAll('.seg-b').forEach(function (b) { b.addEventListener('click', function () { setGroup(b.dataset.group); }); });
+  document.querySelectorAll('.tab').forEach(function (t) { t.addEventListener('click', function () { document.getElementById('tfBar').classList.toggle('hidden', t.dataset.view === 'mgr' || t.dataset.view === 'admin'); }); });
+
   // ---------- live: real check-ins, scoped on the server ----------
   function loadLive() {
-    return HUB.call('getTrackingData').then(function (d) {
+    return HUB.call('getTrackingData', TF_WEEKS).then(function (d) {
       DATA = d; WEEKS = d.weeks; MONTH_LABELS = d.monthLabels; PLAN_LABEL = d.planLabel; REPORT_KEY = d.reportKey; MANAGERS = d.managers;
       REPS.length = 0; d.reps.forEach(function (r) { REPS.push(r); });
       var v = viewerSel;
