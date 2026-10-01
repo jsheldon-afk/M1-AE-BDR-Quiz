@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weekly check-in — Seated University</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap.ci { max-width: 900px; }
+  .preview-banner { background: var(--gold-tint); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 0 0 28px; }
+  .ci h1 { font-size: 40px; margin: 0 0 6px; }
+  .ci-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin: 18px 0 8px; }
+  .ci-meta label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-secondary); }
+  .ci-meta input, .ci-meta select { min-height: 44px; padding: 0 12px; border: 1px solid #D6CBB4; border-radius: 10px; background: #fff; font: inherit; color: var(--ink); min-width: 200px; }
+  .ci section { margin-top: 44px; }
+  .ci h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 27px; margin: 0 0 4px; }
+  .ci .lede { color: var(--ink-secondary); margin: 0 0 16px; max-width: 64ch; }
+  .ci-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 16px; overflow: hidden; }
+  .card-pad { padding: 20px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 16px 20px 12px; }
+  .card-head h3, .card-pad h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 20px; margin: 0; }
+  .card-head span { font-size: 13.5px; color: var(--ink-secondary); }
+  .grid-row { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 0.9fr); gap: 12px; padding: 11px 20px; align-items: center; border-top: 1px solid #EFE8DA; }
+  .grid-row.head { background: #F4EFE5; font-size: 12.5px; font-weight: 600; color: var(--ink-secondary); border-top: none; padding-top: 9px; padding-bottom: 9px; }
+  .grid-row.calc { background: #FBF8F2; }
+  .grid-row label, .grid-row .lbl { font-weight: 600; }
+  .sub { display: block; font-weight: 400; font-size: 13px; color: #6F665A; }
+  .num { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid #D6CBB4; border-radius: 8px; background: #fff; font: inherit; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .num:focus, .txt:focus, textarea:focus, select:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .res { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .std { color: var(--ink-secondary); font-size: 14px; }
+  .muted { color: #6F665A; font-size: 13.5px; font-weight: 400; }
+  .chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .chip.on { background: #E3EEDF; color: #2A4A2E; }
+  .chip.close { background: #FBEBC8; color: #6E4A0E; }
+  .chip.below, .chip.flag { background: #F6DED4; color: #8A3A26; }
+  .chip.na { background: #F1EEE8; color: #5E564A; }
+  .bar { display: flex; height: 18px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 4px 20px 6px; background: #F1EEE8; }
+  .bar div { min-width: 0; transition: flex-grow .2s ease; }
+  .stage-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) 110px; gap: 12px; align-items: center; padding: 8px 20px; border-top: 1px solid #F1ECE2; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 10px; vertical-align: -1px; }
+  .path { border-color: #CDBB93; background: #FFFDF8; }
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13.5px; font-weight: 600; }
+  .hint { font-size: 12.5px; color: #6F665A; }
+  .stat .k { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-secondary); }
+  .stat .v { display: block; font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .stat .s { display: block; font-size: 12.5px; color: #6F665A; }
+  .stat .v.red { color: #8A3A26; } .stat .v.green { color: #2A4A2E; }
+  .dark { background: var(--ink); color: #fff; border-radius: 12px; padding: 16px 18px; }
+  .dark .k { display: block; font-size: 13px; color: #E3DAC8; font-weight: 600; }
+  .dark .v { display: block; font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 28px; }
+  .dark .s { display: block; font-size: 13px; color: #E3DAC8; }
+  .note-box { background: #F4EFE5; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .gap { display: flex; flex-direction: column; gap: 16px; }
+  .goal-card .v { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; font-variant-numeric: tabular-nums; }
+  .goal-card .v small { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: #6F665A; }
+  .choices { display: flex; gap: 8px; flex-wrap: wrap; border: none; margin: 0; padding: 0; }
+  .choices legend { font-size: 13.5px; font-weight: 600; padding: 0; margin-bottom: 8px; }
+  .choice { position: relative; }
+  .choice input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .choice span { display: flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid #D6CBB4; border-radius: 10px; background: #fff; font-weight: 500; }
+  .choices.pills .choice span { border-radius: 999px; padding: 0 14px; font-size: 14px; }
+  .choice input:checked + span { border: 2px solid var(--ink); background: #F4EFE5; font-weight: 600; }
+  .choice input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .txt, textarea { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #D6CBB4; border-radius: 8px; font: inherit; color: var(--ink); background: #fff; }
+  textarea { resize: vertical; }
+  .tag { font-size: 12px; font-weight: 600; color: #8A6820; }
+  .btn { min-height: 48px; padding: 0 26px; border: none; border-radius: 10px; background: var(--ink); color: #fff; font: inherit; font-weight: 600; font-size: 15.5px; cursor: pointer; }
+  .btn.ghost { background: transparent; border: 1px dashed #B9AA8C; color: var(--ink-secondary); min-height: 44px; padding: 0 16px; font-size: 14.5px; }
+  .submit-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+  .check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 500; }
+  .check input { width: 18px; height: 18px; }
+  .email { background: #EDE8DE; border-radius: 14px; padding: 22px; margin-top: 18px; }
+  .email-head { background: #fff; border-radius: 10px; padding: 14px 18px; font-size: 13.5px; margin-bottom: 12px; line-height: 1.7; }
+  .email-body { background: var(--cream); border-radius: 10px; padding: 26px; }
+  .hidden { display: none !important; }
+  @media (max-width: 700px) {
+    .grid-row { grid-template-columns: 1fr 1fr; }
+    .grid-row.head { display: none; }
+    .grid-row > :first-child { grid-column: 1 / -1; }
+    .three, .four, .two { grid-template-columns: 1fr 1fr; }
+    .ci h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap ci">
+  <a class="back-link" href="index.html">&larr; Seated University</a>
+  <p class="preview-banner"><strong>Preview.</strong> Everything calculates live, but nothing is saved yet. Change any number to see how the page responds.</p>
+
+  <h1>Weekly check-in</h1>
+  <p class="lede" id="weekLabel">Your numbers for last week, how last week's goals went, and your plan for this week.</p>
+  <div class="ci-meta">
+    <label>Your name<input id="repName" type="text" value="Joe Prendergast"></label>
+    <label>Ramp stage
+      <select id="stage">
+        <option value="0">M0 (AE/BDR)</option><option value="1">M1 (AE/BDR)</option><option value="2">M2 (AE/BDR)</option>
+        <option value="3" selected>M3 (25% AE)</option><option value="4">M4 (50% AE)</option><option value="5">M5 (75% AE)</option>
+        <option value="6">M6+ (Ramped)</option>
+      </select>
+    </label>
+  </div>
+
+  <!-- STEP 1 -->
+  <section>
+    <h2>1. Your numbers last week</h2>
+    <p class="lede">Pull these from your Salesforce dashboard. Results check against the standard for your stage.</p>
+
+    <div class="ci-card">
+      <div class="card-head"><h3>Top of funnel</h3><span>Calling and scheduling</span></div>
+      <div class="grid-row head"><span>Metric</span><span>Last week</span><span>Result</span><span>Standard</span></div>
+      <div class="grid-row"><label for="dials">Dials</label><input class="num" id="dials" type="number" min="0" value="212"><span class="res" id="r_dpd"></span><span class="std" id="s_dpd"></span></div>
+      <div class="grid-row"><label for="days">Days dialed</label><input class="num" id="days" type="number" min="0" max="7" value="3"><span class="muted">Used for dials / day</span><span></span></div>
+      <div class="grid-row"><label for="dm">DM connects</label><input class="num" id="dm" type="number" min="0" value="11"><span class="res" id="r_conn"></span><span class="std" id="s_conn"></span></div>
+      <div class="grid-row"><label for="mtgcall">Meetings scheduled from calling</label><input class="num" id="mtgcall" type="number" min="0" value="3"><span class="res" id="r_conv"></span><span class="std" id="s_conv"></span></div>
+      <div class="grid-row calc"><span class="lbl">Meetings scheduled per day<span class="sub">Meetings from calling ÷ 5 days</span></span><span class="muted">Calculated</span><span class="res" id="r_mpd"></span><span class="std" id="s_mpd"></span></div>
+    </div>
+
+    <div class="ci-card">
+      <div class="card-head"><h3>Middle of funnel</h3><span>Meetings due, held and waiting</span></div>
+      <div class="grid-row head"><span>Metric</span><span>Last week</span><span>Result</span><span>Standard</span></div>
+      <div class="grid-row"><label for="due">Meetings scheduled for last week<span class="sub">Every meeting that was due Mon–Sun</span></label><input class="num" id="due" type="number" min="0" value="6"><span></span><span></span></div>
+      <div class="grid-row"><label for="held">Of those, held</label><input class="num" id="held" type="number" min="0" value="4"><span class="res" id="r_hold"></span><span class="std" id="s_hold"></span></div>
+      <div class="grid-row calc"><span class="lbl">Missed last week<span class="sub">Scheduled for last week − held</span></span><span class="muted">Calculated</span><span class="res" id="r_missed"></span><span></span></div>
+      <div class="grid-row"><label for="upcoming">Upcoming meetings<span class="sub">Scheduled for this week or later</span></label><input class="num" id="upcoming" type="number" min="0" value="5"><span></span><span></span></div>
+      <div class="grid-row"><label for="missedopen">Missed meetings still open<span class="sub">Not yet rescheduled or closed out</span></label><input class="num" id="missedopen" type="number" min="0" value="5"><span></span><span></span></div>
+      <div class="grid-row"><label for="rotmissed">Rotting missed meetings<span class="sub">Scheduled 2+ weeks ago and still missed</span></label><input class="num" id="rotmissed" type="number" min="0" value="3"><span class="res" id="r_rotm"></span><span></span></div>
+    </div>
+
+    <div class="ci-card">
+      <div class="card-head"><h3>Bottom of funnel</h3><span>Closing and follow-up</span></div>
+      <div class="grid-row head"><span>Metric</span><span>Last week</span><span>Result</span><span>Standard</span></div>
+      <div class="grid-row"><label for="cw">Closed won last week</label><input class="num" id="cw" type="number" min="0" value="2"><span></span><span></span></div>
+      <div class="grid-row"><label for="cl">Closed lost last week</label><input class="num" id="cl" type="number" min="0" value="1"><span></span><span></span></div>
+      <div class="grid-row"><label for="wr">Win Rate (Rolling 30) %<span class="sub">From your Salesforce dashboard</span></label><input class="num" id="wr" type="number" min="0" max="100" step="0.1" value="33"><span class="res" id="r_win"></span><span class="std" id="s_win"></span></div>
+      <div class="grid-row"><label for="fu">Total in Following Up</label><input class="num" id="fu" type="number" min="0" value="8"><span></span><span></span></div>
+      <div class="grid-row"><label for="rotfu">Rotting follow-ups<span class="sub">In Following Up 2+ weeks since held</span></label><input class="num" id="rotfu" type="number" min="0" value="3"><span class="res" id="r_rotf"></span><span></span></div>
+    </div>
+
+    <div class="ci-card">
+      <div class="card-head"><h3>Current pipeline</h3><span id="pipeTotal"></span></div>
+      <div class="bar" id="pipeBar" aria-hidden="true"></div>
+      <div id="pipeRows"></div>
+      <p class="muted" style="margin: 6px 20px 16px;" id="pipeNote"></p>
+    </div>
+
+    <div class="ci-card path card-pad gap">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap"><h3>Path to goal</h3><span class="muted" id="monthLabel"></span></div>
+      <div class="three">
+        <div class="field"><label for="goal">Closed-won goal this month</label><input class="num" id="goal" type="number" min="0" value="8"><span class="hint">Set with your manager</span></div>
+        <div class="field"><label for="sofar">Closed won so far this month</label><input class="num" id="sofar" type="number" min="0" value="3"><span class="hint">Including last week</span></div>
+        <div class="field"><label for="cycle">Average CW cycle (days)</label><input class="num" id="cycle" type="number" min="0" value="6"><span class="hint">Meeting held to closed won</span></div>
+      </div>
+      <div class="field" style="max-width: 420px"><label for="upsoon" id="upsoonLabel">Upcoming meetings held by the cutoff</label><input class="num" id="upsoon" type="number" min="0" value="3"><span class="hint" id="upsoonHint"></span></div>
+      <div class="note-box" id="cutoffNote"></div>
+      <div class="four" id="pathStats"></div>
+      <div class="two" id="pathAsk"></div>
+      <details class="muted"><summary style="cursor: pointer; font-weight: 600; color: var(--ink); min-height: 32px">How the expected number works</summary><p id="pathExplain" style="margin: 8px 0 0"></p></details>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section>
+    <h2>2. Last week's goals</h2>
+    <p class="lede">What you and your manager agreed to, against what you entered above. Change the goals to see it update.</p>
+    <div class="three">
+      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_calls">Calls per day goal</label><input class="num" id="lg_calls" type="number" value="100"></div><div class="v" id="ga_calls" style="margin-top: 10px"></div><div id="gc_calls"></div></div>
+      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_dm">DM connects goal</label><input class="num" id="lg_dm" type="number" value="15"></div><div class="v" id="ga_dm" style="margin-top: 10px"></div><div id="gc_dm"></div></div>
+      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_mtg">Meetings from calling goal</label><input class="num" id="lg_mtg" type="number" value="3"></div><div class="v" id="ga_mtg" style="margin-top: 10px"></div><div id="gc_mtg"></div></div>
+    </div>
+    <div class="ci-card card-pad gap">
+      <div><span class="tag">Follow-up</span><div style="font-weight: 600; font-size: 16px">Send a recap within 1 hour of every demo</div><div class="muted">How I said I'd track it: recap logged as an email activity in Salesforce</div></div>
+      <fieldset class="choices"><legend>How did it go?</legend>
+        <label class="choice"><input type="radio" name="lastgoal" value="Did it"><span>Did it</span></label>
+        <label class="choice"><input type="radio" name="lastgoal" value="Partly" checked><span>Partly</span></label>
+        <label class="choice"><input type="radio" name="lastgoal" value="Didn't"><span>Didn't</span></label>
+      </fieldset>
+      <div class="field"><label for="lastnote">What did your tracking show?</label><textarea id="lastnote" rows="2">Recaps went out on 3 of 4 demos. Missed Thursday's because I went straight into a call block.</textarea></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section>
+    <h2>3. This week's plan</h2>
+    <p class="lede">Set these with your manager in your 1:1. Start from what's below standard and what's rotting.</p>
+    <div class="ci-card card-pad gap">
+      <h3 style="font-family: 'Inter', sans-serif; font-size: 16px">Number goals</h3>
+      <div class="three">
+        <div class="field"><label for="g_calls">Calls per day</label><input class="num" id="g_calls" type="number" value="110"><span class="hint" id="h_calls"></span></div>
+        <div class="field"><label for="g_dm">DM connects this week</label><input class="num" id="g_dm" type="number" value="25"><span class="hint" id="h_dm"></span></div>
+        <div class="field"><label for="g_mtg">Meetings from calling this week</label><input class="num" id="g_mtg" type="number" value="8"><span class="hint" id="h_mtg"></span></div>
+      </div>
+    </div>
+    <div class="ci-card card-pad gap" id="work1">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap"><h3 style="font-family: 'Inter', sans-serif; font-size: 16px">What I'm working on</h3><span class="muted">Things the numbers don't show</span></div>
+      <fieldset class="choices pills"><legend>Type</legend>
+        <label class="choice"><input type="radio" name="t1" value="On call" checked><span>On call</span></label>
+        <label class="choice"><input type="radio" name="t1" value="Follow-up"><span>Follow-up</span></label>
+        <label class="choice"><input type="radio" name="t1" value="Demo prep"><span>Demo prep</span></label>
+        <label class="choice"><input type="radio" name="t1" value="Pipeline / CRM"><span>Pipeline / CRM</span></label>
+      </fieldset>
+      <div class="field"><label for="w1">What I'll do</label><input class="txt" id="w1" type="text" value="Ask for the meeting on the first objection instead of the third"></div>
+      <div class="field"><label for="h1">How I'll track success</label><input class="txt" id="h1" type="text" value="Tally on my call sheet for every DM connect; aim for 20 of 25"></div>
+    </div>
+    <div class="ci-card card-pad gap hidden" id="work2">
+      <h3 style="font-family: 'Inter', sans-serif; font-size: 16px">Second goal</h3>
+      <fieldset class="choices pills"><legend>Type</legend>
+        <label class="choice"><input type="radio" name="t2" value="On call"><span>On call</span></label>
+        <label class="choice"><input type="radio" name="t2" value="Follow-up" checked><span>Follow-up</span></label>
+        <label class="choice"><input type="radio" name="t2" value="Demo prep"><span>Demo prep</span></label>
+        <label class="choice"><input type="radio" name="t2" value="Pipeline / CRM"><span>Pipeline / CRM</span></label>
+      </fieldset>
+      <div class="field"><label for="w2">What I'll do</label><input class="txt" id="w2" type="text" placeholder="e.g. Reschedule or close out every missed meeting older than 2 weeks"></div>
+      <div class="field"><label for="h2">How I'll track success</label><input class="txt" id="h2" type="text" placeholder="e.g. Rotting missed meetings at 0 by Friday"></div>
+    </div>
+    <button class="btn ghost" type="button" id="addGoal">+ Add a second goal</button>
+    <div class="submit-row">
+      <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label><span class="muted">Your goals are emailed to you every weekday at 8am, with your manager cc'd.</span></div>
+      <button class="btn" type="button" id="submit">Submit check-in</button>
+    </div>
+    <div id="emailPreview" class="email hidden" aria-live="polite"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var STD = { // [Ramping, Ramped]
+    dpd: [125, 60], conn: [0.08, 0.10], conv: [0.25, 0.33], mpd: [2.5, 2], hold: [0.50, 0.57], win: [0.27, 0.37]
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var n = function (id) { var v = parseFloat($(id).value); return isNaN(v) || v < 0 ? 0 : v; };
+  var pct = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
+  var fmt = function (x, d) { return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString(); };
+  var chip = function (cls, t) { return '<span class="chip ' + cls + '">' + t + '</span>'; };
+  function judge(v, target) {
+    if (v >= target) return chip('on', '✓ On');
+    if (v >= target * 0.9) return chip('close', '≈ Close');
+    return chip('below', '✕ Below');
+  }
+  function stdText(key, ramped) {
+    var t = STD[key][ramped ? 1 : 0];
+    if (key === 'dpd') return '≥ ' + t + ' / day';
+    if (key === 'mpd') return '≥ ' + t + ' / day';
+    return '≥ ' + pct(t);
+  }
+
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var shortDate = function (d) { return MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate(); };
+  function businessDays(a, b) { // inclusive, Mon–Fri
+    var c = 0, d = new Date(a);
+    while (d <= b) { var w = d.getDay(); if (w !== 0 && w !== 6) c++; d.setDate(d.getDate() + 1); }
+    return c;
+  }
+  var lastMon = new Date(today); lastMon.setDate(today.getDate() - ((today.getDay() + 6) % 7) - 7);
+  var lastSun = new Date(lastMon); lastSun.setDate(lastMon.getDate() + 6);
+  $('weekLabel').textContent = 'Week of ' + shortDate(lastMon) + ' – ' + shortDate(lastSun) + '. Your numbers, how last week\'s goals went, and your plan for this week.';
+
+  function update() {
+    var stage = parseInt($('stage').value, 10), ramped = stage >= 6, aePct = [0, 0, 0, 0.25, 0.5, 0.75][stage];
+    if (aePct === undefined) aePct = 1;
+    var S = function (k) { return STD[k][ramped ? 1 : 0]; };
+
+    // top of funnel
+    var dials = n('dials'), days = n('days'), dm = n('dm'), mc = n('mtgcall');
+    var dpd = days ? dials / days : 0, conn = dials ? dm / dials : 0, conv = dm ? mc / dm : 0, mpd = mc / 5;
+    $('r_dpd').innerHTML = days ? fmt(dpd, 0) + ' / day ' + judge(dpd, S('dpd')) : chip('na', 'Enter days dialed');
+    $('r_conn').innerHTML = dials ? pct(conn) + ' connect ' + judge(conn, S('conn')) : '–';
+    $('r_conv').innerHTML = dm ? pct(conv) + ' conversion ' + judge(conv, S('conv')) : '–';
+    $('r_mpd').innerHTML = fmt(mpd, 1) + ' / day ' + judge(mpd, S('mpd'));
+    ['dpd', 'conn', 'conv', 'mpd'].forEach(function (k) { $('s_' + k).textContent = stdText(k, ramped); });
+
+    // middle of funnel
+    var due = n('due'), held = Math.min(n('held'), due), up = n('upcoming'), mo = n('missedopen'), rm = n('rotmissed');
+    var hold = due ? held / due : 0;
+    $('r_hold').innerHTML = due ? pct(hold) + ' hold ' + judge(hold, S('hold')) : '–';
+    $('s_hold').textContent = stdText('hold', ramped);
+    $('r_missed').textContent = Math.max(due - held, 0);
+    var mofPipe = mo + up;
+    $('r_rotm').innerHTML = mofPipe ? pct(rm / mofPipe) + ' of ' + mofPipe + ' ' + (rm ? chip('flag', '! Rotting') : chip('on', '✓ None')) : '–';
+
+    // bottom of funnel
+    var win = n('wr') / 100, fu = n('fu'), rf = Math.min(n('rotfu'), fu);
+    var winJudged = aePct > 0;
+    $('r_win').innerHTML = pct(win) + ' ' + (winJudged ? judge(win, S('win')) : chip('na', 'Not judged until M3'));
+    $('s_win').textContent = stdText('win', ramped);
+    $('r_rotf').innerHTML = fu ? pct(rf / fu) + ' of Following Up ' + (rf ? chip('flag', '! Rotting') : chip('on', '✓ None')) : '–';
+
+    // pipeline snapshot
+    var stages = [
+      ['Meeting Set', up, '#CDBB93', true], ['Missed (Actively Rescheduling)', mo, '#C98B6E', true],
+      ['Following Up', fu, '#8A6820', true], ['On Hold – Interested', null, '#B9AA8C', false], ['Order Form Sent', null, '#2F5233', false]
+    ];
+    if (!$('st_hold')) {
+      $('pipeRows').innerHTML = stages.map(function (s, i) {
+        var right = s[3] ? '<span class="res" style="justify-content: flex-end" id="sv' + i + '"></span>'
+          : '<input class="num" type="number" min="0" id="' + (i === 3 ? 'st_hold' : 'st_ofs') + '" value="' + (i === 3 ? 2 : 1) + '" style="width: 90px">';
+        var lab = s[3] ? '<span><span class="swatch" style="background:' + s[2] + '"></span>' + s[0] + '</span>'
+          : '<label for="' + (i === 3 ? 'st_hold' : 'st_ofs') + '"><span class="swatch" style="background:' + s[2] + '"></span>' + s[0] + '</label>';
+        return '<div class="stage-row">' + lab + '<span class="muted">' + (s[3] ? 'From above' : 'Enter count') + '</span><span style="display:flex;justify-content:flex-end">' + right + '</span></div>';
+      }).join('');
+      ['st_hold', 'st_ofs'].forEach(function (id) { $(id).addEventListener('input', update); });
+    }
+    stages[3][1] = n('st_hold'); stages[4][1] = n('st_ofs');
+    var total = stages.reduce(function (a, s) { return a + s[1]; }, 0);
+    stages.forEach(function (s, i) { if (s[3]) $('sv' + i).textContent = s[1]; });
+    $('pipeBar').innerHTML = stages.map(function (s) { return '<div style="flex-grow:' + s[1] + ';background:' + s[2] + '"></div>'; }).join('');
+    $('pipeTotal').innerHTML = '<strong style="font-family: Fraunces, Georgia, serif; font-size: 22px; color: var(--ink)">' + total + '</strong> open opportunities';
+    var rotting = rm + rf;
+    $('pipeNote').textContent = total ? rotting + ' of ' + total + ' open opportunities are rotting (' + pct(rotting / total) + '): ' + rm + ' missed meetings and ' + rf + ' follow-ups.' : '';
+
+    // path to goal
+    var goal = n('goal'), sofar = n('sofar'), cycle = n('cycle'), upsoon = Math.min(n('upsoon'), up);
+    var cutoff = new Date(monthEnd); cutoff.setDate(monthEnd.getDate() - cycle);
+    var monthName = MONTHS[today.getMonth()];
+    var daysLeftMonth = Math.round((monthEnd - today) / 86400000) + 1;
+    $('monthLabel').textContent = monthName + ' · ' + daysLeftMonth + ' day' + (daysLeftMonth === 1 ? '' : 's') + ' left';
+    var tooLate = cutoff < today;
+    var holdDays = tooLate ? 0 : businessDays(today, cutoff);
+    $('upsoonLabel').textContent = 'Upcoming meetings held by ' + shortDate(cutoff);
+    $('upsoonHint').textContent = 'Of your ' + up + ' upcoming meetings';
+    $('cutoffNote').innerHTML = tooLate
+      ? 'With a ' + cycle + '-day cycle, the cutoff for ' + monthName + ' (' + shortDate(cutoff) + ') has passed. New meetings count toward next month.'
+      : 'With a ' + cycle + '-day cycle, a meeting has to be <strong>held by ' + shortDate(cutoff) + '</strong> to close by ' + shortDate(monthEnd) + '. Anything held after that counts toward next month.';
+    var holdUse = due ? hold : S('hold');
+    var fromUp = upsoon * holdUse * win, fromFu = Math.max(fu - rf, 0) * win;
+    var expected = fromUp + fromFu, projected = sofar + expected, gapN = Math.max(goal - projected, 0);
+    var heldNeed = win ? Math.ceil(gapN / win - 1e-9) : 0, schedNeed = holdUse ? Math.ceil(heldNeed / holdUse - 1e-9) : 0;
+    var stat = function (k, v, s, cls) { return '<div class="stat"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    $('pathStats').innerHTML =
+      stat('Closed won so far', fmt(sofar, 1), 'This month') +
+      stat('Expected from pipeline', '+' + fmt(expected, 1), 'Closes by ' + shortDate(monthEnd)) +
+      stat('Projected', fmt(projected, 1), gapN > 0 ? fmt(gapN, 1) + ' short of goal' : 'On pace for goal', gapN > 0 ? 'red' : 'green') +
+      stat('Days left to hold', holdDays, tooLate ? 'Cutoff passed' : 'Through ' + shortDate(cutoff));
+    var dark = function (k, v, s) { return '<div class="dark"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    if (gapN <= 0) {
+      $('pathAsk').innerHTML = dark('You\'re on pace', 'Keep the pipeline moving', 'Projected ' + fmt(projected, 1) + ' of ' + goal + ' closed-won') + dark('Next', 'Build for next month', 'Meetings held after ' + shortDate(cutoff) + ' count toward next month');
+    } else if (tooLate || !win) {
+      $('pathAsk').innerHTML = dark('This month', 'Close what\'s open', fmt(projected, 1) + ' of ' + goal + ' is the realistic finish') + dark('Next month', 'Start building now', 'Every meeting held from today counts toward next month');
+    } else {
+      $('pathAsk').innerHTML = dark('Hold by ' + shortDate(cutoff), heldNeed + ' more meeting' + (heldNeed === 1 ? '' : 's'), fmt(gapN, 1) + ' ÷ ' + pct(win) + ' win rate, rounded up') +
+        dark('Schedule for ' + shortDate(today) + ' – ' + shortDate(cutoff), schedNeed + ' more meeting' + (schedNeed === 1 ? '' : 's'), heldNeed + ' ÷ ' + pct(holdUse) + ' hold rate' + (holdDays ? ', about ' + fmt(schedNeed / holdDays, 1) + ' a day' : ''));
+    }
+    $('pathExplain').textContent = 'Upcoming meetings held by the cutoff: ' + upsoon + ' × ' + pct(holdUse) + ' hold × ' + pct(win) + ' win = ' + fmt(fromUp, 1) +
+      '. Following Up deals that aren\'t rotting: ' + Math.max(fu - rf, 0) + ' × ' + pct(win) + ' win = ' + fmt(fromFu, 1) + '. Rotting deals, missed meetings and meetings after the cutoff aren\'t counted for this month.';
+
+    // last week's goals
+    var gcard = function (key, actual, goalV, unit) {
+      $('ga_' + key).innerHTML = fmt(actual, 0) + ' <small>/ ' + goalV + ' ' + unit + '</small>';
+      $('gc_' + key).innerHTML = actual >= goalV ? chip('on', '✓ Hit') : chip('below', '✕ Missed by ' + fmt(goalV - actual, 0));
+    };
+    gcard('calls', dpd, n('lg_calls'), 'goal'); gcard('dm', dm, n('lg_dm'), 'goal'); gcard('mtg', mc, n('lg_mtg'), 'goal');
+
+    // this week's hints
+    $('h_calls').textContent = 'Standard ≥ ' + S('dpd');
+    $('h_dm').textContent = 'Standard pace: ' + Math.round(n('g_calls') * 5 * S('conn')) + ' (' + pct(S('conn')) + ' of ' + n('g_calls') * 5 + ' dials)';
+    $('h_mtg').textContent = gapN > 0 && !tooLate && win ? 'Path to goal: ' + schedNeed + ' by ' + shortDate(cutoff) : 'Standard pace: ' + S('mpd') * 5 + ' a week';
+    window.__ci = { schedNeed: schedNeed, heldNeed: heldNeed, cutoff: cutoff, projected: projected, goal: goal, rm: rm, rf: rf, gap: gapN, tooLate: tooLate };
+  }
+
+  document.querySelectorAll('input, select').forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
+  $('addGoal').addEventListener('click', function () { $('work2').classList.remove('hidden'); this.classList.add('hidden'); $('w2').focus(); });
+
+  $('submit').addEventListener('click', function () {
+    var c = window.__ci, name = $('repName').value.trim() || 'Rep', first = name.split(' ')[0];
+    var t1 = document.querySelector('input[name="t1"]:checked').value;
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
+    var dmDay = Math.ceil(n('g_dm') / 5), mtgDay = Math.ceil(n('g_mtg') / 5);
+    var second = !$('work2').classList.contains('hidden') && $('w2').value.trim()
+      ? '<p style="margin: 10px 0 0"><span class="tag">' + esc(document.querySelector('input[name="t2"]:checked').value) + '</span><br><strong>' + esc($('w2').value) + '</strong>' + ($('h2').value.trim() ? '<br><span class="muted">Track it: ' + esc($('h2').value) + '</span>' : '') + '</p>' : '';
+    var path = c.gap > 0 && !c.tooLate ? 'Projected ' + fmt(c.projected, 1) + ' of ' + c.goal + ' closed-won. You need ' + c.heldNeed + ' more meetings held by ' + shortDate(c.cutoff) + ' to get there.'
+      : 'Projected ' + fmt(c.projected, 1) + ' of ' + c.goal + ' closed-won this month.';
+    $('emailPreview').innerHTML =
+      '<p style="margin: 0 0 12px; font-weight: 600">' + ($('agreed').checked ? 'Check-in submitted.' : 'Check-in submitted (tick "I set this plan with my manager" before the real one).') + ' Here\'s the email ' + esc(first) + ' would get each morning:</p>' +
+      '<div class="email-head"><strong>To:</strong> ' + esc(name) + '<br><strong>Cc:</strong> ' + esc(first) + '\'s manager<br><strong>Subject:</strong> Today: ' + n('g_calls') + ' calls, ' + dmDay + ' DM connects, ' + mtgDay + ' meetings</div>' +
+      '<div class="email-body"><div style="font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin-bottom: 14px">Good morning, ' + esc(first) + '. Here\'s today.</div>' +
+      '<div class="three" style="margin-bottom: 16px"><div class="stat"><span class="k">Calls today</span><span class="v">' + n('g_calls') + '</span></div><div class="stat"><span class="k">DM connects today</span><span class="v">' + dmDay + '</span><span class="s">' + n('g_dm') + ' this week</span></div><div class="stat"><span class="k">Meetings today</span><span class="v">' + mtgDay + '</span><span class="s">' + n('g_mtg') + ' this week</span></div></div>' +
+      '<p style="margin: 0"><span class="tag">What you\'re working on · ' + esc(t1) + '</span><br><strong>' + esc($('w1').value) + '</strong><br><span class="muted">Track it: ' + esc($('h1').value) + '</span></p>' + second +
+      (c.rm || c.rf ? '<p style="margin: 14px 0 0"><span class="tag">Clean up first</span><br>' + (c.rm ? c.rm + ' missed meetings are 2+ weeks old. Reschedule or close them out.<br>' : '') + (c.rf ? c.rf + ' follow-ups are 2+ weeks past their meeting. Move them forward or close them.' : '') + '</p>' : '') +
+      '<div class="dark" style="margin-top: 16px"><span class="k">Path to goal</span><span style="font-size: 15px">' + path + '</span></div></div>';
+    $('emailPreview').classList.remove('hidden');
+    $('emailPreview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
