@@ -37,9 +37,9 @@
     <a class="back-link" href="index.html">&larr; Seated Coaching Hub</a>
     <h1>Knowledge</h1>
     <p class="subtitle">Do you know what you need to know? Modules are grouped by the month they need to be completed, and each one scores and saves when you submit. Tap a month to see its modules.</p>
-    <a class="dashboard-link" href="dashboard.html">View the results dashboard &rarr;</a>
-    <a class="dashboard-link" href="schedule.html" style="margin-left:20px;">View the schedule &rarr;</a>
-    <a class="dashboard-link" href="add-rep.html" style="margin-left:20px;">Add a rep &rarr;</a>
+    <a class="dashboard-link" href="tracking.html">See your tracking &rarr;</a>
+    <a class="dashboard-link" href="schedule.html" style="margin-left:20px;" data-min-role="manager">View the schedule &rarr;</a>
+    <a class="dashboard-link" href="add-rep.html" style="margin-left:20px;" data-min-role="admin">Add a rep &rarr;</a>
   </div>
 
   <details class="track">
@@ -214,5 +214,27 @@
   </details>
 
 </div>
+<script>
+// Signed in through the hub: put each module in the month the Modules tab says, then recount.
+(function () {
+  var H = window.HUB; if (!H || !H.config || !H.config.modules || !H.config.modules.length) return;
+  var groups = {};
+  document.querySelectorAll('details.track:not(.coming-soon)').forEach(function (d) {
+    var name = d.querySelector('.track-name').textContent.trim(); groups[name] = d;
+  });
+  var pageOf = function (a) { var h = a.getAttribute('href') || ''; var m = h.match(/page=([a-z0-9-]+)/) || h.match(/([a-z0-9-]+)\.html/); return m ? m[1] : ''; };
+  var byPage = {}; H.config.modules.forEach(function (m) { if (m.page) byPage[m.page] = m; });
+  document.querySelectorAll('details.track:not(.coming-soon) a.module-row').forEach(function (a) {
+    var m = byPage[pageOf(a)]; if (!m) return;
+    var target = groups[m.month === 'Supplementary' ? 'Supplementary' : 'Month ' + m.month];
+    var li = a.closest('li');
+    if (target && li && li.closest('details') !== target) target.querySelector('.module-list').appendChild(li);
+  });
+  Object.keys(groups).forEach(function (k) {
+    var n = groups[k].querySelectorAll('.module-row').length, c = groups[k].querySelector('.track-count');
+    if (c) c.textContent = n + (n === 1 ? ' quiz' : ' quizzes');
+  });
+})();
+</script>
 </body>
 </html>

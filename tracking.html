@@ -168,6 +168,11 @@
   // ---------- standards & helpers ----------
   var STD = { dpd: [125, 60], conn: [0.08, 0.10], conv: [0.25, 0.33], mpd: [2.5, 2], hold: [0.50, 0.57], win: [0.27, 0.37] };
   var WEEKS = ['2026-08-17', '2026-08-24', '2026-08-31', '2026-09-07', '2026-09-14', '2026-09-21'];
+  var LIVE = !!(window.HUB && !window.HUB.preview), DATA = null;
+  var MONTH_LABELS = ['August', 'September'], PLAN_LABEL = 'Sep 28', REPORT_KEY = '2026-09-21';
+  if (window.HUB && HUB.config && HUB.config.standards) {
+    Object.keys(STD).forEach(function (k) { var c = HUB.config.standards[k]; if (c) STD[k] = [c.ramping, c.ramped]; });
+  }
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var parse = function (k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
   var short = function (k) { var d = parse(k); return MON[d.getMonth()] + ' ' + d.getDate(); };
@@ -226,19 +231,23 @@
 
   function weekMetrics(rep, i) {
     var w = rep.wk[i], st = stageAt(rep.start, WEEKS[i]);
+    if (rep.active && !rep.active[i]) return { missing: true, pre: true, st: st };
     if (!w[0] && !w[1]) return { missing: true, st: st };
     var S = function (k) { return STD[k][st.ramped ? 1 : 0]; };
     var m = {
       st: st, dpd: w[1] ? w[0] / w[1] : 0, conn: w[0] ? w[2] / w[0] : 0, conv: w[2] ? w[3] / w[2] : 0, mpd: w[3] / 5,
       hold: w[4] ? w[5] / w[4] : null, rotm: (w[7] + w[6]) ? w[8] / (w[7] + w[6]) : 0, win: st.ae > 0 ? w[11] : null,
-      rotf: w[12] ? w[13] / w[12] : 0, cw: w[9], cl: w[10], dm: w[2], mc: w[3]
+      rotf: w[12] ? w[13] / w[12] : 0, cw: w[9], cl: w[10], dm: w[2], mc: w[3],
+      inb: w[14] || 0
     };
+    m.booked = m.mc + m.inb; m.selfShare = m.booked ? m.mc / m.booked : null;
     m.bands = {
       dpd: band(m.dpd, S('dpd')), conn: band(m.conn, S('conn')), conv: band(m.conv, S('conv')), mpd: band(m.mpd, S('mpd')),
       hold: m.hold === null ? 'n' : band(m.hold, S('hold')), win: m.win === null ? 'n' : band(m.win, S('win'))
     };
     var g = rep.goals[i];
-    m.goalsHit = (m.dpd >= g[0] ? 1 : 0) + (w[2] >= g[1] ? 1 : 0) + (w[3] >= g[2] ? 1 : 0);
+    m.goalsHit = (g[0] + g[1] + g[2]) > 0 ? (m.dpd >= g[0] ? 1 : 0) + (w[2] >= g[1] ? 1 : 0) + (w[3] >= g[2] ? 1 : 0) : null;
+    m.hasWork = !!rep.work[i][1];
     m.work = rep.work[i][2];
     m.effort = rep.ratings[i].reduce(function (a, b) { return a + b; }, 0) / 4;
     return m;
@@ -248,23 +257,31 @@
   // Outcome = share of the stage's standards hit (green)
   function fronts(rep, i) {
     var m = weekMetrics(rep, i);
-    var k = { v: rep.knowledge[i] / 100, hit: rep.knowledge[i], of: 100 };
+    var kv = rep.knowledge[i];
+    var k = { v: kv === null || kv === undefined ? null : kv / 100, hit: kv, of: 100 };
+    if (m.pre) return { k: k, e: null, o: null, missing: true, pre: true };
     if (m.missing) return { k: k, e: { hit: 0, of: 5 }, o: null, missing: true };
     var work = m.work === 'Did it' ? 1 : m.work === 'Partly' ? 0.5 : 0;
-    var e = { hit: rep.onTime[i] + work + m.goalsHit, of: 5 };
+    var e = { hit: rep.onTime[i] + (m.hasWork ? work : 0) + (m.goalsHit || 0), of: 1 + (m.hasWork ? 1 : 0) + (m.goalsHit === null ? 0 : 3) };
     var on = 0, judged = 0;
     Object.keys(m.bands).forEach(function (b) { if (m.bands[b] !== 'n') { judged++; if (m.bands[b] === 'g') on++; } });
     return { k: k, e: e, o: { hit: on, of: judged } };
   }
   function last4(rep) {
     var e = [0, 0], o = [0, 0];
-    for (var i = 2; i < 6; i++) { var f = fronts(rep, i); e[0] += f.e.hit; e[1] += f.e.of; if (f.o) { o[0] += f.o.hit; o[1] += f.o.of; } }
-    return { k: rep.knowledge[5] / 100, e: e[1] ? e[0] / e[1] : null, o: o[1] ? o[0] / o[1] : null, eRaw: e, oRaw: o };
+    for (var i = 2; i < 6; i++) { var f = fronts(rep, i); if (!f.e) continue; e[0] += f.e.hit; e[1] += f.e.of; if (f.o) { o[0] += f.o.hit; o[1] += f.o.of; } }
+    var k5 = rep.knowledge[5];
+    return { k: k5 === null || k5 === undefined ? null : k5 / 100, e: e[1] ? e[0] / e[1] : null, o: o[1] ? o[0] / o[1] : null, eRaw: e, oRaw: o };
   }
 
   // ---------- rep picker & tabs ----------
   var sel = document.getElementById('rep'), scopeSel = document.getElementById('scope'), viewerSel = document.getElementById('viewer');
   var MANAGERS = ['Gradie Oakes', 'Kristen Garcia', 'Taylor Rozencwaig'];
+  REPS.forEach(function (r) {
+    if (!r.monthsArr) r.monthsArr = [r.months.Aug, r.months.Sep]; if (!r.email) r.email = '';
+    // sample data: add inbound meetings (reps in month 0–2 get none)
+    r.wk.forEach(function (w, i) { if (w.length < 15) { var early = stageAt(r.start, WEEKS[i]).ae === 0; w.push(early ? 0 : Math.max(w[3] ? 1 : 0, Math.round(w[3] * 0.6))); } });
+  });
   var VIS = [];
   function visible() { return VIS; }
   function setupViewer(keepScope) {
@@ -320,7 +337,8 @@
     if (xs.length < 2) return '–';
     var a = (xs[0] + (xs[1] !== undefined ? xs[1] : xs[0])) / 2, b = (xs[xs.length - 1] + xs[xs.length - 2]) / 2;
     if (Math.abs(b - a) < Math.max(Math.abs(a) * 0.05, 0.01)) return '→';
-    var up = b > a; return (up === higherBetter) ? '↑ better' : '↓ worse';
+    var up = b > a; if (higherBetter === null) return up ? '↑' : '↓';
+    return (up === higherBetter) ? '↑ better' : '↓ worse';
   }
 
   function renderWow(rep) {
@@ -332,7 +350,7 @@
       var vals = ms.map(function (m) { return m.missing ? null : get(m); });
       return '<tr class="m"><td class="lab">' + label + '</td><td class="std">' + std + '</td>' +
         ms.map(function (m, i) {
-          if (m.missing) return '<td><span class="cell r">Missed check-in</span></td>';
+          if (m.missing) return m.pre ? '<td><span class="cell n">–</span></td>' : '<td><span class="cell r">Missed check-in</span></td>';
           var v = vals[i]; if (v === null) return '<td><span class="cell n">–</span></td>';
           return cell(fmt(v), b ? m.bands[b] : 'n');
         }).join('') + '<td class="trend">' + trend(vals, higher) + '</td></tr>';
@@ -343,17 +361,21 @@
       line('Dials / day', stdTxt('dpd', function (x) { return x; }), function (m) { return m.dpd; }, 'dpd', function (v) { return Math.round(v); }, true) +
       line('DM connect', stdTxt('conn', pct), function (m) { return m.conn; }, 'conn', pct, true) +
       line('DM conversion', stdTxt('conv', pct), function (m) { return m.conv; }, 'conv', pct, true) +
-      line('Meetings from calling / day', stdTxt('mpd', function (x) { return x; }), function (m) { return m.mpd; }, 'mpd', r1, true) +
+      line('Self-scheduled meetings / day', stdTxt('mpd', function (x) { return x; }), function (m) { return m.mpd; }, 'mpd', r1, true) +
       grp('Opportunity execution standards') +
       line('Hold rate', stdTxt('hold', pct), function (m) { return m.hold; }, 'hold', pct, true) +
       line('Win Rate (Rolling 30)', stdTxt('win', pct), function (m) { return m.win; }, 'win', pct, true) +
+      grp('Where meetings came from') +
+      line('Self-scheduled meetings', 'Goaled', function (m) { return m.mc; }, null, function (v) { return v; }, true) +
+      line('Inbound meetings', 'Not goaled', function (m) { return m.inb; }, null, function (v) { return v; }, null) +
+      line('Self-scheduled share', 'No standard', function (m) { return m.selfShare; }, null, pct, null) +
       grp('Pipeline health') +
       line('Closed won', 'No standard', function (m) { return m.cw; }, null, function (v) { return v; }, true) +
       line('Rotting missed (% of pipeline)', 'No standard', function (m) { return m.rotm; }, null, pct, false) +
       line('Rotting follow-ups (% of Following Up)', 'No standard', function (m) { return m.rotf; }, null, pct, false) +
       grp('Effort') +
-      '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
-      '<tr class="m"><td class="lab">Working-on goal</td><td class="std">Did it</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.work, m.work === 'Did it' ? 'g' : m.work === 'Partly' ? 'y' : 'r'); }).join('') + '<td class="trend"></td></tr>' +
+      '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell ' + (m.pre ? 'n' : 'r') + '">–</span></td>' : m.goalsHit === null ? '<td><span class="cell n">No goals set</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
+      '<tr class="m"><td class="lab">Working-on goal</td><td class="std">Did it</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell ' + (m.pre ? 'n' : 'r') + '">–</span></td>' : !m.hasWork || !m.work ? '<td><span class="cell n">–</span></td>' : cell(m.work, m.work === 'Did it' ? 'g' : m.work === 'Partly' ? 'y' : 'r'); }).join('') + '<td class="trend"></td></tr>' +
       '</tbody>';
     document.getElementById('wowTable').innerHTML = html;
     var firstAE = -1; ms.forEach(function (m, i) { if (firstAE < 0 && m.st.ae > 0) firstAE = i; });
@@ -390,14 +412,14 @@
     var fs = WEEKS.map(function (_, i) { return fronts(rep, i); });
     var row = function (label, get, sub) {
       return '<tr class="m"><td class="lab">' + label + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + sub + '</span></td>' +
-        fs.map(function (f) { var x = get(f); return x === null ? '<td><span class="cell r">Missed check-in</span></td>' : pctCell(x); }).join('') + '</tr>';
+        fs.map(function (f) { var x = get(f); return x === 'PRE' ? '<td><span class="cell n">–</span></td>' : x === null ? '<td><span class="cell r">Missed check-in</span></td>' : pctCell(x); }).join('') + '</tr>';
     };
     document.getElementById('overTime').innerHTML =
       '<thead><tr><th class="l">Front</th>' + WEEKS.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       '<tr class="stage-row"><td></td>' + WEEKS.map(function (k) { return '<td>' + stageAt(rep.start, k).label + '</td>'; }).join('') + '</tr>' +
       row('Knowledge', function (f) { return f.k.v; }, 'Quiz average, modules due') +
-      row('Effort', function (f) { return f.missing ? null : f.e.hit / f.e.of; }, 'Commitments met') +
-      row('Outcome', function (f) { return f.o ? (f.o.of ? f.o.hit / f.o.of : null) : null; }, 'Standards hit') + '</tbody>';
+      row('Effort', function (f) { return f.pre ? 'PRE' : f.missing ? null : (f.e.of ? f.e.hit / f.e.of : 'PRE'); }, 'Commitments met') +
+      row('Outcome', function (f) { return f.pre ? 'PRE' : f.o ? (f.o.of ? f.o.hit / f.o.of : 'PRE') : null; }, 'Standards hit') + '</tbody>';
     // month-end outcomes
     var mcell = function (a, g) { if (!g) return '<td><span class="cell n">No goal</span></td>'; var x = a / g, b = x >= 1 ? 'g' : x >= 0.9 ? 'y' : 'r'; return '<td><span class="cell ' + b + '">' + SYM[b] + a + ' / ' + g + ' · ' + Math.round(x * 100) + '%</span></td>'; };
     var npcell = function (att, paid) {
@@ -407,11 +429,11 @@
     };
     var tcell = function (t) { if (t === null) return '<td><span class="cell n">–</span></td>'; var b = band(t, 18); return '<td><span class="cell ' + b + '">' + SYM[b] + t + '%</span></td>'; };
     document.getElementById('monthTable').innerHTML =
-      '<thead><tr><th class="l" rowspan="2">Rep</th><th colspan="4">August</th><th colspan="4">September</th></tr><tr><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th></tr></thead><tbody>' +
+      (MONTH_LABELS.length ? '<thead><tr><th class="l" rowspan="2">Rep</th>' + MONTH_LABELS.map(function (l) { return '<th colspan="4">' + esc(l) + '</th>'; }).join('') + '</tr><tr>' +
+        MONTH_LABELS.map(function () { return '<th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th>'; }).join('') + '</tr></thead><tbody>' +
       visible().map(function (i) { var r = REPS[i];
-        var a = r.months.Aug, b = r.months.Sep;
-        return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '</td>' + mcell(a[0], a[1]) + npcell(a[0], a[5]) + mcell(a[2], a[3]) + tcell(a[4]) + mcell(b[0], b[1]) + npcell(b[0], b[5]) + mcell(b[2], b[3]) + tcell(b[4]) + '</tr>';
-      }).join('') + '</tbody>';
+        return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '</td>' + r.monthsArr.map(function (a) { return mcell(a[0], a[1]) + npcell(a[0], a[5]) + mcell(a[2], a[3]) + tcell(a[4]); }).join('') + '</tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="l" style="padding:16px">No month-end recaps yet. They come in with the check-in on the third Monday of each month.</td></tr></tbody>');
   }
 
   function renderMgr(selIdx) {
@@ -428,7 +450,7 @@
         var m = weekMetrics(r, 5), st = stageAt(r.start, k);
         var td = function (x) { return '<td class="l" style="padding: 12px 10px 12px 16px">' + x + '</td>'; };
         var name = '<b style="display:block">' + r.name + '</b><span style="font-size:12.5px;color:#6F665A">' + st.label + '</span>';
-        if (m.missing) return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td('<span style="color:#8A3A26;font-weight:600">Not submitted</span>') + td('–') + td('–') + td('–') + td('–') + td('<button class="linkbtn" data-pick="' + i + '">Send reminder</button>') + '</tr>';
+        if (m.missing) return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td('<span style="color:#8A3A26;font-weight:600">Not submitted</span>') + td('–') + td('–') + td('–') + td('–') + td(LIVE && r.email ? '<a class="linkbtn" href="mailto:' + r.email + '?subject=Your%20weekly%20check-in" target="_blank">Send reminder</a>' : '<button class="linkbtn" data-pick="' + i + '">Send reminder</button>') + '</tr>';
         var below = Object.keys(m.bands).filter(function (b) { return m.bands[b] === 'r'; }).map(function (b) { return NAMES[b]; });
         var plan = r.plan === 'review' ? '<span class="chip dk">Needs review</span>' : r.plan === 'suggested' ? '<span class="chip y">Update suggested</span>' : '<span class="chip g">✓ Approved</span>';
         return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td(r.submitted) + td(below.length ? below.join(', ') : '<span class="chip g">✓ None</span>') + td(m.goalsHit + ' of 3') + td(m.work) + td(plan) + td('<button class="linkbtn" data-pick="' + i + '">' + (i === selIdx ? 'Viewing' : 'Open') + '</button>') + '</tr>';
@@ -444,11 +466,11 @@
     var lastWork = r.work[5], next = r.next, g = next[0];
     document.getElementById('mgrDetail').innerHTML =
       '<div class="tp-card"><h3>' + first + '\u2019s week</h3>' +
-      '<span class="sub">Top of funnel</span>' + ml('Dials / day', Math.round(m.dpd), m.bands.dpd) + ml('DM connect', pct(m.conn), m.bands.conn) + ml('Meetings from calling', w[3] + ' · ' + pct(m.conv) + ' conv.', m.bands.conv) +
+      '<span class="sub">Top of funnel</span>' + ml('Dials / day', Math.round(m.dpd), m.bands.dpd) + ml('DM connect', pct(m.conn), m.bands.conn) + ml('Self-scheduled meetings', w[3] + ' · ' + pct(m.conv) + ' conv.', m.bands.conv) + ml('Inbound meetings', m.inb) +
       '<span class="sub">Middle of funnel</span>' + ml('Hold rate', w[5] + ' of ' + w[4] + ' · ' + pct(m.hold), m.bands.hold) + ml('Upcoming meetings', w[6]) + ml('Rotting missed meetings', w[8] + ' of ' + (w[6] + w[7]) + ' · ' + pct(m.rotm)) +
       '<span class="sub">Bottom of funnel</span>' + ml('Closed won / lost', w[9] + ' / ' + w[10]) + (m.win !== null ? ml('Win Rate (Rolling 30)', pct(m.win), m.bands.win) : '') + ml('Rotting follow-ups', w[13] + ' of ' + w[12] + ' · ' + pct(m.rotf)) +
       '</div>' +
-      '<div class="tp-card"><h3>Plan for the week of Sep 28</h3>' + planStatus(r) +
+      '<div class="tp-card"><h3>Plan for the week of ' + PLAN_LABEL + '</h3>' + planStatus(r) +
       '<span class="sub">Last week\u2019s working-on goal: ' + esc(lastWork[0]) + '</span><p style="margin: 4px 0 0">' + esc(lastWork[1]) + ' <span class="chip ' + (lastWork[2] === 'Did it' ? 'g' : lastWork[2] === 'Partly' ? 'y' : 'r') + '">' + esc(lastWork[2]) + '</span></p>' +
       planEditor(r, selIdx) +
       '</div>';
@@ -490,21 +512,35 @@
       read();
       var changed = r.next[0].some(function (v, i) { return v !== r.orig.g[i]; }) || r.next[1][1] !== r.orig.w;
       if (changed) { $('pe_msg').textContent = 'You changed the plan. Use Suggest update so ' + r.name.split(' ')[0] + ' can confirm it.'; $('pe_msg').classList.remove('hidden'); return; }
+      if (LIVE) return liveReview(r, 'approve');
       r.plan = 'approved'; render();
     });
     if ($('pe_suggest')) $('pe_suggest').addEventListener('click', function () {
       read();
       var changed = r.next[0].some(function (v, i) { return v !== r.orig.g[i]; }) || r.next[1][1] !== r.orig.w;
       if (!changed && !r.note.trim()) { $('pe_msg').textContent = 'Change at least one goal or add a note before suggesting an update.'; $('pe_msg').classList.remove('hidden'); return; }
+      if (LIVE) return liveReview(r, 'suggest');
       r.plan = 'suggested'; render();
     });
     if ($('pe_reopen')) $('pe_reopen').addEventListener('click', function () {
       if (r.plan === 'suggested') { r.next[0] = r.orig.g.slice(); r.next[1][1] = r.orig.w; }
+      if (LIVE) return liveReview(r, 'reopen');
       r.plan = 'review'; render();
     });
   }
 
+  function liveReview(r, action) {
+    var msg = document.getElementById('pe_msg');
+    HUB.call('reviewPlan', r.email, REPORT_KEY, action, { g_calls: r.next[0][0], g_dm: r.next[0][1], g_mtg: r.next[0][2], w1: r.next[1][1] }, r.note || '')
+      .then(loadLive).catch(function (e) { if (msg) { msg.textContent = e && e.message || String(e); msg.classList.remove('hidden'); } });
+  }
   function render() {
+    if (!VIS.length) {
+      ['wowTable', 'scoreTable', 'overTime', 'monthTable', 'mgrTable'].forEach(function (id) { var el = document.getElementById(id); if (el) el.innerHTML = '<tbody><tr><td class="l" style="padding:16px">No check-ins to show yet.</td></tr></tbody>'; });
+      ['goalHistory', 'mgrDetail', 'wowNote'].forEach(function (id) { var el = document.getElementById(id); if (el) el.innerHTML = ''; });
+      if (document.getElementById('overTimeTitle')) document.getElementById('overTimeTitle').textContent = '';
+      renderAdmin(); return;
+    }
     var i = VIS.length === 1 ? VIS[0] : parseInt(sel.value, 10);
     if (VIS.indexOf(i) === -1) i = VIS[0];
     renderWow(REPS[i]); renderScore(i); renderMgr(i); renderAdmin();
@@ -515,7 +551,7 @@
     document.getElementById('adminTable').innerHTML =
       '<thead><tr><th class="l">Rep</th><th class="l">Email</th><th class="l">Manager</th><th class="l">Start date</th><th class="l">Stage today</th><th class="l">Exclude</th></tr></thead><tbody>' +
       REPS.map(function (r, i) {
-        return '<tr class="m"><td class="lab">' + r.name + '</td><td class="l">' + emailFor(r.name) + '</td>' +
+        return '<tr class="m"><td class="lab">' + r.name + '</td><td class="l">' + (r.email || emailFor(r.name)) + '</td>' +
           '<td class="l"><select data-edit="manager" data-i="' + i + '" aria-label="Manager for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;background:#fff;font:inherit">' + MANAGERS.map(function (m) { return opt(m, r.manager); }).join('') + '</select></td>' +
           '<td class="l"><input type="date" data-edit="start" data-i="' + i + '" value="' + r.start + '" aria-label="Start date for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;font:inherit"></td>' +
           '<td class="l">' + stageAt(r.start, WEEKS[5]).label + '</td>' +
@@ -524,6 +560,11 @@
     document.querySelectorAll('[data-edit]').forEach(function (el) {
       el.addEventListener('change', function () {
         var r = REPS[parseInt(el.dataset.i, 10)];
+        if (LIVE) {
+          var ch = {}; if (el.dataset.edit === 'manager') ch.manager = el.value; if (el.dataset.edit === 'start' && el.value) ch.start = el.value; if (el.dataset.edit === 'exclude') ch.exclude = el.checked;
+          HUB.call('updateRosterEntry', r.email, ch).then(loadLive).catch(function (e) { alert(e && e.message || e); });
+          return;
+        }
         if (el.dataset.edit === 'manager') r.manager = el.value;
         if (el.dataset.edit === 'start' && el.value) r.start = el.value;
         if (el.dataset.edit === 'exclude') r.exclude = el.checked;
@@ -531,8 +572,28 @@
       });
     });
   }
-  setupViewer();
-  render();
+  // ---------- live: real check-ins, scoped on the server ----------
+  function loadLive() {
+    return HUB.call('getTrackingData').then(function (d) {
+      DATA = d; WEEKS = d.weeks; MONTH_LABELS = d.monthLabels; PLAN_LABEL = d.planLabel; REPORT_KEY = d.reportKey; MANAGERS = d.managers;
+      REPS.length = 0; d.reps.forEach(function (r) { REPS.push(r); });
+      var v = viewerSel;
+      var val = d.role === 'admin' ? 'admin' : d.role === 'manager' ? 'mgr:' + d.me : 'rep:0';
+      v.innerHTML = '<option value="' + esc(val) + '">' + esc(d.me) + '</option>'; v.value = val;
+      setupViewer(true); render();
+    }).catch(function (e) {
+      document.getElementById('wowTable').innerHTML = '<tbody><tr><td class="l" style="padding:16px">Couldn\u2019t load tracking: ' + esc(e && e.message || e) + '</td></tr></tbody>';
+    });
+  }
+  if (LIVE) {
+    document.querySelectorAll('.preview-banner, .viewas').forEach(function (el) { el.classList.add('hidden'); });
+    var lede = document.querySelector('.tp .lede'); if (lede) lede.textContent = 'Your weekly check-ins, week over week, with Knowledge, Effort and Outcome over time.';
+    document.querySelector('h1').textContent = 'Tracking';
+    loadLive();
+  } else {
+    setupViewer();
+    render();
+  }
 })();
 </script>
 </body>

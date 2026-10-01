@@ -144,7 +144,7 @@
       <div class="grid-row"><label for="me_r">Restaurants</label><input class="num" id="me_r" type="number" min="0" value="6"><input class="num" id="me_rg" type="number" min="0" value="8" aria-label="Restaurants goal"><span class="res" id="me_rp"></span></div>
       <div class="grid-row"><label for="me_paid">Restaurants getting paid on<span class="sub">Of the restaurants attained</span></label><input class="num" id="me_paid" type="number" min="0" value="5"><span class="std" id="me_paidof"></span><span class="res" id="me_np"></span></div>
       <div class="grid-row"><label for="me_p">Points</label><input class="num" id="me_p" type="number" min="0" value="410"><input class="num" id="me_pg" type="number" min="0" value="500" aria-label="Points goal"><span class="res" id="me_pp"></span></div>
-      <div class="grid-row"><label for="me_t">Take Rate %<span class="sub">Average across last month's closed-won deals</span></label><input class="num" id="me_t" type="number" min="0" max="100" step="0.1" value="19"><span class="std">Standard 18%</span><span class="res" id="me_tp"></span></div>
+      <div class="grid-row"><label for="me_t">Take Rate %<span class="sub">Average across last month's closed-won deals</span></label><input class="num" id="me_t" type="number" min="0" max="100" step="0.1" value="19"><span class="std" id="takeStd">Standard 18%</span><span class="res" id="me_tp"></span></div>
     </div>
   </section>
 
@@ -159,8 +159,10 @@
       <div class="grid-row"><label for="dials">Dials</label><input class="num" id="dials" type="number" min="0" value="212"><span class="res" id="r_dpd"></span><span class="std" id="s_dpd"></span></div>
       <div class="grid-row"><label for="days">Days dialed</label><input class="num" id="days" type="number" min="0" max="7" value="3"><span class="muted">Used for dials / day</span><span></span></div>
       <div class="grid-row"><label for="dm">DM connects</label><input class="num" id="dm" type="number" min="0" value="11"><span class="res" id="r_conn"></span><span class="std" id="s_conn"></span></div>
-      <div class="grid-row"><label for="mtgcall">Meetings scheduled from calling</label><input class="num" id="mtgcall" type="number" min="0" value="3"><span class="res" id="r_conv"></span><span class="std" id="s_conv"></span></div>
-      <div class="grid-row calc"><span class="lbl">Meetings scheduled per day<span class="sub">Meetings from calling ÷ 5 days</span></span><span class="muted">Calculated</span><span class="res" id="r_mpd"></span><span class="std" id="s_mpd"></span></div>
+      <div class="grid-row"><label for="mtgcall">Self-scheduled meetings<span class="sub">You booked these yourself</span></label><input class="num" id="mtgcall" type="number" min="0" value="3"><span class="res" id="r_conv"></span><span class="std" id="s_conv"></span></div>
+      <div class="grid-row calc"><span class="lbl">Self-scheduled meetings per day<span class="sub">Self-scheduled meetings ÷ 5 days</span></span><span class="muted">Calculated</span><span class="res" id="r_mpd"></span><span class="std" id="s_mpd"></span></div>
+      <div class="grid-row"><label for="mtgin">Inbound meetings<span class="sub">Booked for you by a BDR or from an MQL</span></label><input class="num" id="mtgin" type="number" min="0" value="3"><span class="muted">Not goaled</span><span></span></div>
+      <div class="grid-row calc"><span class="lbl">Total meetings booked<span class="sub">Where last week's new meetings came from</span></span><span class="muted">Calculated</span><span class="res" id="r_src"></span><span></span></div>
     </div>
 
     <div class="ci-card">
@@ -213,10 +215,10 @@
     <div class="three">
       <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">Calls per day</span><input id="lg_calls" type="hidden" value="100"><div class="v" id="ga_calls" style="margin-top: 6px"></div><div id="gc_calls"></div></div>
       <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">DM connects</span><input id="lg_dm" type="hidden" value="15"><div class="v" id="ga_dm" style="margin-top: 6px"></div><div id="gc_dm"></div></div>
-      <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">Meetings from calling</span><input id="lg_mtg" type="hidden" value="3"><div class="v" id="ga_mtg" style="margin-top: 6px"></div><div id="gc_mtg"></div></div>
+      <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">Self-scheduled meetings</span><input id="lg_mtg" type="hidden" value="3"><div class="v" id="ga_mtg" style="margin-top: 6px"></div><div id="gc_mtg"></div></div>
     </div>
-    <div class="ci-card card-pad gap">
-      <div><span class="tag">Follow-up</span><div style="font-weight: 600; font-size: 16px">Send a recap within 1 hour of every demo</div><div class="muted">How I said I'd track it: recap logged as an email activity in Salesforce</div></div>
+    <div class="ci-card card-pad gap" id="lgWorkCard">
+      <div id="lgWork"><span class="tag" id="lgTag">Follow-up</span><div style="font-weight: 600; font-size: 16px" id="lgText">Send a recap within 1 hour of every demo</div><div class="muted" id="lgTrack">How I said I'd track it: recap logged as an email activity in Salesforce</div></div>
       <fieldset class="choices"><legend>How did it go?</legend>
         <label class="choice"><input type="radio" name="lastgoal" value="Did it"><span>Did it</span></label>
         <label class="choice"><input type="radio" name="lastgoal" value="Partly" checked><span>Partly</span></label>
@@ -232,10 +234,11 @@
     <p class="lede">Set these with your manager in your 1:1. Start from what's below standard and what's rotting.</p>
     <div class="ci-card card-pad gap">
       <h3 style="font-family: 'Inter', sans-serif; font-size: 16px">Number goals</h3>
+      <p class="muted" style="margin: -6px 0 0">Goal only what you control: meetings you schedule yourself. Inbound meetings aren't goaled.</p>
       <div class="three">
         <div class="field"><label for="g_calls">Calls per day</label><input class="num" id="g_calls" type="number" value="110"><span class="hint" id="h_calls"></span></div>
         <div class="field"><label for="g_dm">DM connects this week</label><input class="num" id="g_dm" type="number" value="25"><span class="hint" id="h_dm"></span></div>
-        <div class="field"><label for="g_mtg">Meetings from calling this week</label><input class="num" id="g_mtg" type="number" value="8"><span class="hint" id="h_mtg"></span></div>
+        <div class="field"><label for="g_mtg">Self-scheduled meetings this week</label><input class="num" id="g_mtg" type="number" value="8"><span class="hint" id="h_mtg"></span></div>
       </div>
     </div>
     <div class="ci-card card-pad gap" id="work1">
@@ -289,7 +292,15 @@
   var STD = { // [Ramping, Ramped]
     dpd: [125, 60], conn: [0.08, 0.10], conv: [0.25, 0.33], mpd: [2.5, 2], hold: [0.50, 0.57], win: [0.27, 0.37]
   };
+  var LIVE = !!(window.HUB && !window.HUB.preview);
+  var STD_TAKE = 0.18;
+  if (window.HUB && HUB.config && HUB.config.standards) {
+    var cs = HUB.config.standards;
+    Object.keys(STD).forEach(function (k) { if (cs[k]) STD[k] = [cs[k].ramping, cs[k].ramped]; });
+    if (cs.take) STD_TAKE = cs.take.ramped;
+  }
   var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
   var n = function (id) { var v = parseFloat($(id).value); return isNaN(v) || v < 0 ? 0 : v; };
   var pct = function (x) { return (Math.round(x * 1000) / 10) + '%'; };
   var fmt = function (x, d) { return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString(); };
@@ -331,6 +342,8 @@
     $('r_conn').innerHTML = dials ? pct(conn) + ' connect ' + judge(conn, S('conn')) : '–';
     $('r_conv').innerHTML = dm ? pct(conv) + ' conversion ' + judge(conv, S('conv')) : '–';
     $('r_mpd').innerHTML = fmt(mpd, 1) + ' / day ' + judge(mpd, S('mpd'));
+    var mi = n('mtgin'), mt = mc + mi;
+    $('r_src').innerHTML = mt ? mt + ' total <span class="muted">' + mc + ' self-scheduled (' + Math.round(mc / mt * 100) + '%) · ' + mi + ' inbound</span>' : '–';
     ['dpd', 'conn', 'conv', 'mpd'].forEach(function (k) { $('s_' + k).textContent = stdText(k, ramped); });
 
     // middle of funnel
@@ -418,7 +431,7 @@
     $('me_paidof').textContent = 'of ' + att + ' attained';
     $('me_np').innerHTML = att ? pct(notPaid / att) + ' not paid on ' + (notPaid ? chip('flag', '! ' + notPaid + ' not paid') : chip('on', '✓ All paid')) : '–';
     var take = n('me_t') / 100;
-    $('me_tp').innerHTML = (n('me_t') + '%') + ' ' + judge(take, 0.18);
+    $('me_tp').innerHTML = (n('me_t') + '%') + ' ' + judge(take, STD_TAKE);
 
     // last week's goals
     var gcard = function (key, actual, goalV, unit) {
@@ -446,7 +459,7 @@
       '<h3 style="margin-top: 10px">' + mgr + ' suggested changes to your plan</h3>' +
       '<p class="muted" style="margin: 0">Changed goals are highlighted. Accept them, or change your plan and resubmit.</p>' +
       '<table class="diff"><thead><tr><th>Goal</th><th>You set</th><th>' + first + ' suggests</th></tr></thead><tbody>' +
-      row('Calls per day', mine.calls, theirs.calls) + row('DM connects this week', mine.dm, theirs.dm) + row('Meetings from calling this week', mine.mtg, theirs.mtg) + row('Working on', mine.work, theirs.work) +
+      row('Calls per day', mine.calls, theirs.calls) + row('DM connects this week', mine.dm, theirs.dm) + row('Self-scheduled meetings this week', mine.mtg, theirs.mtg) + row('Working on', mine.work, theirs.work) +
       '</tbody></table>' +
       '<p style="margin: 0 0 14px"><span class="tag">Note from ' + first + '</span><br>Standard is 125 dials. Let\'s get you there this week and see what it does for connects.</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="acceptSug">Accept and confirm</button><button class="btn ghost" type="button" id="editSug" style="border-style:solid">Change my plan and resubmit</button></div>';
@@ -468,7 +481,7 @@
     var d = new Date(y, m, 1); var add = (8 - d.getDay()) % 7; // days to first Monday
     return new Date(y, m, 1 + add + 14);
   }
-  (function () {
+  if (!LIVE) (function () {
     var open = thirdMonday(today.getFullYear(), today.getMonth());
     var close = new Date(open); close.setDate(open.getDate() + 6);
     var lastMonth = MONTHS[new Date(today.getFullYear(), today.getMonth() - 1, 1).getMonth()];
@@ -510,7 +523,9 @@
     var o = this.options[this.selectedIndex], start = parseStart(o && o.getAttribute('data-start'));
     if (start) { $('stage').value = String(stageFromStart(start)); update(); }
   });
-  if (typeof SCORE_ENDPOINT !== 'undefined' && SCORE_ENDPOINT) {
+  if (LIVE) {
+    // signed in: name, manager and stage come from the server below
+  } else if (typeof SCORE_ENDPOINT !== 'undefined' && SCORE_ENDPOINT) {
     fetch(SCORE_ENDPOINT + '?roster=true').then(function (r) { return r.json(); })
       .then(function (d) { fillNames(d.rows || [], true); })
       .catch(function () { fillNames([{ name: 'Joe Prendergast', startDate: '2026-06-22' }, { name: 'Israel Duverge', startDate: '2026-06-15' }], false); });
@@ -571,6 +586,13 @@
     return data;
   }
   function saveDraft(manual) {
+    if (LIVE) {
+      if (window.__ciSubmitted) return;
+      HUB.call('saveCheckin', liveFields(), false).then(function (res) {
+        $('draftStatus').textContent = (manual ? 'Draft saved ' : 'Autosaved ') + (res.savedAt || '') + '. Nothing is sent to your manager until you submit.';
+      }).catch(function (e) { $('draftStatus').textContent = 'Couldn\'t save: ' + (e && e.message || e); });
+      return;
+    }
     var d = collect(); d.savedAt = new Date().toISOString();
     try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch (e) { $('draftStatus').textContent = 'Couldn\'t save a draft in this browser.'; return; }
     $('draftStatus').textContent = (manual ? 'Draft saved ' : 'Autosaved ') + timeFmt(new Date()) + '. Nothing is sent to your manager until you submit.';
@@ -596,13 +618,148 @@
   }
   var autoTimer = null;
   document.querySelectorAll('.ci input, .ci select, .ci textarea').forEach(function (el) {
-    el.addEventListener('input', function () { clearTimeout(autoTimer); autoTimer = setTimeout(function () { saveDraft(false); }, 1500); });
+    el.addEventListener('input', function () { clearTimeout(autoTimer); autoTimer = setTimeout(function () { saveDraft(false); }, LIVE ? 4000 : 1500); });
   });
   $('saveDraft').addEventListener('click', function () { saveDraft(true); });
-  $('discardDraft').addEventListener('click', function () { clearDraft(); location.reload(); });
+  $('discardDraft').addEventListener('click', function () {
+    if (LIVE) { clearInputs(); $('draftBanner').classList.add('hidden'); update(); saveDraft(true); return; }
+    clearDraft(); location.reload();
+  });
 
-  restoreDraft();
-  update();
+  // ---------- live mode: signed in through the hub ----------
+  var FIELD_IDS = ['dials','days','dm','mtgcall','mtgin','due','held','upcoming','missedopen','rotmissed','cw','cl','wr','fu','rotfu','goal','sofar','cycle','upsoon',
+    'lastnote','g_calls','g_dm','g_mtg','w1','h1','w2','h2','me_r','me_rg','me_paid','me_p','me_pg','me_t'];
+  var RADIO_IDS = ['lastgoal', 't1', 't2'], CHECK_IDS = ['agreed', 'pipeOk'];
+  var CTX = null;
+  function liveFields() {
+    var f = {};
+    FIELD_IDS.forEach(function (id) { if ($(id)) f[id] = $(id).value; });
+    RADIO_IDS.forEach(function (nm) { var el = document.querySelector('.ci input[name="' + nm + '"]:checked'); f[nm] = el ? el.value : ''; });
+    CHECK_IDS.forEach(function (id) { f[id] = $(id).checked ? 'true' : 'false'; });
+    if ($('work2').classList.contains('hidden')) { f.t2 = ''; f.w2 = ''; f.h2 = ''; }
+    f.recapMonth = CTX && CTX.recap && CTX.recap.open ? CTX.recap.month : '';
+    if (!f.recapMonth) ['me_r','me_rg','me_paid','me_p','me_pg','me_t'].forEach(function (k) { f[k] = ''; });
+    return f;
+  }
+  function clearInputs() {
+    FIELD_IDS.forEach(function (id) { if ($(id)) $(id).value = ''; });
+    document.querySelectorAll('.ci input[name="lastgoal"]').forEach(function (el) { el.checked = false; });
+    CHECK_IDS.forEach(function (id) { $(id).checked = false; });
+  }
+  function applyFields(f) {
+    if (!f) return;
+    FIELD_IDS.forEach(function (id) { if ($(id) && f[id] !== undefined && f[id] !== '') $(id).value = f[id]; });
+    RADIO_IDS.forEach(function (nm) {
+      if (!f[nm]) return;
+      var el = document.querySelector('.ci input[name="' + nm + '"][value="' + String(f[nm]).replace(/"/g, '\\"') + '"]'); if (el) el.checked = true;
+    });
+    CHECK_IDS.forEach(function (id) { if (f[id] !== undefined) $(id).checked = String(f[id]) === 'true'; });
+    if (f.w2) { $('work2').classList.remove('hidden'); $('addGoal').classList.add('hidden'); }
+  }
+  function banner(html, showStartOver) {
+    $('draftBannerText').innerHTML = html;
+    $('discardDraft').classList.toggle('hidden', !showStartOver);
+    $('draftBanner').classList.remove('hidden');
+  }
+  function showLiveSuggestion(cur) {
+    var s = cur.suggestion || {}, mgr = cur.reviewedBy || CTX.manager || 'Your manager', first = mgr.split(' ')[0];
+    var mine = cur.fields;
+    var row = function (label, a, b) { return '<tr><td>' + label + '</td><td>' + esc(a) + '</td><td>' + (String(a) === String(b) ? esc(b) : '<span class="chg">' + esc(b) + '</span>') + '</td></tr>'; };
+    $('reviewBox').innerHTML = '<span class="status-pill" style="background:#FBEBC8;color:#6E4A0E">Update suggested</span>' +
+      '<h3 style="margin-top: 10px">' + esc(mgr) + ' suggested changes to your plan</h3>' +
+      '<p class="muted" style="margin: 0">Changed goals are highlighted. Accept them, or change your plan and resubmit.</p>' +
+      '<table class="diff"><thead><tr><th>Goal</th><th>You set</th><th>' + esc(first) + ' suggests</th></tr></thead><tbody>' +
+      row('Calls per day', mine.g_calls, s.g_calls) + row('DM connects this week', mine.g_dm, s.g_dm) + row('Self-scheduled meetings this week', mine.g_mtg, s.g_mtg) + row('Working on', mine.w1, s.w1) +
+      '</tbody></table>' + (cur.note ? '<p style="margin: 0 0 14px"><span class="tag">Note from ' + esc(first) + '</span><br>' + esc(cur.note) + '</p>' : '') +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="acceptSug">Accept and confirm</button><button class="btn ghost" type="button" id="editSug" style="border-style:solid">Change my plan and resubmit</button></div>';
+    $('reviewBox').classList.remove('hidden');
+    $('acceptSug').addEventListener('click', function () {
+      HUB.call('acceptSuggestion').then(function (res) {
+        $('g_calls').value = res.goals.g_calls; $('g_dm').value = res.goals.g_dm; $('g_mtg').value = res.goals.g_mtg; $('w1').value = res.goals.w1; update();
+        $('reviewBox').innerHTML = '<span class="status-pill" style="background:#E3EEDF;color:#2A4A2E">✓ Approved</span><h3 style="margin-top:10px">Plan confirmed</h3><p class="muted" style="margin:0">Your goals are updated and approved. They\'ll be in Wednesday\'s email to you and ' + esc(first) + '.</p>';
+      }).catch(function (e) { alert(e && e.message || e); });
+    });
+    $('editSug').addEventListener('click', function () {
+      $('reviewBox').innerHTML = '<span class="status-pill" style="background:#F1EEE8;color:#5E564A">Editing</span><h3 style="margin-top:10px">Update your plan, then click Update check-in</h3><p class="muted" style="margin:0">' + esc(first) + ' gets it back to review.</p>';
+      $('g_calls').focus();
+    });
+  }
+  function liveInit() {
+    document.querySelectorAll('.preview-banner').forEach(function (el) { el.classList.add('hidden'); });
+    $('reviewDemoBar').classList.add('hidden');
+    $('mePreview').classList.add('hidden');
+    var tl = document.querySelector('a[href*="tracking"]'); if (tl && tl.parentNode.tagName === 'P') tl.textContent = 'See your tracking (week over week and overview) \u2192';
+    clearInputs();
+    $('repName').innerHTML = '<option>Loading…</option>'; $('repName').disabled = true;
+    HUB.call('getCheckinContext').then(function (ctx) {
+      CTX = ctx;
+      if (ctx.notRep) {
+        document.querySelector('.ci').innerHTML = '<a class="back-link" href="index.html">&larr; Seated Coaching Hub</a><h1>Weekly check-in</h1>' +
+          (ctx.role === 'rep' ? '<p class="lede">You\'re not on the roster yet. Ask your manager to add you, then come back.</p>'
+            : '<p class="lede">Check-ins are filled out by reps. Review your team\'s on the <a href="tracking.html">Tracking</a> page, or <a href="' + HUB.url + '?page=checkin&preview=1" target="_top">open the check-in preview</a> to see what reps see.</p>');
+        return;
+      }
+      $('repName').innerHTML = '<option>' + esc(ctx.name) + '</option>';
+      $('nameHint').textContent = 'Signed in as ' + ctx.email;
+      $('manager').innerHTML = '<option value="">Choose your manager</option>' + ctx.managers.map(function (m) { return '<option' + (m === ctx.manager ? ' selected' : '') + '>' + esc(m) + '</option>'; }).join('');
+      var mh = $('mgrHint'); if (ctx.manager && mh) mh.textContent = 'Change this if your manager changes.';
+      $('manager').addEventListener('change', function () {
+        HUB.call('setMyManager', $('manager').value).then(function () { var h = $('mgrHint'); if (h) h.textContent = 'Saved. Change it here if your manager changes.'; CTX.manager = $('manager').value; });
+      });
+      $('stage').value = String(ctx.stage); $('stage').disabled = true;
+      $('weekLabel').textContent = 'Week of ' + ctx.reportLabel + '. Your numbers, how last week\'s goals went, and your plan for this week.';
+
+      // Step 2 comes from last week's plan
+      var lgSection = $('lgLede').closest('section');
+      if (!ctx.lastPlan) lgSection.classList.add('hidden');
+      else {
+        $('lg_calls').value = ctx.lastPlan.calls || 0; $('lg_dm').value = ctx.lastPlan.dm || 0; $('lg_mtg').value = ctx.lastPlan.mtg || 0;
+        if (ctx.lastPlan.work) {
+          $('lgTag').textContent = ctx.lastPlan.type || 'Working on'; $('lgText').textContent = ctx.lastPlan.work;
+          $('lgTrack').textContent = ctx.lastPlan.track ? 'How I said I\'d track it: ' + ctx.lastPlan.track : '';
+        } else $('lgWorkCard').classList.add('hidden');
+      }
+
+      // month-end recap window comes from the server
+      if (ctx.recap.open) { $('monthEnd').classList.remove('hidden'); $('meTitle').textContent = 'Month-end recap: ' + ctx.recap.month; }
+      else { var od = new Date(ctx.recap.opensOn + 'T00:00:00'); $('meClosedText').innerHTML = 'The next month-end recap opens on <strong>Monday, ' + shortDate(od) + '</strong>.'; $('meClosed').classList.remove('hidden'); }
+
+      var cur = ctx.current;
+      if (cur) {
+        applyFields(cur.fields);
+        if (cur.status === 'submitted') {
+          window.__ciSubmitted = true;
+          $('saveDraft').classList.add('hidden'); $('submit').textContent = 'Update check-in';
+          var ps = { review: 'Your plan is waiting on your manager\'s review.', approved: 'Your plan is approved.', suggested: 'Your manager suggested an update to your plan; see below.' }[cur.planStatus] || '';
+          banner('<strong>Submitted ' + esc(cur.submittedAt) + '.</strong> ' + ps + (cur.planStatus === 'suggested' ? '' : ' You can still update it below.'), false);
+          if (cur.planStatus === 'suggested' && cur.suggestion) showLiveSuggestion(cur);
+        } else banner('<strong>Picking up your draft.</strong> Everything you entered is back where you left it.', true);
+      } else if (ctx.prefill) {
+        applyFields(ctx.prefill);
+        banner('<strong>Started from last week.</strong> Pipeline counts, win rate, cycle and goals are carried over. Check each one before you submit.', true);
+      }
+      update();
+    }).catch(function (e) {
+      banner('<strong>Couldn\'t load your check-in.</strong> ' + esc(e && e.message || e), false);
+    });
+
+    // submitting goes to the Sheet first, then shows the Wednesday email preview
+    $('submit').addEventListener('click', function (ev) {
+      if (window.__ciSent) { window.__ciSent = false; return; }
+      ev.stopImmediatePropagation();
+      if (!$('pipeOk').checked) { $('pipeErr').classList.remove('hidden'); $('pipeOk').focus(); return; }
+      var btn = $('submit'); btn.disabled = true; var label = btn.textContent; btn.textContent = 'Submitting…';
+      HUB.call('saveCheckin', liveFields(), true).then(function () {
+        btn.disabled = false; btn.textContent = 'Update check-in'; window.__ciSubmitted = true; $('saveDraft').classList.add('hidden');
+        window.__ciSent = true; btn.click();
+        $('draftStatus').textContent = 'Submitted. Your manager will review your plan.';
+        $('reviewBox').classList.add('hidden');
+      }).catch(function (e) { btn.disabled = false; btn.textContent = label; $('draftStatus').textContent = 'Couldn\'t submit: ' + (e && e.message || e); });
+    }, true);
+  }
+
+  if (LIVE) { liveInit(); update(); }
+  else { restoreDraft(); update(); }
 })();
 </script>
 </body>

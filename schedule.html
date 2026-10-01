@@ -50,7 +50,7 @@
 
 
 // Module name -> month tag, matching the homepage's Month 0/1/2 grouping.
-const MODULE_MONTHS = {
+const MODULE_MONTHS = (window.HUB && HUB.config && Object.keys(HUB.config.moduleMonths || {}).length) ? HUB.config.moduleMonths : {
   "Restaurants 101": 0,
   "Cold Call Training": 0,
   "Objection Handling": 0,
@@ -69,7 +69,7 @@ const ALL_MODULES = Object.keys(MODULE_MONTHS);
 // Supplementary modules: one-time, fixed due date, no recert.
 // Everyone on the roster shares the same dueDate. Reps who start after it
 // get newHireDays from their start date instead, so they aren't overdue on day one.
-const SUPPLEMENTARY_MODULES = {
+const SUPPLEMENTARY_MODULES = (window.HUB && HUB.config && HUB.config.modules && HUB.config.modules.length) ? HUB.config.supplementary : {
   "Non-Standard Payment Terms & Additional MIDs": { dueDate: "2026-10-09", newHireDays: 30 }
 };
 function supplementaryDueDate(startDateStr, cfg) {
@@ -83,7 +83,7 @@ function supplementaryDueDate(startDateStr, cfg) {
 
 
 // Only these 4 modules require ongoing quarterly recertification.
-const RECERT_MODULES = [
+const RECERT_MODULES = (window.HUB && HUB.config && HUB.config.recert && HUB.config.recert.length) ? HUB.config.recert : [
   "Advanced Product Economics Calculator",
   "Advanced Objection Handling",
   "Pre-Pitch Research",
