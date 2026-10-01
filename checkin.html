@@ -9,7 +9,11 @@
   .wrap.ci { max-width: 900px; }
   .preview-banner { background: var(--gold-tint); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 0 0 28px; }
   .ci h1 { font-size: 40px; margin: 0 0 6px; }
-  .ci-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin: 18px 0 8px; }
+  .ci-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; margin: 18px 0 8px; }
+  .ci-meta label { min-width: 220px; }
+  .ci-meta .hint { font-weight: 500; max-width: 260px; }
+  .me-closed { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-top: 44px; }
+  .me-closed p { margin: 0; }
   .ci-meta label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--ink-secondary); }
   .ci-meta input, .ci-meta select { min-height: 44px; padding: 0 12px; border: 1px solid #D6CBB4; border-radius: 10px; background: #fff; font: inherit; color: var(--ink); min-width: 200px; }
   .ci section { margin-top: 44px; }
@@ -96,7 +100,10 @@
   <h1>Weekly check-in</h1>
   <p class="lede" id="weekLabel">Your numbers for last week, how last week's goals went, and your plan for this week.</p>
   <div class="ci-meta">
-    <label>Your name<input id="repName" type="text" value="Joe Prendergast"></label>
+    <label>Your name
+      <select id="repName"><option value="">Loading names…</option></select>
+      <span class="hint" id="nameHint">From the Knowledge roster</span>
+    </label>
     <label>Your manager
       <select id="manager">
         <option value="">Choose your manager</option>
@@ -113,9 +120,13 @@
   </div>
 
   <!-- MONTH-END RECAP -->
-  <section id="monthEnd">
+  <div class="me-closed hidden" id="meClosed">
+    <p id="meClosedText"></p>
+    <button class="btn ghost" type="button" id="mePreview" style="border-style: solid">Preview the recap</button>
+  </div>
+  <section id="monthEnd" class="hidden">
     <h2 id="meTitle">Month-end recap</h2>
-    <p class="lede">Shows during the first week of each month. Log how last month finished, from your commission statement or Salesforce dashboard. (The preview always shows it.)</p>
+    <p class="lede">Opens on the third Monday of each month, once last month's numbers have settled. Log how last month finished, from your commission statement or Salesforce dashboard.</p>
     <div class="ci-card">
       <div class="grid-row head"><span>Outcome</span><span>Attained</span><span>Goal</span><span>% to goal</span></div>
       <div class="grid-row"><label for="me_r">Restaurants</label><input class="num" id="me_r" type="number" min="0" value="6"><input class="num" id="me_rg" type="number" min="0" value="8" aria-label="Restaurants goal"><span class="res" id="me_rp"></span></div>
@@ -248,6 +259,7 @@
   </section>
 </div>
 
+<script src="score.js"></script>
 <script>
 (function () {
   var STD = { // [Ramping, Ramped]
@@ -316,9 +328,9 @@
     // pipeline snapshot
     var stages = [
       ['Meeting Set', up, '#CDBB93', true], ['Missed (Actively Rescheduling)', mo, '#C98B6E', true],
-      ['Following Up', fu, '#8A6820', true], ['On Hold – Interested', null, '#B9AA8C', false], ['Order Form Sent', null, '#2F5233', false]
+      ['Following Up', fu, '#8A6820', true]
     ];
-    if (!$('st_hold')) {
+    if (!$('sv0')) {
       $('pipeRows').innerHTML = stages.map(function (s, i) {
         var right = s[3] ? '<span class="res" style="justify-content: flex-end" id="sv' + i + '"></span>'
           : '<input class="num" type="number" min="0" id="' + (i === 3 ? 'st_hold' : 'st_ofs') + '" value="' + (i === 3 ? 2 : 1) + '" style="width: 90px">';
@@ -326,9 +338,7 @@
           : '<label for="' + (i === 3 ? 'st_hold' : 'st_ofs') + '"><span class="swatch" style="background:' + s[2] + '"></span>' + s[0] + '</label>';
         return '<div class="stage-row">' + lab + '<span class="muted">' + (s[3] ? 'From above' : 'Enter count') + '</span><span style="display:flex;justify-content:flex-end">' + right + '</span></div>';
       }).join('');
-      ['st_hold', 'st_ofs'].forEach(function (id) { $(id).addEventListener('input', update); });
     }
-    stages[3][1] = n('st_hold'); stages[4][1] = n('st_ofs');
     var total = stages.reduce(function (a, s) { return a + s[1]; }, 0);
     stages.forEach(function (s, i) { if (s[3]) $('sv' + i).textContent = s[1]; });
     $('pipeBar').innerHTML = stages.map(function (s) { return '<div style="flex-grow:' + s[1] + ';background:' + s[2] + '"></div>'; }).join('');
@@ -372,7 +382,7 @@
     $('pathExplain').textContent = 'Upcoming meetings held by the cutoff: ' + upsoon + ' × ' + pct(holdUse) + ' hold × ' + pct(win) + ' win = ' + fmt(fromUp, 1) +
       '. Following Up deals that aren\'t rotting: ' + Math.max(fu - rf, 0) + ' × ' + pct(fuWin) + ' (a third of your ' + pct(win) + ' win rate) = ' + fmt(fromFu, 1) + '. Rotting deals, missed meetings and meetings after the cutoff aren\'t counted for this month.';
 
-    // month-end recap
+    // month-end recap (title only; visibility is set once below)
     var prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     $('meTitle').textContent = 'Month-end recap: ' + MONTHS[prevMonth.getMonth()];
     var toGoal = function (a, g) {
@@ -399,6 +409,60 @@
     $('h_dm').textContent = 'Standard pace: ' + Math.round(n('g_calls') * 5 * S('conn')) + ' (' + pct(S('conn')) + ' of ' + n('g_calls') * 5 + ' dials)';
     $('h_mtg').textContent = gapN > 0 && !tooLate && win ? 'Path to goal: ' + schedNeed + ' by ' + shortDate(cutoff) : 'Standard pace: ' + S('mpd') * 5 + ' a week';
     window.__ci = { schedNeed: schedNeed, heldNeed: heldNeed, cutoff: cutoff, projected: projected, goal: goal, rm: rm, rf: rf, gap: gapN, tooLate: tooLate };
+  }
+
+  // ---------- month-end recap: the week of the 3rd Monday of the following month ----------
+  function thirdMonday(y, m) {
+    var d = new Date(y, m, 1); var add = (8 - d.getDay()) % 7; // days to first Monday
+    return new Date(y, m, 1 + add + 14);
+  }
+  (function () {
+    var open = thirdMonday(today.getFullYear(), today.getMonth());
+    var close = new Date(open); close.setDate(open.getDate() + 6);
+    var lastMonth = MONTHS[new Date(today.getFullYear(), today.getMonth() - 1, 1).getMonth()];
+    var thisMonth = MONTHS[today.getMonth()];
+    if (today >= open && today <= close) { $('monthEnd').classList.remove('hidden'); return; }
+    var msg;
+    if (today < open) msg = 'The <strong>' + lastMonth + '</strong> month-end recap opens on <strong>Monday, ' + shortDate(open) + '</strong>, with that week\'s check-in.';
+    else { var next = thirdMonday(today.getFullYear(), today.getMonth() + 1); msg = 'The <strong>' + thisMonth + '</strong> month-end recap opens on <strong>Monday, ' + shortDate(next) + '</strong>.'; }
+    $('meClosedText').innerHTML = msg;
+    $('meClosed').classList.remove('hidden');
+    $('mePreview').addEventListener('click', function () {
+      $('monthEnd').classList.remove('hidden'); $('meClosed').classList.add('hidden');
+      $('meTitle').textContent += ' (preview)';
+    });
+  })();
+
+  // ---------- name: pick from the Knowledge roster; ramp stage fills from start date ----------
+  var MANAGER_NAMES = ['Gradie Oakes', 'Kristen Garcia', 'Taylor Rozencwaig'];
+  function stageFromStart(start) {
+    var m = (today.getFullYear() - start.getFullYear()) * 12 + today.getMonth() - start.getMonth();
+    if (today.getDate() < start.getDate()) m--;
+    return Math.min(Math.max(m, 0), 6);
+  }
+  function parseStart(v) {
+    var x = String(v || '').match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (x) return new Date(+x[1], +x[2] - 1, +x[3]);
+    var d = new Date(v); return isNaN(d) ? null : d;
+  }
+  function fillNames(rows, fromRoster) {
+    var reps = rows.filter(function (r) { return r.name && MANAGER_NAMES.indexOf(String(r.name).trim()) === -1; })
+      .sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+    $('repName').innerHTML = '<option value="">Choose your name</option>' + reps.map(function (r) {
+      return '<option value="' + String(r.name).replace(/"/g, '&quot;') + '" data-start="' + (r.startDate || '') + '">' + r.name + '</option>';
+    }).join('');
+    $('nameHint').textContent = fromRoster ? 'From the Knowledge roster. Not listed? Ask your manager to add you.' : 'Couldn\'t load the roster, so these are sample names.';
+  }
+  $('repName').addEventListener('change', function () {
+    var o = this.options[this.selectedIndex], start = parseStart(o && o.getAttribute('data-start'));
+    if (start) { $('stage').value = String(stageFromStart(start)); update(); }
+  });
+  if (typeof SCORE_ENDPOINT !== 'undefined' && SCORE_ENDPOINT) {
+    fetch(SCORE_ENDPOINT + '?roster=true').then(function (r) { return r.json(); })
+      .then(function (d) { fillNames(d.rows || [], true); })
+      .catch(function () { fillNames([{ name: 'Joe Prendergast', startDate: '2026-06-22' }, { name: 'Israel Duverge', startDate: '2026-06-15' }], false); });
+  } else {
+    fillNames([{ name: 'Joe Prendergast', startDate: '2026-06-22' }], false);
   }
 
   // manager: picked once, remembered for next time (the live version saves it to the Reps tab)
