@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Weekly check-in — Seated University</title>
+<title>Weekly check-in — Seated Coaching Hub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -89,7 +89,7 @@
 </head>
 <body>
 <div class="wrap ci">
-  <a class="back-link" href="index.html">&larr; Seated University</a>
+  <a class="back-link" href="index.html">&larr; Seated Coaching Hub</a>
   <p style="margin: -16px 0 18px; font-size: 13.5px"><a href="tracking.html" style="font-weight: 600">See how tracking looks (week over week and overview) &rarr;</a></p>
   <p class="preview-banner"><strong>Preview.</strong> Everything calculates live, but nothing is saved yet. Change any number to see how the page responds.</p>
 
@@ -97,6 +97,12 @@
   <p class="lede" id="weekLabel">Your numbers for last week, how last week's goals went, and your plan for this week.</p>
   <div class="ci-meta">
     <label>Your name<input id="repName" type="text" value="Joe Prendergast"></label>
+    <label>Your manager
+      <select id="manager">
+        <option value="">Choose your manager</option>
+        <option>Gradie Oakes</option><option>Kristen Garcia</option><option>Taylor Rozencwaig</option>
+      </select>
+    </label>
     <label>Ramp stage
       <select id="stage">
         <option value="0">M0 (AE/BDR)</option><option value="1">M1 (AE/BDR)</option><option value="2">M2 (AE/BDR)</option>
@@ -233,7 +239,9 @@
     </div>
     <button class="btn ghost" type="button" id="addGoal">+ Add a second goal</button>
     <div class="submit-row">
-      <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label><span class="muted">You'll get a reminder Monday morning to finish this by end of day. On Wednesday your goals are emailed to you with your manager cc'd; reply all if you need to course-correct.</span></div>
+      <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label>
+        <label class="check" style="font-weight: 600"><input type="checkbox" id="pipeOk" required aria-describedby="pipeErr"> I confirm my pipeline stages in Salesforce are up to date <span style="color:#8A3A26">*</span></label>
+        <span id="pipeErr" class="hint hidden" role="alert" style="color:#8A3A26; font-weight: 600">Update your pipeline stages in Salesforce, then tick this box to submit.</span><span class="muted">You'll get a reminder Monday morning to finish this by end of day. On Wednesday your goals are emailed to you with your manager cc'd; reply all if you need to course-correct.</span></div>
       <button class="btn" type="button" id="submit">Submit check-in</button>
     </div>
     <div id="emailPreview" class="email hidden" aria-live="polite"></div>
@@ -393,10 +401,21 @@
     window.__ci = { schedNeed: schedNeed, heldNeed: heldNeed, cutoff: cutoff, projected: projected, goal: goal, rm: rm, rf: rf, gap: gapN, tooLate: tooLate };
   }
 
+  // manager: picked once, remembered for next time (the live version saves it to the Reps tab)
+  var mgrSel = $('manager');
+  try { var saved = localStorage.getItem('su_manager'); if (saved) mgrSel.value = saved; } catch (e) {}
+  if (!mgrSel.value) mgrSel.insertAdjacentHTML('afterend', '<span class="hint" id="mgrHint">First check-in: pick once and we\'ll remember it.</span>');
+  mgrSel.addEventListener('change', function () {
+    try { localStorage.setItem('su_manager', mgrSel.value); } catch (e) {}
+    var h = $('mgrHint'); if (h) h.textContent = 'Saved. Change it here if your manager changes.';
+  });
+
   document.querySelectorAll('input, select').forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
   $('addGoal').addEventListener('click', function () { $('work2').classList.remove('hidden'); this.classList.add('hidden'); $('w2').focus(); });
 
+  $('pipeOk').addEventListener('change', function () { if (this.checked) $('pipeErr').classList.add('hidden'); });
   $('submit').addEventListener('click', function () {
+    if (!$('pipeOk').checked) { $('pipeErr').classList.remove('hidden'); $('pipeOk').focus(); return; }
     var c = window.__ci, name = $('repName').value.trim() || 'Rep', first = name.split(' ')[0];
     var t1 = document.querySelector('input[name="t1"]:checked').value;
     var esc = function (s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); };
@@ -407,7 +426,7 @@
       : 'Projected ' + fmt(c.projected, 1) + ' of ' + c.goal + ' closed-won this month.';
     $('emailPreview').innerHTML =
       '<p style="margin: 0 0 12px; font-weight: 600">' + ($('agreed').checked ? 'Check-in submitted.' : 'Check-in submitted (tick "I set this plan with my manager" before the real one).') + ' Here\'s the Wednesday email ' + esc(first) + ' would get:</p>' +
-      '<div class="email-head"><strong>To:</strong> ' + esc(name) + '<br><strong>Cc:</strong> ' + esc(first) + '\'s manager<br><strong>Subject:</strong> Midweek check: ' + n('g_calls') + ' calls a day, ' + n('g_dm') + ' DM connects, ' + n('g_mtg') + ' meetings this week</div>' +
+      '<div class="email-head"><strong>To:</strong> ' + esc(name) + '<br><strong>Cc:</strong> ' + esc($('manager').value || (first + '\'s manager')) + '<br><strong>Subject:</strong> Midweek check: ' + n('g_calls') + ' calls a day, ' + n('g_dm') + ' DM connects, ' + n('g_mtg') + ' meetings this week</div>' +
       '<div class="email-body"><div style="font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin-bottom: 6px">Halfway through the week, ' + esc(first) + '.</div><p class="muted" style="margin: 0 0 14px">Here\'s what you and your manager agreed to on Monday. How are you tracking?</p>' +
       '<div class="three" style="margin-bottom: 16px"><div class="stat"><span class="k">Calls per day</span><span class="v">' + n('g_calls') + '</span></div><div class="stat"><span class="k">DM connects this week</span><span class="v">' + n('g_dm') + '</span><span class="s">About ' + dmDay + ' a day</span></div><div class="stat"><span class="k">Meetings this week</span><span class="v">' + n('g_mtg') + '</span><span class="s">About ' + mtgDay + ' a day</span></div></div>' +
       '<p style="margin: 0"><span class="tag">What you\'re working on · ' + esc(t1) + '</span><br><strong>' + esc($('w1').value) + '</strong><br><span class="muted">Track it: ' + esc($('h1').value) + '</span></p>' + second +

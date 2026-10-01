@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tracking preview — Seated University</title>
+<title>Tracking preview — Seated Coaching Hub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -62,14 +62,26 @@
   .dot.on { border: 2px solid var(--ink); background: #F4EFE5; color: var(--ink); }
   .linkbtn { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: #8A6820; cursor: pointer; min-height: 32px; }
   .hidden { display: none !important; }
+  .viewas { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff; border: 1px dashed #CDBB93; border-radius: 12px; padding: 10px 14px; margin: 0 0 24px; }
+  .viewas .muted { font-size: 13.5px; color: var(--ink-secondary); }
   @media (max-width: 760px) { .how, .detail { grid-template-columns: 1fr; } .tp h1 { font-size: 32px; } }
 </style>
 </head>
 <body>
 <div class="wrap tp">
-  <a class="back-link" href="index.html">&larr; Seated University</a>
+  <a class="back-link" href="index.html">&larr; Seated Coaching Hub</a>
   <p style="margin: -16px 0 18px; font-size: 13.5px"><a href="checkin.html" style="font-weight: 600">Try the weekly check-in &rarr;</a></p>
   <p class="preview-banner"><strong>Sample data.</strong> These reps aren't real. This shows how tracking will look once check-ins are coming in every week.</p>
+  <div class="viewas">
+    <label class="picker" style="flex-direction: row; align-items: center; gap: 10px">Preview as<select id="viewer">
+      <option value="rep:0">Jordan Avery (rep)</option>
+      <option value="mgr:Gradie Oakes" selected>Gradie Oakes (manager)</option>
+      <option value="mgr:Kristen Garcia">Kristen Garcia (manager)</option>
+      <option value="mgr:Taylor Rozencwaig">Taylor Rozencwaig (manager)</option>
+      <option value="admin">James Sheldon (admin, jsheldon@seatedapp.io)</option>
+    </select></label>
+    <span class="muted" id="viewNote"></span>
+  </div>
   <h1>Tracking</h1>
   <p class="lede">Every weekly check-in feeds three views: one rep's numbers week over week, an overview of how often each rep is hitting on Knowledge, Effort and Outcome, and the manager's weekly review.</p>
 
@@ -78,8 +90,12 @@
       <button class="tab" role="tab" aria-selected="true" data-view="wow">Week over week</button>
       <button class="tab" role="tab" aria-selected="false" data-view="score">Overview</button>
       <button class="tab" role="tab" aria-selected="false" data-view="mgr">Manager review</button>
+      <button class="tab hidden" role="tab" aria-selected="false" data-view="admin">Admin</button>
     </div>
-    <label class="picker">Rep<select id="rep"></select></label>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end">
+      <label class="picker" id="scopeWrap">Show<select id="scope"></select></label>
+      <label class="picker" id="repWrap">Rep<select id="rep"></select></label>
+    </div>
   </div>
 
   <!-- WEEK OVER WEEK -->
@@ -111,6 +127,25 @@
       <div class="tp-card"><h3>Knowledge</h3><p>Average quiz score on the modules due so far for the rep's stage. An overdue module counts as 0 until it's done.</p></div>
       <div class="tp-card"><h3>Effort</h3><p>Commitments met each week, out of 5: check-in on time, working-on goal done (Partly counts half), and each of the 3 number goals.</p></div>
       <div class="tp-card"><h3>Outcome</h3><p>Share of the standards for the rep's stage they hit each week. Month-end restaurants, points and take rate are tracked in the table above.</p></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="view-admin" class="hidden">
+    <h2 class="sec">Reps and managers</h2>
+    <p class="lede" style="font-size: 14px">Only admins see this tab. Changes here update every view straight away. Reps set their own manager on their first check-in; fix it here if it's wrong. Emails fill in from first initial + last name.</p>
+    <div class="panel"><table id="adminTable"></table></div>
+    <div class="section-gap">
+      <h2 class="sec">Managers</h2>
+      <div class="panel"><table>
+        <thead><tr><th class="l">Name</th><th class="l">Email</th><th class="l">Role</th></tr></thead>
+        <tbody>
+          <tr class="m"><td class="lab">Gradie Oakes</td><td class="l">goakes@seatedapp.io</td><td class="l">Manager</td></tr>
+          <tr class="m"><td class="lab">Kristen Garcia</td><td class="l">kgarcia@seatedapp.io</td><td class="l">Manager</td></tr>
+          <tr class="m"><td class="lab">Taylor Rozencwaig</td><td class="l">trozencwaig@seatedapp.io</td><td class="l">Manager</td></tr>
+          <tr class="m"><td class="lab">James Sheldon</td><td class="l">jsheldon@seatedapp.io</td><td class="l">Admin: sees everything and can edit any rep or check-in</td></tr>
+        </tbody>
+      </table></div>
     </div>
   </div>
 
@@ -154,26 +189,37 @@
       goals: [[100,25,8],[105,30,10],[110,40,12],[120,45,12],[120,45,12],[110,25,8]],
       work: [['On call','Name-drop a local partner restaurant in every opener','Did it'],['On call','Name-drop a local partner restaurant in every opener','Did it'],['Follow-up','Text a confirmation the morning of every meeting','Partly'],['Follow-up','Send a recap within 1 hour of every demo','Did it'],['Follow-up','Send a recap within 1 hour of every demo','Partly'],['Pipeline / CRM','Reschedule or close every missed meeting older than 2 weeks','Didn\u2019t']],
       ratings: [[3,2,3,2],[3,3,3,3],[2,2,3,2],[3,2,3,3],[3,2,3,2],[2,2,2,2]], onTime: [1,1,1,1,1,0],
-      submitted: 'Mon 9:40am', plan: 'review', next: [[115,30,10],['Pipeline / CRM','Reschedule or close every missed meeting older than 2 weeks','Retrying after last week']] },
+      manager: 'Gradie Oakes', submitted: 'Mon 9:40am', plan: 'review', next: [[115,30,10],['Pipeline / CRM','Reschedule or close every missed meeting older than 2 weeks','Retrying after last week']] },
     { name: 'Sam Ortiz', start: '2026-08-10', knowledge: [40,48,55,58,62,62], months: { Aug: [0,0,0,0,null,0], Sep: [1,2,60,100,16,1] },
       wk: [[540,5,27,5,4,2,4,2,0,0,0,0,0,0],[610,5,34,8,6,3,5,3,0,0,0,0,0,0],[640,5,41,10,8,5,6,3,1,0,0,0,0,0],[655,5,46,12,10,6,7,4,1,0,0,0,0,0],[630,5,44,11,11,7,6,4,1,0,0,0,0,0],[668,5,52,14,12,8,8,4,2,0,0,0,0,0]],
       goals: [[100,25,5],[110,30,8],[120,35,10],[125,45,12],[125,45,12],[130,50,13]],
       work: [['On call','Get past the gatekeeper with the owner-name ask','Partly'],['On call','Get past the gatekeeper with the owner-name ask','Did it'],['On call','Use the ARP steps on every objection','Partly'],['On call','Use the ARP steps on every objection','Did it'],['Demo prep','Research the restaurant before every booked meeting','Did it'],['On call','Ask for the meeting on the first objection','Did it']],
       ratings: [[2,3,3,2],[3,3,3,3],[3,2,3,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,1,1,1,1],
-      submitted: 'Mon 8:15am', plan: 'agreed', next: [[130,50,14],['On call','Ask for the meeting on the first objection','Keep it going']] },
+      manager: 'Gradie Oakes', submitted: 'Mon 8:15am', plan: 'agreed', next: [[130,50,14],['On call','Ask for the meeting on the first objection','Keep it going']] },
     { name: 'Priya Nair', start: '2025-11-03', knowledge: [92,92,94,94,94,94], months: { Aug: [19,20,1350,1400,20.5,18], Sep: [22,20,1520,1400,21,21] },
       wk: [[290,5,31,9,10,6,8,3,1,3,1,.38,10,2],[305,5,30,10,11,7,8,3,1,4,2,.40,11,2],[280,4,27,8,9,6,7,4,1,3,2,.39,12,3],[300,5,33,10,10,6,9,3,1,4,1,.41,11,2],[310,5,34,11,11,7,9,3,0,5,2,.42,10,1],[295,5,32,10,10,7,8,2,0,4,1,.43,9,1]],
       goals: [[60,30,10],[60,30,10],[60,30,10],[60,32,10],[65,32,11],[65,32,11]],
       work: [['Pipeline / CRM','Next step and date on every open opp','Did it'],['Follow-up','Send order form same day as a verbal yes','Did it'],['Follow-up','Send order form same day as a verbal yes','Partly'],['Demo prep','Bring two local partner examples to every demo','Did it'],['Demo prep','Bring two local partner examples to every demo','Did it'],['On call','Book the next meeting before hanging up','Did it']],
       ratings: [[3,3,2,3],[3,3,3,3],[3,2,2,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,0,1,1,1],
-      submitted: 'Sun 7:02pm', plan: 'agreed', next: [[65,32,11],['Follow-up','Send the order form the same day as a verbal yes','']] },
+      manager: 'Kristen Garcia', submitted: 'Sun 7:02pm', plan: 'agreed', next: [[65,32,11],['Follow-up','Send the order form the same day as a verbal yes','']] },
     { name: 'Marcus Lee', start: '2026-04-06', knowledge: [72,70,66,62,58,58], months: { Aug: [7,12,480,800,15,5], Sep: [6,14,400,900,14,4] },
       wk: [[380,4,22,5,8,3,5,6,2,1,2,.24,7,2],[410,5,25,6,7,4,5,7,3,1,1,.23,8,3],[350,4,19,4,6,3,4,7,4,0,2,.21,8,4],[390,5,24,6,7,4,4,8,4,1,1,.22,9,4],[360,4,20,5,6,3,5,8,5,1,2,.21,9,5],[0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
       goals: [[110,30,8],[110,30,8],[115,30,8],[110,30,8],[110,30,8],[0,0,0]],
       work: [['Follow-up','Confirm every meeting the day before','Partly'],['Follow-up','Confirm every meeting the day before','Didn\u2019t'],['On call','Run the full ARP on price objections','Partly'],['Pipeline / CRM','Clear missed meetings older than 2 weeks','Didn\u2019t'],['Pipeline / CRM','Clear missed meetings older than 2 weeks','Partly'],['','','']],
       ratings: [[2,1,2,2],[2,1,2,1],[2,2,2,2],[1,1,2,1],[2,1,2,2],[0,0,0,0]], onTime: [1,0,1,0,1,0],
-      submitted: '', plan: 'missing', next: null }
+      manager: 'Taylor Rozencwaig', submitted: '', plan: 'missing', next: null }
   ];
+
+  // one more sample rep for Kristen's team: same shape as Sam's data, a little behind
+  (function () {
+    var src = REPS[1];
+    REPS.push({ name: 'Dana Brooks', start: '2026-07-06', knowledge: [70,74,78,81,84,86],
+      months: { Aug: [0,0,0,0,null,0], Sep: [2,3,130,200,17,2] },
+      wk: src.wk.map(function (w) { return w.map(function (x, j) { return j === 1 || j === 11 ? x : Math.round(x * 0.9); }); }),
+      goals: src.goals, work: src.work, ratings: src.ratings, onTime: [1,1,1,0,1,1],
+      manager: 'Kristen Garcia', submitted: 'Mon 11:20am', plan: 'review',
+      next: [[125,45,12],['Follow-up','Confirm every meeting the morning of','']] });
+  })();
 
   function weekMetrics(rep, i) {
     var w = rep.wk[i], st = stageAt(rep.start, WEEKS[i]);
@@ -214,17 +260,56 @@
   }
 
   // ---------- rep picker & tabs ----------
-  var sel = document.getElementById('rep');
-  sel.innerHTML = REPS.map(function (r, i) { return '<option value="' + i + '">' + r.name + ' (' + stageAt(r.start, WEEKS[5]).label + ')</option>'; }).join('');
+  var sel = document.getElementById('rep'), scopeSel = document.getElementById('scope'), viewerSel = document.getElementById('viewer');
+  var MANAGERS = ['Gradie Oakes', 'Kristen Garcia', 'Taylor Rozencwaig'];
+  var VIS = [];
+  function visible() { return VIS; }
+  function setupViewer(keepScope) {
+    var v = viewerSel.value, opts = [];
+    if (v.indexOf('rep:') === 0) {
+      VIS = [parseInt(v.slice(4), 10)];
+      document.getElementById('scopeWrap').classList.add('hidden');
+      document.getElementById('repWrap').classList.add('hidden');
+      document.querySelector('[data-view="mgr"]').classList.add('hidden');
+      document.querySelector('[data-view="admin"]').classList.add('hidden');
+      if (view === 'mgr' || view === 'admin') document.querySelector('[data-view="wow"]').click();
+      document.getElementById('viewNote').textContent = 'Reps only ever see their own numbers.';
+    } else {
+      var me = v.indexOf('mgr:') === 0 ? v.slice(4) : null;
+      if (me) opts.push(['team:' + me, 'My team']);
+      opts.push(['org', 'Entire organization']);
+      MANAGERS.forEach(function (m) { if (m !== me) opts.push(['team:' + m, m + '\u2019s team']); });
+      var prev = scopeSel.value;
+      scopeSel.innerHTML = opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('');
+      if (keepScope && opts.some(function (o) { return o[0] === prev; })) scopeSel.value = prev;
+      document.getElementById('scopeWrap').classList.remove('hidden');
+      document.getElementById('repWrap').classList.remove('hidden');
+      document.querySelector('[data-view="mgr"]').classList.remove('hidden');
+      document.getElementById('viewNote').textContent = me ? 'Managers can switch between their team, another team and the whole org.' : 'Admins see everyone and can edit reps and managers.';
+      var adminTab = document.querySelector('[data-view="admin"]');
+      adminTab.classList.toggle('hidden', !!me);
+      if (me && view === 'admin') document.querySelector('[data-view="wow"]').click();
+      applyScope();
+    }
+  }
+  function applyScope() {
+    var sc = scopeSel.value;
+    VIS = REPS.map(function (_, i) { return i; }).filter(function (i) { return !REPS[i].exclude && (sc === 'org' || REPS[i].manager === sc.slice(5)); });
+    var cur = sel.value;
+    sel.innerHTML = VIS.map(function (i) { var r = REPS[i]; return '<option value="' + i + '">' + r.name + ' (' + stageAt(r.start, WEEKS[5]).label + ')</option>'; }).join('');
+    if (VIS.indexOf(parseInt(cur, 10)) > -1) sel.value = cur;
+  }
   var view = 'wow';
   document.querySelectorAll('.tab').forEach(function (t) {
     t.addEventListener('click', function () {
       view = t.dataset.view;
       document.querySelectorAll('.tab').forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
-      ['wow', 'score', 'mgr'].forEach(function (v) { document.getElementById('view-' + v).classList.toggle('hidden', v !== view); });
+      ['wow', 'score', 'mgr', 'admin'].forEach(function (v) { document.getElementById('view-' + v).classList.toggle('hidden', v !== view); });
     });
   });
   sel.addEventListener('change', render);
+  scopeSel.addEventListener('change', function () { applyScope(); render(); });
+  viewerSel.addEventListener('change', function () { setupViewer(); render(); });
 
   function cell(text, b, big) { return '<td><span class="cell ' + b + (big ? ' big' : '') + '">' + SYM[b] + text + '</span></td>'; }
   function trend(vals, higherBetter) {
@@ -266,7 +351,6 @@
       grp('Effort') +
       '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
       '<tr class="m"><td class="lab">Working-on goal</td><td class="std">Did it</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.work, m.work === 'Did it' ? 'g' : m.work === 'Partly' ? 'y' : 'r'); }).join('') + '<td class="trend"></td></tr>' +
-      '<tr class="m"><td class="lab">Manager effort rating</td><td class="std">Out of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(r1(m.effort), m.effort >= 2.5 ? 'g' : m.effort >= 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.effort; }), true) + '</td></tr>' +
       '</tbody>';
     document.getElementById('wowTable').innerHTML = html;
     var firstAE = -1; ms.forEach(function (m, i) { if (firstAE < 0 && m.st.ae > 0) firstAE = i; });
@@ -292,7 +376,7 @@
   function renderScore(selIdx) {
     document.getElementById('scoreTable').innerHTML =
       '<thead><tr><th class="l">Rep</th><th>Knowledge</th><th>Effort</th><th>Outcome</th></tr></thead><tbody>' +
-      REPS.map(function (r, i) {
+      visible().map(function (i) { var r = REPS[i];
         var t = last4(r), st = stageAt(r.start, WEEKS[5]);
         return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '<span style="display:block;font-weight:400;font-size:12.5px;color:#6F665A">' + st.label + '</span></td>' +
           pctCell(t.k, 'quiz average') + pctCell(t.e, Math.round(t.eRaw[0] * 2) / 2 + ' of ' + t.eRaw[1] + ' commitments') + pctCell(t.o, t.oRaw[0] + ' of ' + t.oRaw[1] + ' standards') + '</tr>';
@@ -321,7 +405,7 @@
     var tcell = function (t) { if (t === null) return '<td><span class="cell n">–</span></td>'; var b = band(t, 18); return '<td><span class="cell ' + b + '">' + SYM[b] + t + '%</span></td>'; };
     document.getElementById('monthTable').innerHTML =
       '<thead><tr><th class="l" rowspan="2">Rep</th><th colspan="4">August</th><th colspan="4">September</th></tr><tr><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th><th>Restaurants</th><th>Not paid on</th><th>Points</th><th>Take rate</th></tr></thead><tbody>' +
-      REPS.map(function (r, i) {
+      visible().map(function (i) { var r = REPS[i];
         var a = r.months.Aug, b = r.months.Sep;
         return '<tr class="m' + (i === selIdx ? ' sel' : '') + '"><td class="lab">' + r.name + '</td>' + mcell(a[0], a[1]) + npcell(a[0], a[5]) + mcell(a[2], a[3]) + tcell(a[4]) + mcell(b[0], b[1]) + npcell(b[0], b[5]) + mcell(b[2], b[3]) + tcell(b[4]) + '</tr>';
       }).join('') + '</tbody>';
@@ -330,13 +414,14 @@
   function renderMgr(selIdx) {
     var k = WEEKS[5];
     document.getElementById('mgrWeek').textContent = 'Week of ' + short(k);
-    var subs = REPS.filter(function (r) { return r.plan !== 'missing'; }).length;
-    var review = REPS.filter(function (r) { return r.plan === 'review'; }).length;
-    var rot = REPS.reduce(function (a, r) { var w = r.wk[5]; return a + w[8] + w[13]; }, 0);
-    document.getElementById('mgrStats').innerHTML = '<div class="stat"><span class="k">Submitted</span><span class="v">' + subs + ' of ' + REPS.length + '</span></div><div class="stat"><span class="k">Plans to review</span><span class="v">' + review + '</span></div><div class="stat"><span class="k">Rotting deals, team</span><span class="v">' + rot + '</span></div>';
+    var V = visible().map(function (i) { return REPS[i]; });
+    var subs = V.filter(function (r) { return r.plan !== 'missing'; }).length;
+    var review = V.filter(function (r) { return r.plan === 'review'; }).length;
+    var rot = V.reduce(function (a, r) { var w = r.wk[5]; return a + w[8] + w[13]; }, 0);
+    document.getElementById('mgrStats').innerHTML = '<div class="stat"><span class="k">Submitted</span><span class="v">' + subs + ' of ' + V.length + '</span></div><div class="stat"><span class="k">Plans to review</span><span class="v">' + review + '</span></div><div class="stat"><span class="k">Rotting deals</span><span class="v">' + rot + '</span></div>';
     var NAMES = { dpd: 'Dials', conn: 'DM connect', conv: 'DM conversion', mpd: 'Meetings / day', hold: 'Hold rate', win: 'Win rate' };
     document.getElementById('mgrTable').innerHTML = '<thead><tr><th class="l">Rep</th><th class="l">Check-in</th><th class="l">Below standard</th><th class="l">Goals hit</th><th class="l">Working-on goal</th><th class="l">Plan</th><th class="l"><span class="hidden">Action</span></th></tr></thead><tbody>' +
-      REPS.map(function (r, i) {
+      visible().map(function (i) { var r = REPS[i];
         var m = weekMetrics(r, 5), st = stageAt(r.start, k);
         var td = function (x) { return '<td class="l" style="padding: 12px 10px 12px 16px">' + x + '</td>'; };
         var name = '<b style="display:block">' + r.name + '</b><span style="font-size:12.5px;color:#6F665A">' + st.label + '</span>';
@@ -353,7 +438,6 @@
       return;
     }
     var ml = function (l, v, b) { return '<div class="ml"><span>' + l + '</span><span class="val">' + v + (b ? '<span class="chip ' + b + '">' + (b === 'g' ? '✓ On' : b === 'y' ? '≈ Close' : b === 'r' ? '✕ Below' : '') + '</span>' : '') + '</span></div>'; };
-    var dots = function (label, v) { return '<div class="ml"><span>' + label + '</span><span class="dots">' + [1, 2, 3].map(function (n) { return '<span class="dot' + (n === v ? ' on' : '') + '">' + n + '</span>'; }).join('') + '</span></div>'; };
     var lastWork = r.work[5], next = r.next, g = next[0];
     document.getElementById('mgrDetail').innerHTML =
       '<div class="tp-card"><h3>' + first + '\u2019s week</h3>' +
@@ -365,14 +449,37 @@
       '<div class="ml"><span>Number goals</span><span class="val">' + g[0] + ' calls/day · ' + g[1] + ' DMs · ' + g[2] + ' meetings</span></div>' +
       '<span class="sub">Last week\u2019s working-on goal: ' + esc(lastWork[0]) + '</span><p style="margin: 4px 0 0">' + esc(lastWork[1]) + ' <span class="chip ' + (lastWork[2] === 'Did it' ? 'g' : lastWork[2] === 'Partly' ? 'y' : 'r') + '">' + esc(lastWork[2]) + '</span></p>' +
       '<span class="sub">This week\u2019s working-on goal: ' + esc(next[1][0]) + '</span><p style="margin: 4px 0 8px; font-weight: 600">' + esc(next[1][1]) + (next[1][2] ? ' <span style="font-weight:400;color:#6F665A">(' + esc(next[1][2]) + ')</span>' : '') + '</p>' +
-      '<span class="sub">Effort this week (manager)</span>' + dots('Demo prep', r.ratings[5][0]) + dots('Came to 1:1 prepared', r.ratings[5][1]) + dots('Coachability', r.ratings[5][2]) + dots('Put feedback into practice', r.ratings[5][3]) +
       '</div>';
   }
 
   function render() {
-    var i = parseInt(sel.value, 10);
-    renderWow(REPS[i]); renderScore(i); renderMgr(i);
+    var i = VIS.length === 1 ? VIS[0] : parseInt(sel.value, 10);
+    if (VIS.indexOf(i) === -1) i = VIS[0];
+    renderWow(REPS[i]); renderScore(i); renderMgr(i); renderAdmin();
   }
+  function emailFor(name) { var p = name.trim().toLowerCase().split(/\s+/); return (p[0][0] + p[p.length - 1]).replace(/[^a-z]/g, '') + '@seatedapp.io'; }
+  function renderAdmin() {
+    var opt = function (m, cur) { return '<option' + (m === cur ? ' selected' : '') + '>' + m + '</option>'; };
+    document.getElementById('adminTable').innerHTML =
+      '<thead><tr><th class="l">Rep</th><th class="l">Email</th><th class="l">Manager</th><th class="l">Start date</th><th class="l">Stage today</th><th class="l">Exclude</th></tr></thead><tbody>' +
+      REPS.map(function (r, i) {
+        return '<tr class="m"><td class="lab">' + r.name + '</td><td class="l">' + emailFor(r.name) + '</td>' +
+          '<td class="l"><select data-edit="manager" data-i="' + i + '" aria-label="Manager for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;background:#fff;font:inherit">' + MANAGERS.map(function (m) { return opt(m, r.manager); }).join('') + '</select></td>' +
+          '<td class="l"><input type="date" data-edit="start" data-i="' + i + '" value="' + r.start + '" aria-label="Start date for ' + r.name + '" style="min-height:40px;border:1px solid #D6CBB4;border-radius:8px;padding:0 8px;font:inherit"></td>' +
+          '<td class="l">' + stageAt(r.start, WEEKS[5]).label + '</td>' +
+          '<td class="l"><input type="checkbox" data-edit="exclude" data-i="' + i + '"' + (r.exclude ? ' checked' : '') + ' aria-label="Exclude ' + r.name + '" style="width:18px;height:18px"></td></tr>';
+      }).join('') + '</tbody>';
+    document.querySelectorAll('[data-edit]').forEach(function (el) {
+      el.addEventListener('change', function () {
+        var r = REPS[parseInt(el.dataset.i, 10)];
+        if (el.dataset.edit === 'manager') r.manager = el.value;
+        if (el.dataset.edit === 'start' && el.value) r.start = el.value;
+        if (el.dataset.edit === 'exclude') r.exclude = el.checked;
+        applyScope(); render();
+      });
+    });
+  }
+  setupViewer();
   render();
 })();
 </script>

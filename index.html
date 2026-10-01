@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Seated University</title>
+<title>Seated Coaching Hub</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -39,11 +39,23 @@
   .su-triangle .loop-center { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 24px; fill: var(--ink-secondary); }
   .su-flow { font-size: 15px; color: var(--ink-secondary); max-width: 60ch; margin: 8px 0 0; }
 
+  .owns { margin-top: 48px; padding: 44px 0 4px; border-top: 1px solid var(--line); }
+  .owns h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; margin: 0 0 18px; letter-spacing: -0.01em; }
+  .owns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .owns-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+  .owns-card h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 20px; margin: 0 0 10px; }
+  .owns-card ul { margin: 0; padding-left: 18px; font-size: 15px; color: var(--ink-secondary); }
+  .owns-card li { margin-bottom: 8px; } .owns-card strong { color: var(--ink); font-weight: 600; }
+  .rhythm-title { font-size: 15px; font-weight: 600; margin: 26px 0 10px; }
+  .rhythm { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .rhythm li { background: var(--gold-tint); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .rhythm .when { font-size: 13px; font-weight: 600; color: #7A5A18; }
+  .rhythm .what { font-size: 14.5px; color: var(--ink); }
   .pillar {
     display: grid; grid-template-columns: 200px 1fr; column-gap: 36px;
     padding: 44px 0; border-top: 1px solid var(--line);
   }
-  .su-hero { margin-bottom: 48px; }
+  .su-hero { margin-bottom: 0; }
   .pillar-head h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; }
   .pillar-q { font-family: 'Fraunces', Georgia, serif; font-size: 17px; line-height: 1.4; color: var(--ink-secondary); margin: 0 0 14px; }
   .status { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
@@ -109,6 +121,8 @@
     .su-lead { font-size: 16.5px; }
     .pillar { grid-template-columns: 1fr; row-gap: 14px; }
     .habits { grid-template-columns: 1fr; }
+    .owns-grid { grid-template-columns: 1fr; }
+    .rhythm { grid-template-columns: 1fr 1fr; }
     .equation { flex-direction: column; }
     .eq-op { align-self: flex-start; padding-left: 14px; line-height: 1; }
     .diag-row { grid-template-columns: 1fr; gap: 4px; }
@@ -123,7 +137,7 @@
 <div class="wrap su">
 
   <header class="su-bar">
-    <a class="su-mark" href="index.html">Seated University</a>
+    <a class="su-mark" href="index.html">Seated Coaching Hub</a>
     <nav class="su-nav" aria-label="Site">
       <a href="knowledge.html">Knowledge modules</a>
       <a href="checkin.html">Weekly check-in</a>
@@ -133,12 +147,12 @@
   </header>
 
   <section class="su-hero">
-    <h1>Seated University</h1>
-    <p class="su-lead">Seated University is built to set every AE and BDR up to succeed. It gives you and your manager one shared framework to quickly diagnose what is holding results back, and a clear plan to improve them.</p>
+    <h1>Seated Coaching Hub</h1>
+    <p class="su-lead">You own your numbers and your plan to hit them. Your manager owns the coaching plan that gets you there. The Coaching Hub gives you both the same picture of where you stand, what's holding you back, and what to do next.</p>
 
     <div class="su-triangle">
       <svg viewBox="-50 0 740 640" role="img" aria-labelledby="tri-title tri-desc">
-        <title id="tri-title">The Seated University success feedback loop</title>
+        <title id="tri-title">The Seated Coaching Hub success feedback loop</title>
         <desc id="tri-desc">Knowledge drives Effort, Effort drives Outcome, and Outcome shows where to improve Knowledge, in a continuous loop.</desc>
         <defs>
           <marker id="arrow-gold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -174,7 +188,38 @@
       </svg>
     </div>
 
-    <p class="su-flow">Each part feeds the next, and Outcome naturally comes from Knowledge and Effort working together. When you know why and how a behavior makes you successful, you do it consistently. When you do the behaviors consistently, the numbers follow. And when a number is short, we now have a plan on how to improve.</p>
+    <p class="su-flow">Each part feeds the next, and Outcome naturally comes from Knowledge and Effort working together. When you know why and how a behavior makes you successful, you do it consistently. When you do the behaviors consistently, the numbers follow. And when a number is short, you and your manager already have a plan for how to improve.</p>
+  </section>
+
+  <section class="owns" aria-labelledby="owns-title">
+    <h2 id="owns-title">Who owns what</h2>
+    <div class="owns-grid">
+      <div class="owns-card">
+        <h3>You own</h3>
+        <ul>
+          <li><strong>Your numbers.</strong> You log them yourself every week, so you always know them.</li>
+          <li><strong>Your plan.</strong> You set your goals and decide how you'll hit them and how you'll track it.</li>
+          <li><strong>Your pipeline.</strong> Stages up to date in Salesforce before every check-in.</li>
+          <li><strong>Speaking up early.</strong> If you're off track midweek, you say so before Friday.</li>
+        </ul>
+      </div>
+      <div class="owns-card">
+        <h3>Your manager owns</h3>
+        <ul>
+          <li><strong>Your coaching plan.</strong> Built around your biggest gap, not a general pep talk.</li>
+          <li><strong>Agreeing your goals.</strong> Pressure-testing your plan in your Monday 1:1.</li>
+          <li><strong>Course-correcting with you.</strong> Answering when you reply to the Wednesday email.</li>
+          <li><strong>Making sure you can win.</strong> The knowledge, tools and time to do the job.</li>
+        </ul>
+      </div>
+    </div>
+    <h3 class="rhythm-title">Your week</h3>
+    <ol class="rhythm">
+      <li><span class="when">Monday morning</span><span class="what">Reminder to log last week</span></li>
+      <li><span class="when">Monday, end of day</span><span class="what">Check-in submitted and plan set with your manager</span></li>
+      <li><span class="when">Wednesday</span><span class="what">Your goals by email; reply all if you need to course-correct</span></li>
+      <li><span class="when">First week of the month</span><span class="what">Month-end recap: restaurants, points, take rate</span></li>
+    </ol>
   </section>
 
   <section class="pillar" id="knowledge">
@@ -202,10 +247,10 @@
     <div class="pillar-head">
       <h2>Effort</h2>
       <p class="pillar-q">Are you doing the work that sets you up to win?</p>
-      <span class="status soon">Tracking in development</span>
+      <span class="status soon">Weekly check-in in preview</span>
     </div>
     <div class="pillar-body">
-      <p>The daily behaviors that make reps successful. Putting knowledge into practice.</p>
+      <p>The daily behaviors that make reps successful: putting knowledge into practice. Every week you set your goals, pick one thing you're working on, decide how you'll track it, and report back on whether you did it.</p>
       <div class="habits">
         <div>
           <h3>Activity</h3>
@@ -232,10 +277,10 @@
     <div class="pillar-head">
       <h2>Outcome</h2>
       <p class="pillar-q">Are the results showing up?</p>
-      <span class="status soon">Tracking in development</span>
+      <span class="status soon">Tracking in preview</span>
     </div>
     <div class="pillar-body">
-      <p>The Seated standard metrics. If the knowledge is there and the behaviors are happening, these follow. Everything below rolls up to one number: a restaurant signed every day.</p>
+      <p>The Seated standard metrics. If the knowledge is there and the behaviors are happening, these follow. You report them yourself every week, so they're never a surprise. Everything below rolls up to one number: a restaurant signed every day.</p>
       <div class="equation" role="group" aria-label="2 self-scheduled opportunities a day gives 0.5 productivity, plus 0.5 productivity from MQLs, equals 1 restaurant signed per day">
         <div class="eq-term">
           <span class="eq-val">0.5</span>
@@ -290,17 +335,19 @@
 
   <section class="reading">
     <h2>Reading your loop</h2>
-    <p>Every rep will see all three parts together, measured against the standard and next to the team. The point isn't a grade. It's knowing exactly where to put your energy.</p>
+    <p>You see all three parts together, measured against the standard for your stage. The point isn't a grade. It's knowing exactly where to put your energy, and what your manager's coaching plan should focus on.</p>
     <dl class="diag">
-      <div class="diag-row"><dt>Knowledge is short</dt><dd>Start here. Retake or recertify the modules you missed before changing anything else.</dd></div>
-      <div class="diag-row"><dt>Knowledge is solid, Effort is short</dt><dd>You know what to do; the gap is doing it. Pick one behavior with your manager and make it a habit.</dd></div>
-      <div class="diag-row"><dt>Effort is solid, Outcome is short</dt><dd>The work is there but the conversion isn't. Call reviews and coaching focus on execution: the opener, discovery, objections, the close.</dd></div>
+      <div class="diag-row"><dt>Knowledge is short</dt><dd>Start here. You retake or recertify the modules you missed; your manager makes sure you understand why they matter.</dd></div>
+      <div class="diag-row"><dt>Knowledge is solid, Effort is short</dt><dd>You know what to do; the gap is doing it. You pick one behavior to make a habit; your manager holds you to it each week.</dd></div>
+      <div class="diag-row"><dt>Effort is solid, Outcome is short</dt><dd>The work is there but the conversion isn't. Your manager's coaching plan focuses on execution: the opener, discovery, objections, the close.</dd></div>
       <div class="diag-row"><dt>All three are on standard</dt><dd>You're certified for your stage. Keep recertifying, and help raise the bar for the next cohort.</dd></div>
     </dl>
   </section>
 
   <footer class="su-foot">
     <a href="knowledge.html">Knowledge modules</a>
+    <a href="checkin.html">Weekly check-in</a>
+    <a href="tracking.html">Tracking</a>
     <a href="schedule.html">Schedule</a>
     <a href="dashboard.html">Results dashboard</a>
     <a href="add-rep.html">Add a rep</a>
