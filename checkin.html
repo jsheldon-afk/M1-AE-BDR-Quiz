@@ -205,11 +205,11 @@
   <!-- STEP 2 -->
   <section>
     <h2>2. Last week's goals</h2>
-    <p class="lede">What you and your manager agreed to, against what you entered above. Change the goals to see it update.</p>
+    <p class="lede" id="lgLede">The goals you and your manager approved last week, against the numbers you entered above. They come from last week's plan, so there's nothing to type here.</p>
     <div class="three">
-      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_calls">Calls per day goal</label><input class="num" id="lg_calls" type="number" value="100"></div><div class="v" id="ga_calls" style="margin-top: 10px"></div><div id="gc_calls"></div></div>
-      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_dm">DM connects goal</label><input class="num" id="lg_dm" type="number" value="15"></div><div class="v" id="ga_dm" style="margin-top: 10px"></div><div id="gc_dm"></div></div>
-      <div class="ci-card card-pad goal-card"><div class="field"><label for="lg_mtg">Meetings from calling goal</label><input class="num" id="lg_mtg" type="number" value="3"></div><div class="v" id="ga_mtg" style="margin-top: 10px"></div><div id="gc_mtg"></div></div>
+      <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">Calls per day</span><input id="lg_calls" type="hidden" value="100"><div class="v" id="ga_calls" style="margin-top: 6px"></div><div id="gc_calls"></div></div>
+      <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">DM connects</span><input id="lg_dm" type="hidden" value="15"><div class="v" id="ga_dm" style="margin-top: 6px"></div><div id="gc_dm"></div></div>
+      <div class="ci-card card-pad goal-card"><span class="k" style="font-size: 13.5px; font-weight: 600; color: var(--ink-secondary)">Meetings from calling</span><input id="lg_mtg" type="hidden" value="3"><div class="v" id="ga_mtg" style="margin-top: 6px"></div><div id="gc_mtg"></div></div>
     </div>
     <div class="ci-card card-pad gap">
       <div><span class="tag">Follow-up</span><div style="font-weight: 600; font-size: 16px">Send a recap within 1 hour of every demo</div><div class="muted">How I said I'd track it: recap logged as an email activity in Salesforce</div></div>
@@ -412,7 +412,7 @@
 
     // last week's goals
     var gcard = function (key, actual, goalV, unit) {
-      $('ga_' + key).innerHTML = fmt(actual, 0) + ' <small>/ ' + goalV + ' ' + unit + '</small>';
+      $('ga_' + key).innerHTML = fmt(actual, 0) + ' <small>actual / ' + goalV + ' ' + unit + '</small>';
       $('gc_' + key).innerHTML = actual >= goalV ? chip('on', '✓ Hit') : chip('below', '✕ Missed by ' + fmt(goalV - actual, 0));
     };
     gcard('calls', dpd, n('lg_calls'), 'goal'); gcard('dm', dm, n('lg_dm'), 'goal'); gcard('mtg', mc, n('lg_mtg'), 'goal');
