@@ -90,6 +90,7 @@
 <body>
 <div class="wrap ci">
   <a class="back-link" href="index.html">&larr; Seated University</a>
+  <p style="margin: -16px 0 18px; font-size: 13.5px"><a href="tracking.html" style="font-weight: 600">See how tracking looks (week over week and overview) &rarr;</a></p>
   <p class="preview-banner"><strong>Preview.</strong> Everything calculates live, but nothing is saved yet. Change any number to see how the page responds.</p>
 
   <h1>Weekly check-in</h1>
@@ -232,7 +233,7 @@
     </div>
     <button class="btn ghost" type="button" id="addGoal">+ Add a second goal</button>
     <div class="submit-row">
-      <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label><span class="muted">Your goals are emailed to you every weekday at 8am, with your manager cc'd.</span></div>
+      <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label><span class="muted">You'll get a reminder Monday morning to finish this by end of day. On Wednesday your goals are emailed to you with your manager cc'd; reply all if you need to course-correct.</span></div>
       <button class="btn" type="button" id="submit">Submit check-in</button>
     </div>
     <div id="emailPreview" class="email hidden" aria-live="polite"></div>
@@ -341,7 +342,8 @@
       ? 'With a ' + cycle + '-day cycle, the cutoff for ' + monthName + ' (' + shortDate(cutoff) + ') has passed. New meetings count toward next month.'
       : 'With a ' + cycle + '-day cycle, a meeting has to be <strong>held by ' + shortDate(cutoff) + '</strong> to close by ' + shortDate(monthEnd) + '. Anything held after that counts toward next month.';
     var holdUse = due ? hold : S('hold');
-    var fromUp = upsoon * holdUse * win, fromFu = Math.max(fu - rf, 0) * win;
+    var fuWin = win / 3; // follow-ups close at a third of the rep's win rate
+    var fromUp = upsoon * holdUse * win, fromFu = Math.max(fu - rf, 0) * fuWin;
     var expected = fromUp + fromFu, projected = sofar + expected, gapN = Math.max(goal - projected, 0);
     var heldNeed = win ? Math.ceil(gapN / win - 1e-9) : 0, schedNeed = holdUse ? Math.ceil(heldNeed / holdUse - 1e-9) : 0;
     var stat = function (k, v, s, cls) { return '<div class="stat"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '">' + v + '</span><span class="s">' + s + '</span></div>'; };
@@ -360,7 +362,7 @@
         dark('Schedule for ' + shortDate(today) + ' – ' + shortDate(cutoff), schedNeed + ' more meeting' + (schedNeed === 1 ? '' : 's'), heldNeed + ' ÷ ' + pct(holdUse) + ' hold rate' + (holdDays ? ', about ' + fmt(schedNeed / holdDays, 1) + ' a day' : ''));
     }
     $('pathExplain').textContent = 'Upcoming meetings held by the cutoff: ' + upsoon + ' × ' + pct(holdUse) + ' hold × ' + pct(win) + ' win = ' + fmt(fromUp, 1) +
-      '. Following Up deals that aren\'t rotting: ' + Math.max(fu - rf, 0) + ' × ' + pct(win) + ' win = ' + fmt(fromFu, 1) + '. Rotting deals, missed meetings and meetings after the cutoff aren\'t counted for this month.';
+      '. Following Up deals that aren\'t rotting: ' + Math.max(fu - rf, 0) + ' × ' + pct(fuWin) + ' (a third of your ' + pct(win) + ' win rate) = ' + fmt(fromFu, 1) + '. Rotting deals, missed meetings and meetings after the cutoff aren\'t counted for this month.';
 
     // month-end recap
     var prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -404,13 +406,14 @@
     var path = c.gap > 0 && !c.tooLate ? 'Projected ' + fmt(c.projected, 1) + ' of ' + c.goal + ' closed-won. You need ' + c.heldNeed + ' more meetings held by ' + shortDate(c.cutoff) + ' to get there.'
       : 'Projected ' + fmt(c.projected, 1) + ' of ' + c.goal + ' closed-won this month.';
     $('emailPreview').innerHTML =
-      '<p style="margin: 0 0 12px; font-weight: 600">' + ($('agreed').checked ? 'Check-in submitted.' : 'Check-in submitted (tick "I set this plan with my manager" before the real one).') + ' Here\'s the email ' + esc(first) + ' would get each morning:</p>' +
-      '<div class="email-head"><strong>To:</strong> ' + esc(name) + '<br><strong>Cc:</strong> ' + esc(first) + '\'s manager<br><strong>Subject:</strong> Today: ' + n('g_calls') + ' calls, ' + dmDay + ' DM connects, ' + mtgDay + ' meetings</div>' +
-      '<div class="email-body"><div style="font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin-bottom: 14px">Good morning, ' + esc(first) + '. Here\'s today.</div>' +
-      '<div class="three" style="margin-bottom: 16px"><div class="stat"><span class="k">Calls today</span><span class="v">' + n('g_calls') + '</span></div><div class="stat"><span class="k">DM connects today</span><span class="v">' + dmDay + '</span><span class="s">' + n('g_dm') + ' this week</span></div><div class="stat"><span class="k">Meetings today</span><span class="v">' + mtgDay + '</span><span class="s">' + n('g_mtg') + ' this week</span></div></div>' +
+      '<p style="margin: 0 0 12px; font-weight: 600">' + ($('agreed').checked ? 'Check-in submitted.' : 'Check-in submitted (tick "I set this plan with my manager" before the real one).') + ' Here\'s the Wednesday email ' + esc(first) + ' would get:</p>' +
+      '<div class="email-head"><strong>To:</strong> ' + esc(name) + '<br><strong>Cc:</strong> ' + esc(first) + '\'s manager<br><strong>Subject:</strong> Midweek check: ' + n('g_calls') + ' calls a day, ' + n('g_dm') + ' DM connects, ' + n('g_mtg') + ' meetings this week</div>' +
+      '<div class="email-body"><div style="font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 24px; margin-bottom: 6px">Halfway through the week, ' + esc(first) + '.</div><p class="muted" style="margin: 0 0 14px">Here\'s what you and your manager agreed to on Monday. How are you tracking?</p>' +
+      '<div class="three" style="margin-bottom: 16px"><div class="stat"><span class="k">Calls per day</span><span class="v">' + n('g_calls') + '</span></div><div class="stat"><span class="k">DM connects this week</span><span class="v">' + n('g_dm') + '</span><span class="s">About ' + dmDay + ' a day</span></div><div class="stat"><span class="k">Meetings this week</span><span class="v">' + n('g_mtg') + '</span><span class="s">About ' + mtgDay + ' a day</span></div></div>' +
       '<p style="margin: 0"><span class="tag">What you\'re working on · ' + esc(t1) + '</span><br><strong>' + esc($('w1').value) + '</strong><br><span class="muted">Track it: ' + esc($('h1').value) + '</span></p>' + second +
       (c.rm || c.rf ? '<p style="margin: 14px 0 0"><span class="tag">Clean up first</span><br>' + (c.rm ? c.rm + ' missed meetings are 2+ weeks old. Reschedule or close them out.<br>' : '') + (c.rf ? c.rf + ' follow-ups are 2+ weeks past their meeting. Move them forward or close them.' : '') + '</p>' : '') +
-      '<div class="dark" style="margin-top: 16px"><span class="k">Path to goal</span><span style="font-size: 15px">' + path + '</span></div></div>';
+      '<div class="dark" style="margin-top: 16px"><span class="k">Path to goal</span><span style="font-size: 15px">' + path + '</span></div>' +
+      '<p style="margin: 16px 0 0; font-weight: 600">Off track? Reply all with your manager and say what you\'ll change for the rest of the week.</p></div>';
     $('emailPreview').classList.remove('hidden');
     $('emailPreview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
