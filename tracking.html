@@ -195,13 +195,13 @@
       goals: [[100,25,5],[110,30,8],[120,35,10],[125,45,12],[125,45,12],[130,50,13]],
       work: [['On call','Get past the gatekeeper with the owner-name ask','Partly'],['On call','Get past the gatekeeper with the owner-name ask','Did it'],['On call','Use the ARP steps on every objection','Partly'],['On call','Use the ARP steps on every objection','Did it'],['Demo prep','Research the restaurant before every booked meeting','Did it'],['On call','Ask for the meeting on the first objection','Did it']],
       ratings: [[2,3,3,2],[3,3,3,3],[3,2,3,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,1,1,1,1],
-      manager: 'Gradie Oakes', submitted: 'Mon 8:15am', plan: 'agreed', next: [[130,50,14],['On call','Ask for the meeting on the first objection','Keep it going']] },
+      manager: 'Gradie Oakes', submitted: 'Mon 8:15am', plan: 'approved', next: [[130,50,14],['On call','Ask for the meeting on the first objection','Keep it going']] },
     { name: 'Priya Nair', start: '2025-11-03', knowledge: [92,92,94,94,94,94], months: { Aug: [19,20,1350,1400,20.5,18], Sep: [22,20,1520,1400,21,21] },
       wk: [[290,5,31,9,10,6,8,3,1,3,1,.38,10,2],[305,5,30,10,11,7,8,3,1,4,2,.40,11,2],[280,4,27,8,9,6,7,4,1,3,2,.39,12,3],[300,5,33,10,10,6,9,3,1,4,1,.41,11,2],[310,5,34,11,11,7,9,3,0,5,2,.42,10,1],[295,5,32,10,10,7,8,2,0,4,1,.43,9,1]],
       goals: [[60,30,10],[60,30,10],[60,30,10],[60,32,10],[65,32,11],[65,32,11]],
       work: [['Pipeline / CRM','Next step and date on every open opp','Did it'],['Follow-up','Send order form same day as a verbal yes','Did it'],['Follow-up','Send order form same day as a verbal yes','Partly'],['Demo prep','Bring two local partner examples to every demo','Did it'],['Demo prep','Bring two local partner examples to every demo','Did it'],['On call','Book the next meeting before hanging up','Did it']],
       ratings: [[3,3,2,3],[3,3,3,3],[3,2,2,3],[3,3,3,3],[3,3,3,3],[3,3,3,3]], onTime: [1,1,0,1,1,1],
-      manager: 'Kristen Garcia', submitted: 'Sun 7:02pm', plan: 'agreed', next: [[65,32,11],['Follow-up','Send the order form the same day as a verbal yes','']] },
+      manager: 'Kristen Garcia', submitted: 'Sun 7:02pm', plan: 'approved', next: [[65,32,11],['Follow-up','Send the order form the same day as a verbal yes','']] },
     { name: 'Marcus Lee', start: '2026-04-06', knowledge: [72,70,66,62,58,58], months: { Aug: [7,12,480,800,15,5], Sep: [6,14,400,900,14,4] },
       wk: [[380,4,22,5,8,3,5,6,2,1,2,.24,7,2],[410,5,25,6,7,4,5,7,3,1,1,.23,8,3],[350,4,19,4,6,3,4,7,4,0,2,.21,8,4],[390,5,24,6,7,4,4,8,4,1,1,.22,9,4],[360,4,20,5,6,3,5,8,5,1,2,.21,9,5],[0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
       goals: [[110,30,8],[110,30,8],[115,30,8],[110,30,8],[110,30,8],[0,0,0]],
@@ -427,7 +427,7 @@
         var name = '<b style="display:block">' + r.name + '</b><span style="font-size:12.5px;color:#6F665A">' + st.label + '</span>';
         if (m.missing) return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td('<span style="color:#8A3A26;font-weight:600">Not submitted</span>') + td('–') + td('–') + td('–') + td('–') + td('<button class="linkbtn" data-pick="' + i + '">Send reminder</button>') + '</tr>';
         var below = Object.keys(m.bands).filter(function (b) { return m.bands[b] === 'r'; }).map(function (b) { return NAMES[b]; });
-        var plan = r.plan === 'review' ? '<span class="chip dk">Needs review</span>' : '<span class="chip g">✓ Agreed</span>';
+        var plan = r.plan === 'review' ? '<span class="chip dk">Needs review</span>' : r.plan === 'suggested' ? '<span class="chip y">Update suggested</span>' : '<span class="chip g">✓ Approved</span>';
         return '<tr class="m' + (i === selIdx ? ' sel' : '') + '">' + td(name) + td(r.submitted) + td(below.length ? below.join(', ') : '<span class="chip g">✓ None</span>') + td(m.goalsHit + ' of 3') + td(m.work) + td(plan) + td('<button class="linkbtn" data-pick="' + i + '">' + (i === selIdx ? 'Viewing' : 'Open') + '</button>') + '</tr>';
       }).join('') + '</tbody>';
     document.querySelectorAll('[data-pick]').forEach(function (b) { b.addEventListener('click', function () { sel.value = b.dataset.pick; render(); }); });
@@ -445,11 +445,60 @@
       '<span class="sub">Middle of funnel</span>' + ml('Hold rate', w[5] + ' of ' + w[4] + ' · ' + pct(m.hold), m.bands.hold) + ml('Upcoming meetings', w[6]) + ml('Rotting missed meetings', w[8] + ' of ' + (w[6] + w[7]) + ' · ' + pct(m.rotm)) +
       '<span class="sub">Bottom of funnel</span>' + ml('Closed won / lost', w[9] + ' / ' + w[10]) + (m.win !== null ? ml('Win Rate (Rolling 30)', pct(m.win), m.bands.win) : '') + ml('Rotting follow-ups', w[13] + ' of ' + w[12] + ' · ' + pct(m.rotf)) +
       '</div>' +
-      '<div class="tp-card"><h3>Plan for the week of Sep 28</h3>' +
-      '<div class="ml"><span>Number goals</span><span class="val">' + g[0] + ' calls/day · ' + g[1] + ' DMs · ' + g[2] + ' meetings</span></div>' +
+      '<div class="tp-card"><h3>Plan for the week of Sep 28</h3>' + planStatus(r) +
       '<span class="sub">Last week\u2019s working-on goal: ' + esc(lastWork[0]) + '</span><p style="margin: 4px 0 0">' + esc(lastWork[1]) + ' <span class="chip ' + (lastWork[2] === 'Did it' ? 'g' : lastWork[2] === 'Partly' ? 'y' : 'r') + '">' + esc(lastWork[2]) + '</span></p>' +
-      '<span class="sub">This week\u2019s working-on goal: ' + esc(next[1][0]) + '</span><p style="margin: 4px 0 8px; font-weight: 600">' + esc(next[1][1]) + (next[1][2] ? ' <span style="font-weight:400;color:#6F665A">(' + esc(next[1][2]) + ')</span>' : '') + '</p>' +
+      planEditor(r, selIdx) +
       '</div>';
+    wirePlan(r);
+  }
+
+  // ---------- manager approval: Approve, or edit and Suggest update ----------
+  function planStatus(r) {
+    if (r.plan === 'approved') return '<p style="margin: 0 0 10px"><span class="chip g">✓ Approved</span></p>';
+    if (r.plan === 'suggested') return '<p style="margin: 0 0 10px"><span class="chip y">Update suggested</span> <span class="muted" style="font-size:13.5px">Waiting on ' + r.name.split(' ')[0] + ' to accept or change it</span></p>';
+    return '<p style="margin: 0 0 10px"><span class="chip dk">Needs review</span> <span class="muted" style="font-size:13.5px">Approve as is, or edit and suggest an update</span></p>';
+  }
+  function planEditor(r) {
+    var g = r.next[0], w = r.next[1], orig = r.orig || (r.orig = { g: g.slice(), w: w[1] });
+    var locked = r.plan !== 'review';
+    var inp = function (id, label, v, o) {
+      var changed = v !== o;
+      return '<div style="display:flex;flex-direction:column;gap:4px"><label for="' + id + '" style="font-size:13px;font-weight:600">' + label + '</label>' +
+        '<input id="' + id + '" type="number" value="' + v + '"' + (locked ? ' disabled' : '') + ' style="min-height:42px;border:1px solid #D6CBB4;border-radius:8px;padding:0 10px;font:inherit;' + (changed ? 'background:#FBEBC8;' : '') + '">' +
+        (changed ? '<span style="font-size:12px;color:#6E4A0E">Rep set ' + o + '</span>' : '') + '</div>';
+    };
+    return '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 12px">' +
+      inp('pe_calls', 'Calls / day', g[0], orig.g[0]) + inp('pe_dm', 'DM connects', g[1], orig.g[1]) + inp('pe_mtg', 'Meetings', g[2], orig.g[2]) + '</div>' +
+      '<label for="pe_work" style="font-size:13px;font-weight:600">Working-on goal (' + esc(w[0]) + ')</label>' +
+      '<input id="pe_work" type="text" value="' + esc(w[1]) + '"' + (locked ? ' disabled' : '') + ' style="width:100%;min-height:42px;border:1px solid #D6CBB4;border-radius:8px;padding:0 10px;font:inherit;margin:4px 0 12px;' + (w[1] !== orig.w ? 'background:#FBEBC8;' : '') + '">' +
+      '<label for="pe_note" style="font-size:13px;font-weight:600">Note to ' + r.name.split(' ')[0] + '</label>' +
+      '<textarea id="pe_note" rows="2"' + (locked ? ' disabled' : '') + ' style="width:100%;border:1px solid #D6CBB4;border-radius:8px;padding:8px 10px;font:inherit;margin:4px 0 12px;resize:vertical">' + esc(r.note || '') + '</textarea>' +
+      (locked
+        ? '<button type="button" class="linkbtn" id="pe_reopen">' + (r.plan === 'approved' ? 'Reopen review' : 'Withdraw suggestion') + '</button>'
+        : '<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" id="pe_approve" style="min-height:46px;padding:0 20px;border:none;border-radius:10px;background:#1C1810;color:#fff;font:inherit;font-weight:600;cursor:pointer">Approve</button>' +
+          '<button type="button" id="pe_suggest" style="min-height:46px;padding:0 20px;border:1px solid #D6CBB4;border-radius:10px;background:#fff;color:#1C1810;font:inherit;font-weight:600;cursor:pointer">Suggest update</button></div>' +
+          '<p id="pe_msg" class="muted hidden" role="alert" style="margin:10px 0 0;font-size:13.5px;color:#8A3A26"></p>');
+  }
+  function wirePlan(r) {
+    var $ = function (id) { return document.getElementById(id); };
+    var read = function () { r.next[0] = [+$('pe_calls').value || 0, +$('pe_dm').value || 0, +$('pe_mtg').value || 0]; r.next[1][1] = $('pe_work').value; r.note = $('pe_note').value; };
+    ['pe_calls', 'pe_dm', 'pe_mtg', 'pe_work'].forEach(function (id) { if ($(id) && !$(id).disabled) $(id).addEventListener('change', function () { read(); render(); }); });
+    if ($('pe_approve')) $('pe_approve').addEventListener('click', function () {
+      read();
+      var changed = r.next[0].some(function (v, i) { return v !== r.orig.g[i]; }) || r.next[1][1] !== r.orig.w;
+      if (changed) { $('pe_msg').textContent = 'You changed the plan. Use Suggest update so ' + r.name.split(' ')[0] + ' can confirm it.'; $('pe_msg').classList.remove('hidden'); return; }
+      r.plan = 'approved'; render();
+    });
+    if ($('pe_suggest')) $('pe_suggest').addEventListener('click', function () {
+      read();
+      var changed = r.next[0].some(function (v, i) { return v !== r.orig.g[i]; }) || r.next[1][1] !== r.orig.w;
+      if (!changed && !r.note.trim()) { $('pe_msg').textContent = 'Change at least one goal or add a note before suggesting an update.'; $('pe_msg').classList.remove('hidden'); return; }
+      r.plan = 'suggested'; render();
+    });
+    if ($('pe_reopen')) $('pe_reopen').addEventListener('click', function () {
+      if (r.plan === 'suggested') { r.next[0] = r.orig.g.slice(); r.next[1][1] = r.orig.w; }
+      r.plan = 'review'; render();
+    });
   }
 
   function render() {

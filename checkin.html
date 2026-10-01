@@ -82,6 +82,14 @@
   .email-head { background: #fff; border-radius: 10px; padding: 14px 18px; font-size: 13.5px; margin-bottom: 12px; line-height: 1.7; }
   .email-body { background: var(--cream); border-radius: 10px; padding: 26px; }
   .hidden { display: none !important; }
+  .path-fields .field label { min-height: 2.6em; display: flex; align-items: flex-end; }
+  .review-box { background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 20px; margin-top: 22px; }
+  .review-box h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 21px; margin: 0 0 6px; }
+  .diff { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .diff th { text-align: left; font-size: 12.5px; color: var(--ink-secondary); font-weight: 600; padding: 8px 10px; background: #F4EFE5; }
+  .diff td { padding: 9px 10px; border-top: 1px solid #F1ECE2; }
+  .diff .chg { font-weight: 600; background: #FBEBC8; border-radius: 6px; padding: 2px 8px; }
+  .status-pill { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 4px 11px; border-radius: 999px; }
   @media (max-width: 700px) {
     .grid-row { grid-template-columns: 1fr 1fr; }
     .grid-row.head { display: none; }
@@ -181,12 +189,12 @@
 
     <div class="ci-card path card-pad gap">
       <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap"><h3>Path to goal</h3><span class="muted" id="monthLabel"></span></div>
-      <div class="three">
-        <div class="field"><label for="goal">Closed-won goal this month</label><input class="num" id="goal" type="number" min="0" value="8"><span class="hint">Set with your manager</span></div>
-        <div class="field"><label for="sofar">Closed won so far this month</label><input class="num" id="sofar" type="number" min="0" value="3"><span class="hint">Including last week</span></div>
-        <div class="field"><label for="cycle">Average CW cycle (days)</label><input class="num" id="cycle" type="number" min="0" value="6"><span class="hint">Meeting held to closed won</span></div>
+      <div class="four path-fields">
+        <div class="field"><label for="goal">Closed-won goal this month</label><input class="num" id="goal" type="number" min="0" value="8"></div>
+        <div class="field"><label for="sofar">Closed won so far this month</label><input class="num" id="sofar" type="number" min="0" value="3"></div>
+        <div class="field"><label for="cycle">Average CW cycle (days)</label><input class="num" id="cycle" type="number" min="0" value="6"></div>
+        <div class="field"><label for="upsoon" id="upsoonLabel">Upcoming meetings on or before the cutoff</label><input class="num" id="upsoon" type="number" min="0" value="3"></div>
       </div>
-      <div class="field" style="max-width: 420px"><label for="upsoon" id="upsoonLabel">Upcoming meetings held by the cutoff</label><input class="num" id="upsoon" type="number" min="0" value="3"><span class="hint" id="upsoonHint"></span></div>
       <div class="note-box" id="cutoffNote"></div>
       <div class="four" id="pathStats"></div>
       <div class="two" id="pathAsk"></div>
@@ -256,6 +264,12 @@
       <button class="btn" type="button" id="submit">Submit check-in</button>
     </div>
     <div id="emailPreview" class="email hidden" aria-live="polite"></div>
+
+    <div class="me-closed" style="margin-top: 22px" id="reviewDemoBar">
+      <p><strong>After you submit,</strong> your manager approves your plan or suggests an update. See what a suggested update looks like on your side.</p>
+      <button class="btn ghost" type="button" id="reviewDemo" style="border-style: solid">Preview a suggested update</button>
+    </div>
+    <div class="review-box hidden" id="reviewBox" aria-live="polite"></div>
   </section>
 </div>
 
@@ -354,8 +368,7 @@
     $('monthLabel').textContent = monthName + ' · ' + daysLeftMonth + ' day' + (daysLeftMonth === 1 ? '' : 's') + ' left';
     var tooLate = cutoff < today;
     var holdDays = tooLate ? 0 : businessDays(today, cutoff);
-    $('upsoonLabel').textContent = 'Upcoming meetings held by ' + shortDate(cutoff);
-    $('upsoonHint').textContent = 'Of your ' + up + ' upcoming meetings';
+    $('upsoonLabel').textContent = 'Upcoming meetings on or before ' + shortDate(cutoff);
     $('cutoffNote').innerHTML = tooLate
       ? 'With a ' + cycle + '-day cycle, the cutoff for ' + monthName + ' (' + shortDate(cutoff) + ') has passed. New meetings count toward next month.'
       : 'With a ' + cycle + '-day cycle, a meeting has to be <strong>held by ' + shortDate(cutoff) + '</strong> to close by ' + shortDate(monthEnd) + '. Anything held after that counts toward next month.';
@@ -410,6 +423,35 @@
     $('h_mtg').textContent = gapN > 0 && !tooLate && win ? 'Path to goal: ' + schedNeed + ' by ' + shortDate(cutoff) : 'Standard pace: ' + S('mpd') * 5 + ' a week';
     window.__ci = { schedNeed: schedNeed, heldNeed: heldNeed, cutoff: cutoff, projected: projected, goal: goal, rm: rm, rf: rf, gap: gapN, tooLate: tooLate };
   }
+
+  // ---------- manager review: rep's side of "Suggest update" ----------
+  function showSuggestion() {
+    var mgr = $('manager').value || 'Your manager';
+    var first = mgr.split(' ')[0];
+    var mine = { calls: n('g_calls'), dm: n('g_dm'), mtg: n('g_mtg'), work: $('w1').value };
+    var theirs = { calls: Math.max(mine.calls, 125), dm: mine.dm + 5, mtg: mine.mtg, work: mine.work };
+    var row = function (label, a, b) { return '<tr><td>' + label + '</td><td>' + a + '</td><td>' + (a === b ? b : '<span class="chg">' + b + '</span>') + '</td></tr>'; };
+    $('reviewBox').innerHTML =
+      '<span class="status-pill" style="background:#FBEBC8;color:#6E4A0E">Update suggested</span>' +
+      '<h3 style="margin-top: 10px">' + mgr + ' suggested changes to your plan</h3>' +
+      '<p class="muted" style="margin: 0">Changed goals are highlighted. Accept them, or change your plan and resubmit.</p>' +
+      '<table class="diff"><thead><tr><th>Goal</th><th>You set</th><th>' + first + ' suggests</th></tr></thead><tbody>' +
+      row('Calls per day', mine.calls, theirs.calls) + row('DM connects this week', mine.dm, theirs.dm) + row('Meetings from calling this week', mine.mtg, theirs.mtg) + row('Working on', mine.work, theirs.work) +
+      '</tbody></table>' +
+      '<p style="margin: 0 0 14px"><span class="tag">Note from ' + first + '</span><br>Standard is 125 dials. Let\'s get you there this week and see what it does for connects.</p>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="acceptSug">Accept and confirm</button><button class="btn ghost" type="button" id="editSug" style="border-style:solid">Change my plan and resubmit</button></div>';
+    $('reviewBox').classList.remove('hidden');
+    $('reviewBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('acceptSug').addEventListener('click', function () {
+      $('g_calls').value = theirs.calls; $('g_dm').value = theirs.dm; $('g_mtg').value = theirs.mtg; update();
+      $('reviewBox').innerHTML = '<span class="status-pill" style="background:#E3EEDF;color:#2A4A2E">✓ Approved</span><h3 style="margin-top:10px">Plan confirmed</h3><p class="muted" style="margin:0">Your goals are updated and approved. They\'ll be in Wednesday\'s email to you and ' + first + '.</p>';
+    });
+    $('editSug').addEventListener('click', function () {
+      $('reviewBox').innerHTML = '<span class="status-pill" style="background:#F1EEE8;color:#5E564A">Editing</span><h3 style="margin-top:10px">Update your plan, then submit again</h3><p class="muted" style="margin:0">' + first + ' gets it back to review.</p>';
+      $('g_calls').focus();
+    });
+  }
+  $('reviewDemo').addEventListener('click', showSuggestion);
 
   // ---------- month-end recap: the week of the 3rd Monday of the following month ----------
   function thirdMonday(y, m) {
