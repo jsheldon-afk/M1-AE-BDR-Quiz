@@ -103,8 +103,12 @@
 <div class="wrap ci">
   <a class="back-link" href="index.html">&larr; Seated Coaching Hub</a>
   <p style="margin: -16px 0 18px; font-size: 13.5px"><a href="tracking.html" style="font-weight: 600">See how tracking looks (week over week and overview) &rarr;</a></p>
-  <p class="preview-banner"><strong>Preview.</strong> Everything calculates live, but nothing is saved yet. Change any number to see how the page responds.</p>
+  <p class="preview-banner"><strong>Preview.</strong> Everything calculates live. Drafts save in this browser so you can try them; submitting doesn't send anything yet.</p>
 
+  <div class="me-closed hidden" id="draftBanner" style="margin: 0 0 22px">
+    <p id="draftBannerText"></p>
+    <button class="btn ghost" type="button" id="discardDraft" style="border-style: solid">Start over</button>
+  </div>
   <h1>Weekly check-in</h1>
   <p class="lede" id="weekLabel">Your numbers for last week, how last week's goals went, and your plan for this week.</p>
   <div class="ci-meta">
@@ -261,7 +265,13 @@
       <div><label class="check"><input type="checkbox" id="agreed"> I set this plan with my manager</label>
         <label class="check" style="font-weight: 600"><input type="checkbox" id="pipeOk" required aria-describedby="pipeErr"> I confirm my pipeline stages in Salesforce are up to date <span style="color:#8A3A26">*</span></label>
         <span id="pipeErr" class="hint hidden" role="alert" style="color:#8A3A26; font-weight: 600">Update your pipeline stages in Salesforce, then tick this box to submit.</span><span class="muted">You'll get a reminder Monday morning to finish this by end of day. On Wednesday your goals are emailed to you with your manager cc'd; reply all if you need to course-correct.</span></div>
-      <button class="btn" type="button" id="submit">Submit check-in</button>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end">
+          <button class="btn ghost" type="button" id="saveDraft" style="border-style: solid; min-height: 48px">Save draft</button>
+          <button class="btn" type="button" id="submit">Submit check-in</button>
+        </div>
+        <span class="muted" id="draftStatus" aria-live="polite" style="font-size: 13px"></span>
+      </div>
     </div>
     <div id="emailPreview" class="email hidden" aria-live="polite"></div>
 
@@ -494,6 +504,7 @@
       return '<option value="' + String(r.name).replace(/"/g, '&quot;') + '" data-start="' + (r.startDate || '') + '">' + r.name + '</option>';
     }).join('');
     $('nameHint').textContent = fromRoster ? 'From the Knowledge roster. Not listed? Ask your manager to add you.' : 'Couldn\'t load the roster, so these are sample names.';
+    if (window.__draftName) { $('repName').value = window.__draftName; }
   }
   $('repName').addEventListener('change', function () {
     var o = this.options[this.selectedIndex], start = parseStart(o && o.getAttribute('data-start'));
@@ -541,8 +552,56 @@
       '<p style="margin: 16px 0 0; font-weight: 600">Off track? Reply all with your manager and say what you\'ll change for the rest of the week.</p></div>';
     $('emailPreview').classList.remove('hidden');
     $('emailPreview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    clearDraft(); $('draftStatus').textContent = 'Submitted. Your draft has been cleared.';
   });
 
+  // ---------- drafts: save by hand or automatically as you type ----------
+  // Preview keeps the draft in this browser. The live version saves it to the Sheet as a draft,
+  // so it follows the rep across devices and managers don't see it until it's submitted.
+  var DRAFT_KEY = 'su_checkin_draft';
+  var timeFmt = function (d) { var h = d.getHours(), m = d.getMinutes(); return (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? 'am' : 'pm'); };
+  var dayFmt = function (d) { return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()] + ' ' + timeFmt(d); };
+  function collect() {
+    var data = { fields: {}, radios: {}, checks: {}, second: !$('work2').classList.contains('hidden') };
+    document.querySelectorAll('.ci input[id], .ci select[id], .ci textarea[id]').forEach(function (el) {
+      if (el.type === 'hidden' || el.id === 'manager') return;
+      if (el.type === 'checkbox') data.checks[el.id] = el.checked; else data.fields[el.id] = el.value;
+    });
+    document.querySelectorAll('.ci input[type="radio"]:checked').forEach(function (el) { data.radios[el.name] = el.value; });
+    return data;
+  }
+  function saveDraft(manual) {
+    var d = collect(); d.savedAt = new Date().toISOString();
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch (e) { $('draftStatus').textContent = 'Couldn\'t save a draft in this browser.'; return; }
+    $('draftStatus').textContent = (manual ? 'Draft saved ' : 'Autosaved ') + timeFmt(new Date()) + '. Nothing is sent to your manager until you submit.';
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+  function restoreDraft() {
+    var raw; try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var d; try { d = JSON.parse(raw); } catch (e) { return; }
+    Object.keys(d.fields || {}).forEach(function (id) {
+      var el = $(id); if (!el) return;
+      if (id === 'repName') window.__draftName = d.fields[id];
+      el.value = d.fields[id];
+    });
+    Object.keys(d.checks || {}).forEach(function (id) { if ($(id)) $(id).checked = d.checks[id]; });
+    Object.keys(d.radios || {}).forEach(function (name) {
+      var el = document.querySelector('.ci input[name="' + name + '"][value="' + String(d.radios[name]).replace(/"/g, '\\"') + '"]'); if (el) el.checked = true;
+    });
+    if (d.second) { $('work2').classList.remove('hidden'); $('addGoal').classList.add('hidden'); }
+    var when = d.savedAt ? new Date(d.savedAt) : null;
+    $('draftBannerText').innerHTML = '<strong>Picking up your draft</strong>' + (when ? ' from ' + dayFmt(when) : '') + '. Everything you entered is back where you left it.';
+    $('draftBanner').classList.remove('hidden');
+  }
+  var autoTimer = null;
+  document.querySelectorAll('.ci input, .ci select, .ci textarea').forEach(function (el) {
+    el.addEventListener('input', function () { clearTimeout(autoTimer); autoTimer = setTimeout(function () { saveDraft(false); }, 1500); });
+  });
+  $('saveDraft').addEventListener('click', function () { saveDraft(true); });
+  $('discardDraft').addEventListener('click', function () { clearDraft(); location.reload(); });
+
+  restoreDraft();
   update();
 })();
 </script>
