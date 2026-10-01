@@ -336,17 +336,17 @@
     }
     var grp = function (t) { return '<tr class="grp"><th colspan="9">' + t + '</th></tr>'; };
     var html = head + '<tbody>' + stageRow +
-      grp('Top of funnel') +
+      grp('Opportunity creation standards') +
       line('Dials / day', stdTxt('dpd', function (x) { return x; }), function (m) { return m.dpd; }, 'dpd', function (v) { return Math.round(v); }, true) +
       line('DM connect', stdTxt('conn', pct), function (m) { return m.conn; }, 'conn', pct, true) +
       line('DM conversion', stdTxt('conv', pct), function (m) { return m.conv; }, 'conv', pct, true) +
       line('Meetings from calling / day', stdTxt('mpd', function (x) { return x; }), function (m) { return m.mpd; }, 'mpd', r1, true) +
-      grp('Middle of funnel') +
+      grp('Opportunity execution standards') +
       line('Hold rate', stdTxt('hold', pct), function (m) { return m.hold; }, 'hold', pct, true) +
-      line('Rotting missed (% of pipeline)', 'No standard', function (m) { return m.rotm; }, null, pct, false) +
-      grp('Bottom of funnel') +
       line('Win Rate (Rolling 30)', stdTxt('win', pct), function (m) { return m.win; }, 'win', pct, true) +
+      grp('Pipeline health') +
       line('Closed won', 'No standard', function (m) { return m.cw; }, null, function (v) { return v; }, true) +
+      line('Rotting missed (% of pipeline)', 'No standard', function (m) { return m.rotm; }, null, pct, false) +
       line('Rotting follow-ups (% of Following Up)', 'No standard', function (m) { return m.rotf; }, null, pct, false) +
       grp('Effort') +
       '<tr class="m"><td class="lab">Number goals hit</td><td class="std">3 of 3</td>' + ms.map(function (m) { return m.missing ? '<td><span class="cell r">–</span></td>' : cell(m.goalsHit + ' of 3', m.goalsHit === 3 ? 'g' : m.goalsHit === 2 ? 'y' : 'r'); }).join('') + '<td class="trend">' + trend(ms.map(function (m) { return m.missing ? null : m.goalsHit; }), true) + '</td></tr>' +
